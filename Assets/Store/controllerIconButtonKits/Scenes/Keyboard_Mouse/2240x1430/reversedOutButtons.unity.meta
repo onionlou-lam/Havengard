@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f6517c7b0889a47af938a87d87880334
+timeCreated: 1474832140
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 72273
+  packageName: Controller Overlays & Button Kits (3 styles) x9 controllers +keyboard/mouse
+  packageVersion: 1.9.3
+  assetPath: Assets/controllerIconButtonKits/Scenes/Keyboard_Mouse/2240x1430/reversedOutButtons.unity
+  uploadId: 777088

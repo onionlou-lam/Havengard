@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a93bd38d69fd24ef8b22ce4d17c7856b
+timeCreated: 1474832140
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 72273
+  packageName: Controller Overlays & Button Kits (3 styles) x9 controllers +keyboard/mouse
+  packageVersion: 1.9.3
+  assetPath: Assets/controllerIconButtonKits/Scenes/PS5/4096x2615/reversedOutPS5Buttons.unity
+  uploadId: 777088
