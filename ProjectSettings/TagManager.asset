@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 2
+  serializedVersion: 3
   tags:
   - LevelBounds
   - FX
@@ -16,23 +16,23 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - Obstacles
   - Ground
+  - Wall
+  - Obstacles
   - Player
   - ObstaclesDoors
   - NoPathfinding
   - Enemies
   - NoCollisions
   - Hole
-  - MovingPlatform
-  - FallingPlatform
   - Projectile
-  - Camera1
-  - Camera2
-  - Camera3
-  - Camera4
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 
@@ -52,12 +52,23 @@ TagManager:
   - name: Ground
     uniqueID: 2296623839
     locked: 0
-  - name: Foreground
-    uniqueID: 1603220759
+  - name: Walls
+    uniqueID: 3053662813
+    locked: 0
+  - name: Props
+    uniqueID: 3903493149
     locked: 0
   - name: Characters
     uniqueID: 47421343
     locked: 0
+  - name: Foreground
+    uniqueID: 1603220759
+    locked: 0
+  - name: Overlay FX
+    uniqueID: 1147017395
+    locked: 0
   - name: Above
     uniqueID: 961700441
     locked: 0
+  m_RenderingLayers:
+  - Default
