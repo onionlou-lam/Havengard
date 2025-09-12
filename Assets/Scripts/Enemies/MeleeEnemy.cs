@@ -9,9 +9,9 @@ namespace Havengard.Enemies
 
         public override void PerformAttack(GameObject target)
         {
-            if (target.TryGetComponent<Health>(out var targetHealth))
+            if (target.TryGetComponent<IHealth>(out var targetHealth))
             {
-                // Pass this enemy's faction so friendly fire is prevented
+                // Prevent friendly fire by passing this enemy's faction
                 targetHealth.TakeDamage(damage, health.GetFaction());
             }
         }

@@ -1,38 +1,39 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Havengard.HealthSystem;
 
-public class HealthBar : MonoBehaviour
+namespace Havengard.HealthSystem
 {
-    [SerializeField] private Image fillImage;
-    [SerializeField] private Vector3 offset = new Vector3(0, 1.5f, 0);
-
-    private Health targetHealth;
-
-    public void Init(Health health)
+    public class HealthBar : MonoBehaviour
     {
-        targetHealth = health;
-        health.OnDamaged += UpdateBar;
-        health.OnHealed += UpdateBar;
-        health.OnDeath += HandleDeath;
+        [SerializeField] private Health health;
+        [SerializeField] private Image fillImage;
 
-        UpdateBar();
-    }
+        private void Start()
+        {
+            if (health == null) health = GetComponentInParent<Health>();
 
-    void LateUpdate()
-    {
-        if (targetHealth != null)
-            transform.position = targetHealth.transform.position + offset;
-    }
+            if (health != null)
+            {
+                health.OnDamaged += UpdateBar;
+                health.OnHealed += UpdateBar;
+                health.OnDeath += HandleDeath;
 
-    private void UpdateBar()
-    {
-        float normalized = targetHealth.GetHealthSystem().GetHealthNormalized();
-        fillImage.fillAmount = normalized;
-    }
+                UpdateBar(0); // initialize UI
+            }
+        }
 
-    private void HandleDeath()
-    {
-        Destroy(gameObject);
+        private void UpdateBar(float _)
+        {
+            if (health == null) return;
+
+            float ratio = health.GetCurrentHealth() / health.GetMaxHealth();
+            fillImage.fillAmount = ratio;
+        }
+
+        private void HandleDeath()
+        {
+            // Optionally hide UI
+            gameObject.SetActive(false);
+        }
     }
 }

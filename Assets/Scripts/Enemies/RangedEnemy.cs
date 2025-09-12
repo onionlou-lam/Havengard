@@ -1,4 +1,5 @@
 using UnityEngine;
+using Havengard.HealthSystem;
 
 namespace Havengard.Enemies
 {
@@ -6,14 +7,21 @@ namespace Havengard.Enemies
     {
         [SerializeField] private GameObject projectilePrefab;
         [SerializeField] private float projectileSpeed = 10f;
+        [SerializeField] private float damage = 8f;
 
         public override void PerformAttack(GameObject target)
         {
-            if (projectilePrefab == null) return;
+            if (projectilePrefab == null || target == null) return;
 
-            var projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
-            Vector3 direction = (target.transform.position - transform.position).normalized;
-            projectile.GetComponent<Rigidbody2D>().linearVelocity = direction * projectileSpeed;
+            var projectileObj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+            if (projectileObj.TryGetComponent<Projectile>(out var projectile))
+            {
+                projectile.Init(target.transform, damage, health.GetFaction());
+            }
+            else
+            {
+                Debug.LogError("Projectile prefab is missing a Projectile component!");
+            }
         }
     }
 }

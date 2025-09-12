@@ -1,49 +1,80 @@
+﻿using UnityEngine;
+using Havengard.Combat;
 using System;
-using UnityEngine;
 
 namespace Havengard.HealthSystem
 {
-    public enum Faction
-    {
-        Neutral,
-        Player,
-        Enemy
-    }
-    [RequireComponent(typeof(Collider2D))]
     public class Health : MonoBehaviour, IHealth
     {
-        [Header("Settings")]
         [SerializeField] private float maxHealth = 100f;
-        [SerializeField] private Faction faction = Faction.Neutral;
+        [SerializeField] private Faction faction = Faction.Enemy;
 
-        private HealthSystem healthSystem;
+        private float currentHealth;
 
-        public event Action OnDamaged;
-        public event Action OnHealed;
+        // ✅ Events for UI / gameplay
+        public event Action<float> OnDamaged; // sends damage amount
+        public event Action<float> OnHealed;  // sends heal amount
         public event Action OnDeath;
-
-        public Faction GetFaction() => faction;
-        public HealthSystem GetHealthSystem() => healthSystem;
 
         private void Awake()
         {
-            healthSystem = new HealthSystem(maxHealth);
-
-            healthSystem.OnDamaged += (s, e) => OnDamaged?.Invoke();
-            healthSystem.OnHealed += (s, e) => OnHealed?.Invoke();
-            healthSystem.OnDead += (s, e) =>
-            {
-                OnDeath?.Invoke();
-                Destroy(gameObject); // You can swap this for animation/respawn
-            };
+            currentHealth = maxHealth;
         }
+
+        public Faction GetFaction() => faction;
+        public float GetCurrentHealth() => currentHealth;
+        public float GetMaxHealth() => maxHealth; // useful for UI bars
 
         public void TakeDamage(float amount, Faction sourceFaction)
         {
-            if (sourceFaction == faction) return; // ?? Prevent friendly fire
-            healthSystem.Damage(amount);
+            // Prevent friendly fire
+            if (sourceFaction == faction) return;
+
+            currentHealth -= amount;
+            OnDamaged?.Invoke(amount);
+
+            if (currentHealth <= 0f)
+            {
+                Die();
+            }
         }
 
-        public void Heal(float amount) => healthSystem.Heal(amount);
+        public void ApplyDoT(float totalDamage, float duration, Faction sourceFaction)
+        {
+            if (sourceFaction == faction) return;
+            StartCoroutine(DoTDamage(totalDamage, duration));
+        }
+
+        private System.Collections.IEnumerator DoTDamage(float totalDamage, float duration)
+        {
+            float tickRate = 1f;
+            float damagePerTick = totalDamage / duration * tickRate;
+
+            for (float t = 0; t < duration; t += tickRate)
+            {
+                currentHealth -= damagePerTick;
+                OnDamaged?.Invoke(damagePerTick);
+
+                if (currentHealth <= 0f)
+                {
+                    Die();
+                    yield break;
+                }
+                yield return new WaitForSeconds(tickRate);
+            }
+        }
+
+        public void Heal(float amount)
+        {
+            currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+            OnHealed?.Invoke(amount);
+        }
+
+        private void Die()
+        {
+            OnDeath?.Invoke();
+            Debug.Log($"{gameObject.name} has died.");
+            Destroy(gameObject);
+        }
     }
 }

@@ -1,8 +1,9 @@
 using UnityEngine;
 using Havengard.HealthSystem;
 
-namespace Havengard.Player
+namespace Havengard.Character
 {
+    [RequireComponent(typeof(Health))]
     public class PlayerController : MonoBehaviour
     {
         private IHealth health;
@@ -12,13 +13,30 @@ namespace Havengard.Player
             health = GetComponent<IHealth>();
         }
 
-        private void Update()
+        private void Start()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (health is Health h)
             {
-                health.GetHealthSystem().Damage(10f);
-                Debug.Log($"{gameObject.name} took 10 damage. Current HP: {health.GetHealthSystem().GetHealth()}");
+                h.OnDamaged += HandleDamaged;
+                h.OnHealed += HandleHealed;
+                h.OnDeath += HandleDeath;
             }
+        }
+
+        private void HandleDamaged(float amount)
+        {
+            Debug.Log($"Player took {amount} damage! Current HP: {health.GetCurrentHealth()}");
+        }
+
+        private void HandleHealed(float amount)
+        {
+            Debug.Log($"Player healed {amount} HP. Current HP: {health.GetCurrentHealth()}");
+        }
+
+        private void HandleDeath()
+        {
+            Debug.Log("Player has died!");
+            // Handle respawn or game over logic here
         }
     }
 }
