@@ -1,16 +1,16 @@
 using UnityEngine;
 
 /// <summary>
-/// Chases into melee range and deals damage.
+/// Friendly melee unit: same logic as MeleeEnemy but intended to target enemies.
+/// Make sure inspector targetLayer is set to the enemy layer.
 /// </summary>
-public class MeleeEnemy : EnemyBase
+public class FriendlyMelee : UnitBase
 {
-    [SerializeField] private float damage = 10f;
-    [SerializeField] private float approachSpeedMultiplier = 1.4f;
+    [SerializeField] private float damage = 12f;
+    [SerializeField] private float approachMultiplier = 1.25f;
 
     protected override void TryAttack(GameObject target)
     {
-        // override to approach more aggressively and then hit
         float dist = Vector2.Distance(transform.position, target.transform.position);
 
         if (dist <= attackRange && Time.time >= lastAttackTime + attackCooldown)
@@ -20,23 +20,16 @@ public class MeleeEnemy : EnemyBase
         }
         else
         {
-            // faster approach speed for melee
             Vector3 dir = (target.transform.position - transform.position).normalized;
-            transform.position += dir * (moveSpeed * approachSpeedMultiplier * Time.deltaTime);
+            transform.position += dir * (moveSpeed * approachMultiplier * Time.deltaTime);
         }
     }
 
     public override void PerformAttack(GameObject target)
     {
-        // Attempt to damage unit-type targets (UnitBase)
         if (target.TryGetComponent<UnitBase>(out var unit))
         {
             unit.TakeDamage(damage);
-        }
-        else
-        {
-            // If target doesn't have UnitBase, try IHealth or other damage path (not included here)
-            Debug.Log($"{name} melee attacked {target.name} for {damage}");
         }
     }
 }

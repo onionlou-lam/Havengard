@@ -1,34 +1,29 @@
 using UnityEngine;
-using Havengard.HealthSystem;
 
-namespace Havengard.Enemies
+/// <summary>
+/// Simple enemy base. Implements IEnemy-like behavior (PerformAttack & OnDeath).
+/// Inherit for specific enemy behaviours.
+/// </summary>
+public abstract class EnemyBase : UnitBase
 {
-    [RequireComponent(typeof(Health))]
-    public abstract class EnemyBase : MonoBehaviour, IEnemy
+    // Optionally expose special enemy-only fields here
+
+    public override void PerformAttack(GameObject target)
     {
-        protected IHealth health;
+        // If a subclass forgot to override, this is called.
+        Debug.LogWarning($"{name} attempted to PerformAttack but no implementation provided.");
+    }
 
-        protected virtual void Awake()
-        {
-            health = GetComponent<IHealth>();
-            if (health == null)
-                Debug.LogError($"{name} is missing an IHealth component!");
-        }
+    // You can override OnDestroy or Die to provide common enemy death logic
+    protected override void Die()
+    {
+        OnDeath();
+        base.Die();
+    }
 
-        protected virtual void Start()
-        {
-            if (health is Health h)
-            {
-                h.OnDeath += HandleDeath;
-            }
-        }
-
-        public abstract void PerformAttack(GameObject target);
-
-        protected virtual void HandleDeath()
-        {
-            Debug.Log($"{name} has died.");
-            Destroy(gameObject);
-        }
+    protected virtual void OnDeath()
+    {
+        // default enemy death hook
+        Debug.Log($"{name} died (EnemyBase.OnDeath).");
     }
 }

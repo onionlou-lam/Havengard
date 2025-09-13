@@ -1,14 +1,14 @@
-using UnityEngine;
-using Havengard.Combat;
-
-namespace Havengard.HealthSystem
+public interface IHealth
 {
-    public interface IHealth
-    {
-        void TakeDamage(float amount, Faction sourceFaction);
-        void ApplyDoT(float totalDamage, float duration, Faction sourceFaction);
-        float GetCurrentHealth();
-        float GetMaxHealth();
-        Faction GetFaction();
-    }
+    float CurrentHealth { get; }
+    float MaxHealth { get; }
+
+    Faction GetFaction();
+
+    void TakeDamage(float amount);
+    void Heal(float amount);
+
+    event System.Action OnDamaged;
+    event System.Action OnHealed;
+    event System.Action OnDeath;
 }

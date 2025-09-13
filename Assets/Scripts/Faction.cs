@@ -1,9 +1,14 @@
-namespace Havengard.Combat
+using UnityEngine;
+
+public enum Faction
 {
-    public enum Faction
-    {
-        Player,
-        Enemy,
-        Neutral
-    }
+    Neutral,
+    Friendly,
+    Enemy
+}
+
+public class FactionProvider : MonoBehaviour
+{
+    public Faction faction = Faction.Neutral;
+    public Faction GetFaction() => faction;
 }

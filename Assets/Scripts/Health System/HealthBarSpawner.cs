@@ -1,16 +1,17 @@
-using Havengard.HealthSystem;
 using UnityEngine;
 
 public class HealthBarSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject healthBarPrefab;
+    [SerializeField] private Transform uiCanvas;
 
-    void Start()
+    private void Start()
     {
-        if (TryGetComponent<Health>(out var health))
-        {
-            var hb = Instantiate(healthBarPrefab);
-            hb.GetComponent<HealthBar>().Init(health);
-        }
+        var health = GetComponent<IHealth>();
+        if (health == null) return;
+
+        var bar = Instantiate(healthBarPrefab, uiCanvas);
+        var healthBar = bar.GetComponent<HealthBar>();
+        healthBar.Init(health);
     }
 }

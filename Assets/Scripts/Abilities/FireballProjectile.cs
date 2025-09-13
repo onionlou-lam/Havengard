@@ -1,66 +1,45 @@
 using UnityEngine;
+using Havengard;
 using Havengard.HealthSystem;
-using Havengard.Combat;
 
-public class FireballProjectile : MonoBehaviour
+namespace Havengard.Abilities
 {
-    private Transform target;
-    private Vector3 travelPos;
-    private float damage;
-    private float splashRadius;
-    private float dotDuration;
-    private float dotPercent;
-    private float speed;
-    private Faction sourceFaction;
-
-    private bool travelToPoint;
-
-    public void Init(Transform target, float damage, float splashRadius, float dotDuration, float dotPercent, float speed, Faction sourceFaction, Vector3? point = null)
+    public class FireballProjectile : MonoBehaviour
     {
-        this.target = target;
-        this.damage = damage;
-        this.splashRadius = splashRadius;
-        this.dotDuration = dotDuration;
-        this.dotPercent = dotPercent;
-        this.speed = speed;
-        this.sourceFaction = sourceFaction;
+        private float damage;
+        private float radius;
+        private Faction sourceFaction;
 
-        if (point.HasValue)
+        public void Init(float damage, float radius, Faction sourceFaction)
         {
-            travelToPoint = true;
-            travelPos = point.Value;
+            this.damage = damage;
+            this.radius = radius;
+            this.sourceFaction = sourceFaction;
         }
-    }
 
-    private void Update()
-    {
-        Vector3 destination = travelToPoint ? travelPos : target?.position ?? transform.position;
-
-        transform.position = Vector2.MoveTowards(transform.position, destination, speed * Time.deltaTime);
-
-        if (Vector2.Distance(transform.position, destination) < 0.1f)
+        private void OnCollisionEnter2D(Collision2D collision)
         {
-            Explode();
-        }
-    }
-
-    private void Explode()
-    {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, splashRadius);
-        foreach (var hit in hits)
-        {
-            if (hit.TryGetComponent<IHealth>(out var health))
+            // Damage main target
+            if (collision.gameObject.TryGetComponent<IHealth>(out var mainTarget))
             {
-                if (health.GetFaction() == sourceFaction) continue; // no friendly fire
-
-                // Full damage for main target, half for others
-                float appliedDamage = (hit.transform == target) ? damage : damage * 0.5f;
-                health.TakeDamage(appliedDamage, sourceFaction);
-
-                // Apply DoT
-                health.ApplyDoT(appliedDamage * dotPercent, dotDuration, sourceFaction);
+                mainTarget.TakeDamage(damage);
             }
+
+            // AoE splash damage
+            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, radius);
+            foreach (var hit in hits)
+            {
+                if (hit.TryGetComponent<IHealth>(out var health))
+                {
+                    if (health.GetFaction() != sourceFaction)
+                    {
+                        float splashDamage = damage * 0.5f;
+                        health.TakeDamage(splashDamage);
+                    }
+                }
+            }
+
+            Destroy(gameObject);
         }
-        Destroy(gameObject);
     }
 }

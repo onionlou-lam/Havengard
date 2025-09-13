@@ -1,20 +1,18 @@
 using UnityEngine;
 
 /// <summary>
-/// Fires a simple projectile (physics linearVelocity) at the target.
-/// Projectile prefab must have a Rigidbody2D and a script to apply damage on contact.
+/// Friendly ranged unit: fires projectiles at enemies. Set projectile prefab & enemy layer.
 /// </summary>
-public class RangedEnemy : EnemyBase
+public class FriendlyRanged : UnitBase
 {
     [SerializeField] private GameObject projectilePrefab;
-    [SerializeField] private float projectileSpeed = 8f;
+    [SerializeField] private float projectileSpeed = 9f;
 
     protected override void TryAttack(GameObject target)
     {
         if (Time.time < lastAttackTime + attackCooldown) return;
         if (target == null) return;
 
-        // fire immediately (no approach)
         PerformAttack(target);
         lastAttackTime = Time.time;
     }
@@ -29,6 +27,5 @@ public class RangedEnemy : EnemyBase
             Vector2 dir = (target.transform.position - transform.position).normalized;
             rb.linearVelocity = dir * projectileSpeed;
         }
-        // projectile should handle collision & apply damage to UnitBase or Health
     }
 }

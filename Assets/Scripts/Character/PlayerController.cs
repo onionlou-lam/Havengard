@@ -8,35 +8,31 @@ namespace Havengard.Character
     {
         private IHealth health;
 
-        private void Awake()
-        {
-            health = GetComponent<IHealth>();
-        }
-
         private void Start()
         {
-            if (health is Health h)
+            health = GetComponent<IHealth>();
+            if (health != null)
             {
-                h.OnDamaged += HandleDamaged;
-                h.OnHealed += HandleHealed;
-                h.OnDeath += HandleDeath;
+                health.OnDamaged += HandleDamaged;
+                health.OnHealed += HandleHealed;
+                health.OnDeath += HandleDeath;
             }
         }
 
-        private void HandleDamaged(float amount)
+        private void HandleDamaged()
         {
-            Debug.Log($"Player took {amount} damage! Current HP: {health.GetCurrentHealth()}");
+            Debug.Log("Player damaged: " + health.CurrentHealth);
         }
 
-        private void HandleHealed(float amount)
+        private void HandleHealed()
         {
-            Debug.Log($"Player healed {amount} HP. Current HP: {health.GetCurrentHealth()}");
+            Debug.Log("Player healed: " + health.CurrentHealth);
         }
 
         private void HandleDeath()
         {
-            Debug.Log("Player has died!");
-            // Handle respawn or game over logic here
+            Debug.Log("Player died!");
         }
+
     }
 }
