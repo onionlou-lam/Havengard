@@ -27,6 +27,18 @@ public class FriendlyMelee : UnitBase
 
     public override void PerformAttack(GameObject target)
     {
+        float dist = Vector2.Distance(transform.position, target.transform.position);
+
+        if (dist <= attackRange && Time.time >= lastAttackTime + attackCooldown)
+        {
+            PerformAttack(target);
+            lastAttackTime = Time.time;
+        }
+        else
+        {
+            Vector3 dir = (target.transform.position - transform.position).normalized;
+            transform.position += dir * (moveSpeed * approachMultiplier * Time.deltaTime);
+        }
         if (target.TryGetComponent<UnitBase>(out var unit))
         {
             unit.TakeDamage(damage);

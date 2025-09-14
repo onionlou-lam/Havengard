@@ -1,50 +1,75 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
-public class Health : MonoBehaviour, IHealth
+namespace Havengard.Health
 {
-    [SerializeField] private float maxHealth = 100f;
-    private float currentHealth;
-    private FactionProvider factionProvider;
-
-    public float CurrentHealth => currentHealth;
-    public float MaxHealth => maxHealth;
-
-    public event System.Action OnDamaged;
-    public event System.Action OnHealed;
-    public event System.Action OnDeath;
-
-    private void Awake()
+    [RequireComponent(typeof(FactionProvider))]
+    public class Health : MonoBehaviour, IHealth
     {
-        currentHealth = maxHealth;
-        factionProvider = GetComponent<FactionProvider>();
-    }
+        [SerializeField] private float maxHealth = 100f;
+        private float currentHealth;
+        private FactionProvider factionProvider;
 
-    public void TakeDamage(float amount)
-    {
-        if (amount <= 0f) return;
+        public event System.Action<float> OnDamaged;
+        public event System.Action<float> OnHealed;
+        public event System.Action OnDeath;
 
-        currentHealth -= amount;
-        OnDamaged?.Invoke();
+        public float CurrentHealth => currentHealth;
+        public float MaxHealth => maxHealth;
 
-        if (currentHealth <= 0f)
+        private void Awake()
         {
-            currentHealth = 0f;
-            OnDeath?.Invoke();
+            currentHealth = maxHealth;
+            factionProvider = GetComponent<FactionProvider>();
         }
-    }
 
-    public void Heal(float amount)
-    {
-        if (amount <= 0f) return;
+        public void TakeDamage(float amount)
+        {
+            if (amount <= 0f) return;
+            if (currentHealth <= 0f) return;
 
-        currentHealth += amount;
-        if (currentHealth > maxHealth) currentHealth = maxHealth;
+            currentHealth = Mathf.Clamp(currentHealth - amount, 0f, maxHealth);
+            OnDamaged?.Invoke();
 
-        OnHealed?.Invoke();
-    }
+            if (currentHealth <= 0f)
+            {
+                currentHealth = 0f;
+                OnDeath?.Invoke();
+            }
+        }
 
-    public Faction GetFaction()
-    {
-        return factionProvider != null ? factionProvider.faction : Faction.Neutral;
+        public void Heal(float amount)
+        {
+            if (amount <= 0f) return;
+            if (currentHealth <= 0f) return; // dead units can't be healed here (changeable)
+
+            currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
+            OnHealed?.Invoke();
+        }
+
+        public Faction GetFaction()
+        {
+            return factionProvider != null ? factionProvider.Faction : Faction.Neutral;
+        }
+
+        public void ApplyDoT(float totalDamage, float duration, float tickInterval = 1f)
+        {
+            if (totalDamage <= 0f || duration <= 0f) return;
+            StartCoroutine(DoTCoroutine(totalDamage, duration, tickInterval));
+        }
+
+        private IEnumerator DoTCoroutine(float totalDamage, float duration, float tickInterval)
+        {
+            float ticks = Mathf.Max(1, Mathf.Floor(duration / tickInterval));
+            float damagePerTick = totalDamage / ticks;
+
+            float elapsed = 0f;
+            while (elapsed < duration && currentHealth > 0f)
+            {
+                yield return new WaitForSeconds(tickInterval);
+                TakeDamage(damagePerTick);
+                elapsed += tickInterval;
+            }
+        }
     }
 }

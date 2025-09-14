@@ -1,34 +1,22 @@
 using UnityEngine;
 
-/// <summary>
-/// Fires a simple projectile (physics linearVelocity) at the target.
-/// Projectile prefab must have a Rigidbody2D and a script to apply damage on contact.
-/// </summary>
-public class RangedEnemy : EnemyBase
+public class RangedEnemy : UnitBase
 {
-    [SerializeField] private GameObject projectilePrefab;
-    [SerializeField] private float projectileSpeed = 8f;
+    [Header("Ranged Settings")]
+    public GameObject projectilePrefab;
+    public Transform firePoint;
+    public float projectileSpeed = 10f;
 
-    protected override void TryAttack(GameObject target)
+    protected override void PerformAttack(Transform target)
     {
-        if (Time.time < lastAttackTime + attackCooldown) return;
-        if (target == null) return;
+        if (projectilePrefab == null || firePoint == null) return;
 
-        // fire immediately (no approach)
-        PerformAttack(target);
-        lastAttackTime = Time.time;
-    }
-
-    public override void PerformAttack(GameObject target)
-    {
-        if (projectilePrefab == null || target == null) return;
-
-        var proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
-        if (proj.TryGetComponent<Rigidbody2D>(out var rb))
+        var proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        if (proj.TryGetComponent<Rigidbody>(out var rb))
         {
-            Vector2 dir = (target.transform.position - transform.position).normalized;
-            rb.linearVelocity = dir * projectileSpeed;
+            Vector3 dir = (target.position - firePoint.position).normalized;
+            rb.velocity = dir * projectileSpeed;
         }
-        // projectile should handle collision & apply damage to UnitBase or Health
+        Debug.Log($"{name} fires at {target.name}");
     }
 }

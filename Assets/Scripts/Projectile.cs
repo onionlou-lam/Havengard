@@ -1,32 +1,60 @@
 ﻿using UnityEngine;
-using Havengard;
-using Havengard.HealthSystem;
+using Havengard.Health;
 
-public class Projectile : MonoBehaviour
+namespace Havengard.Projectiles
 {
-    private Transform target;
-    private float damage;
-    private Faction sourceFaction;
-
-    public void Init(Transform target, float damage, Faction sourceFaction)
+    [RequireComponent(typeof(Collider2D))]
+    public class Projectile2D : MonoBehaviour
     {
-        this.target = target;
-        this.damage = damage;
-        this.sourceFaction = sourceFaction;
-    }
+        private Transform targetTransform;
+        private Vector2 targetPoint;
+        private float speed = 10f;
+        private float damage = 10f;
+        private Faction sourceFaction;
+        private bool isPoint = false;
+        public bool allowFriendlyFire = false;
 
-    void Update()
-    {
-        if (target == null) { Destroy(gameObject); return; }
-
-        // Move towards target
-        transform.position = Vector2.MoveTowards(transform.position, target.position, 10f * Time.deltaTime);
-
-        // Hit check
-        if (Vector2.Distance(transform.position, target.position) < 0.1f)
+        public void Init(Transform target, float damage, Faction sourceFaction, float speed = 10f, bool allowFriendly = false)
         {
-            if (target.TryGetComponent<IHealth>(out var health))
+            this.targetTransform = target;
+            this.damage = damage;
+            this.sourceFaction = sourceFaction;
+            this.speed = speed;
+            this.isPoint = false;
+            this.allowFriendlyFire = allowFriendly;
+        }
+
+        public void Init(Vector2 point, float damage, Faction sourceFaction, float speed = 10f, bool allowFriendly = false)
+        {
+            this.targetPoint = point;
+            this.damage = damage;
+            this.sourceFaction = sourceFaction;
+            this.speed = speed;
+            this.isPoint = true;
+            this.allowFriendlyFire = allowFriendly;
+        }
+
+        private void Update()
+        {
+            Vector2 dest = isPoint ? targetPoint : (targetTransform != null ? (Vector2)targetTransform.position : (Vector2)transform.position);
+            transform.position = Vector2.MoveTowards(transform.position, dest, speed * Time.deltaTime);
+
+            if (Vector2.Distance(transform.position, dest) < 0.1f)
             {
+                // If it reaches the destination (point) then destroy
+                if (isPoint) Destroy(gameObject);
+            }
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (other.transform == transform) return;
+
+            if (other.TryGetComponent<IHealth>(out var health))
+            {
+                // prevent friendly fire unless allowed
+                if (!allowFriendlyFire && health.GetFaction() == sourceFaction) return;
+
                 health.TakeDamage(damage);
             }
 

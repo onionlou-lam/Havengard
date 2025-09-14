@@ -1,17 +1,24 @@
 using UnityEngine;
+using Havengard.Health;
+using Havengard.UI;
 
-public class HealthBarSpawner : MonoBehaviour
+namespace Havengard.UI
 {
-    [SerializeField] private GameObject healthBarPrefab;
-    [SerializeField] private Transform uiCanvas;
-
-    private void Start()
+    public class HealthBarSpawner : MonoBehaviour
     {
-        var health = GetComponent<IHealth>();
-        if (health == null) return;
+        [SerializeField] private GameObject healthBarPrefab; // prefab with HealthBarUI and Slider
+        [SerializeField] private Transform parentCanvas;     // world-space canvas or UI root
 
-        var bar = Instantiate(healthBarPrefab, uiCanvas);
-        var healthBar = bar.GetComponent<HealthBar>();
-        healthBar.Init(health);
+        private void Start()
+        {
+            if (healthBarPrefab == null || parentCanvas == null) return;
+
+            if (GetComponent<IHealth>() is IHealth health)
+            {
+                var go = Instantiate(healthBarPrefab, parentCanvas);
+                var ui = go.GetComponent<HealthBarUI>();
+                ui.Setup(health);
+            }
+        }
     }
 }

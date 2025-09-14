@@ -1,42 +1,17 @@
 using UnityEngine;
 
-/// <summary>
-/// Chases into melee range and deals damage.
-/// </summary>
-public class MeleeEnemy : EnemyBase
+public class MeleeEnemy : UnitBase
 {
-    [SerializeField] private float damage = 10f;
-    [SerializeField] private float approachSpeedMultiplier = 1.4f;
+    [Header("Melee Settings")]
+    public float meleeDamage = 15f;
 
-    protected override void TryAttack(GameObject target)
+    protected override void PerformAttack(Transform target)
     {
-        // override to approach more aggressively and then hit
-        float dist = Vector2.Distance(transform.position, target.transform.position);
-
-        if (dist <= attackRange && Time.time >= lastAttackTime + attackCooldown)
+        IHealth health = target.GetComponent<IHealth>();
+        if (health != null && health.GetFaction() != GetFaction())
         {
-            PerformAttack(target);
-            lastAttackTime = Time.time;
-        }
-        else
-        {
-            // faster approach speed for melee
-            Vector3 dir = (target.transform.position - transform.position).normalized;
-            transform.position += dir * (moveSpeed * approachSpeedMultiplier * Time.deltaTime);
-        }
-    }
-
-    public override void PerformAttack(GameObject target)
-    {
-        // Attempt to damage unit-type targets (UnitBase)
-        if (target.TryGetComponent<UnitBase>(out var unit))
-        {
-            unit.TakeDamage(damage);
-        }
-        else
-        {
-            // If target doesn't have UnitBase, try IHealth or other damage path (not included here)
-            Debug.Log($"{name} melee attacked {target.name} for {damage}");
+            health.TakeDamage(meleeDamage);
+            Debug.Log($"{name} slashes {target.name} for {meleeDamage} damage!");
         }
     }
 }

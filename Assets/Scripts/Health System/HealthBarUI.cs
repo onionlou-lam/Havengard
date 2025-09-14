@@ -1,54 +1,46 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Havengard.Health;
 
-namespace Havengard.HealthSystem
+namespace Havengard.UI
 {
-    /// <summary>
-    /// Simple world-space or screen-space health bar UI.
-    /// Updates an Image's fill amount based on a linked HealthSystem.
-    /// </summary>
     public class HealthBarUI : MonoBehaviour
     {
-        [Tooltip("GameObject that provides a HealthSystem (via IGetHealthSystem). Optional.")]
-        [SerializeField] private GameObject healthSource;
+        [SerializeField] private Slider slider = null;
+        private IHealth trackedHealth;
 
-        [Tooltip("Image representing the health bar fill.")]
-        [SerializeField] private Image healthFillImage;
-
-        private HealthSystem healthSystem;
-
-        private void Start()
+        public void Setup(IHealth health)
         {
-            if (healthSource != null && HealthSystem.TryGet(healthSource, out HealthSystem found))
-            {
-                SetHealthSystem(found);
-            }
+            if (health == null) return;
+            trackedHealth = health;
+            slider.maxValue = health.MaxHealth;
+            slider.value = health.CurrentHealth;
+
+            health.OnDamaged += UpdateBar;
+            health.OnHealed += UpdateBar;
+            health.OnDeath += HandleDeath;
         }
 
-        public void SetHealthSystem(HealthSystem newHealthSystem)
+        private void UpdateBar()
         {
-            if (healthSystem != null)
-                healthSystem.OnHealthChanged -= OnHealthChanged;
-
-            healthSystem = newHealthSystem;
-            UpdateHealthBar();
-
-            if (healthSystem != null)
-                healthSystem.OnHealthChanged += OnHealthChanged;
+            if (trackedHealth == null) return;
+            slider.value = trackedHealth.CurrentHealth;
         }
 
-        private void OnHealthChanged(object sender, System.EventArgs e) => UpdateHealthBar();
-
-        private void UpdateHealthBar()
+        private void HandleDeath()
         {
-            if (healthFillImage != null && healthSystem != null)
-                healthFillImage.fillAmount = healthSystem.GetHealthNormalized();
+            if (slider != null) slider.value = 0f;
+            gameObject.SetActive(false);
         }
 
         private void OnDestroy()
         {
-            if (healthSystem != null)
-                healthSystem.OnHealthChanged -= OnHealthChanged;
+            if (trackedHealth != null)
+            {
+                trackedHealth.OnDamaged -= UpdateBar;
+                trackedHealth.OnHealed -= UpdateBar;
+                trackedHealth.OnDeath -= HandleDeath;
+            }
         }
     }
 }

@@ -1,124 +1,142 @@
+﻿using Havengard.Health;
 using UnityEngine;
+using UnityEngine.AI;
 
-/// <summary>
-/// Shared base for any unit (friendly or enemy).
-/// Handles detection (OverlapCircle) and basic moving/attack loop.
-/// Child classes implement PerformAttack and can override TryAttack to control approach/attack behavior.
-/// </summary>
-[RequireComponent(typeof(Collider2D))]
-public abstract class UnitBase : MonoBehaviour
+public enum UnitState { Idle, Moving, Attacking }
+
+[RequireComponent(typeof(NavMeshAgent))]
+public class UnitBase : MonoBehaviour, IHealth
 {
-    [Header("Core")]
-    public float health = 100f;
-    public float moveSpeed = 2.5f;
+    [Header("Faction Settings")]
+    [SerializeField] private FactionProvider factionProvider;
 
-    [Header("Detection / Combat")]
-    public float detectionRadius = 6f;
-    public LayerMask targetLayer;        // set in inspector to what this unit should target
-    public float attackRange = 1.5f;     // distance at which attack can occur
+    [Header("Combat Settings")]
+    public float detectionRange = 8f;
+    public float attackRange = 5f;
     public float attackCooldown = 1f;
+    public float maxHealth = 100f;
 
-    protected GameObject currentTarget;
+    protected float currentHealth;
+    protected Transform target;
+    protected NavMeshAgent agent;
     protected float lastAttackTime;
+    private UnitState currentState = UnitState.Idle;
+
+    public float CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
+
+    public event System.Action<float> OnDamaged;
+    public event System.Action<float> OnHealed;
+    public event System.Action OnDeath;
+
+    protected virtual void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        currentHealth = maxHealth;
+    }
 
     protected virtual void Update()
     {
-        DetectTarget();
-
-        if (currentTarget != null)
+        switch (currentState)
         {
-            TryAttack(currentTarget);
-        }
-        else
-        {
-            // idle behavior - can be overridden (patrol, roam, move to gate, etc.)
-            IdleBehavior();
-        }
-    }
-
-    protected virtual void IdleBehavior() { /* no-op by default */ }
-
-    protected virtual void DetectTarget()
-    {
-        // If a target already exists, don't change it here (child may clear it when dead)
-        if (currentTarget != null)
-        {
-            if (!IsTargetValid(currentTarget)) currentTarget = null;
-            else return;
-        }
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRadius, targetLayer);
-        if (hits.Length > 0)
-        {
-            // simple: pick the first detected target; you can add prioritization later
-            currentTarget = hits[0].gameObject;
-            OnTargetAcquired(currentTarget);
+            case UnitState.Idle:
+                LookForTargets();
+                break;
+            case UnitState.Moving:
+                HandleMovement();
+                break;
+            case UnitState.Attacking:
+                HandleAttack();
+                break;
         }
     }
 
-    protected virtual bool IsTargetValid(GameObject target)
+    private void LookForTargets()
     {
-        return target != null && target.activeInHierarchy;
-    }
-
-    protected virtual void OnTargetAcquired(GameObject target)
-    {
-        // override in subclasses for e.g. move-to or prepare
-    }
-
-    /// <summary>
-    /// Attempt to attack the target. Child classes control approach and calling PerformAttack.
-    /// </summary>
-    protected virtual void TryAttack(GameObject target)
-    {
-        // default behaviour: if in range and cooldown passed, call PerformAttack
-        float dist = Vector2.Distance(transform.position, target.transform.position);
-        if (dist <= attackRange && Time.time >= lastAttackTime + attackCooldown)
+        Collider[] hits = Physics.OverlapSphere(transform.position, detectionRange);
+        foreach (Collider hit in hits)
         {
-            PerformAttack(target);
+            IHealth candidate = hit.GetComponent<IHealth>();
+            if (candidate != null && candidate.GetFaction() != GetFaction())
+            {
+                target = hit.transform;
+                currentState = UnitState.Moving;
+                break;
+            }
+        }
+    }
+
+    private void HandleMovement()
+    {
+        if (target == null) { currentState = UnitState.Idle; return; }
+
+        agent.SetDestination(target.position);
+        if (Vector3.Distance(transform.position, target.position) <= attackRange)
+        {
+            currentState = UnitState.Attacking;
+            agent.ResetPath();
+        }
+    }
+
+    private void HandleAttack()
+    {
+        if (target == null) { currentState = UnitState.Idle; return; }
+
+        transform.LookAt(target);
+
+        float distance = Vector3.Distance(transform.position, target.position);
+        if (distance > attackRange) { currentState = UnitState.Moving; return; }
+
+        if (Time.time - lastAttackTime > attackCooldown)
+        {
+            PerformAttack(target); // 🔑 single entry point for children
             lastAttackTime = Time.time;
         }
-        else
+    }
+
+    // 🔑 Override this in child classes to define attack behavior
+    protected virtual void PerformAttack(Transform target)
+    {
+        Debug.Log($"{name} attacks {target.name} (default no-op).");
+    }
+
+    // ============ IHealth ============
+    public Faction GetFaction() =>
+        factionProvider != null ? factionProvider.Faction : Faction.Neutral;
+
+    public void TakeDamage(float amount)
+    {
+        currentHealth -= amount;
+        OnDamaged?.Invoke(amount);
+
+        if (currentHealth <= 0) Die();
+    }
+
+    public void Heal(float amount)
+    {
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        OnHealed?.Invoke(amount);
+    }
+
+    public void ApplyDoT(float dps, float duration, float interval)
+    {
+        StartCoroutine(DoTDamage(dps, duration, interval));
+    }
+
+    private System.Collections.IEnumerator DoTDamage(float dps, float duration, float interval)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration && currentHealth > 0)
         {
-            // move toward the target
-            MoveTowards(target.transform.position);
+            TakeDamage(dps);
+            yield return new WaitForSeconds(interval);
+            elapsed += interval;
         }
     }
 
-    protected void MoveTowards(Vector3 pos)
+    private void Die()
     {
-        Vector3 dir = (pos - transform.position).normalized;
-        transform.position += dir * (moveSpeed * Time.deltaTime);
-    }
-
-    public virtual void PerformAttack(GameObject target)
-    {
-        // default fallback (children should override)
-        Debug.Log($"{name} performs a default attack on {target.name}");
-    }
-
-    public virtual void TakeDamage(float amount)
-    {
-        health -= amount;
-        // you can add hit reactions/particles here
-
-        if (health <= 0f)
-        {
-            Die();
-        }
-    }
-
-    protected virtual void Die()
-    {
-        // you can add death animation here
+        OnDeath?.Invoke();
         Destroy(gameObject);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRadius);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }

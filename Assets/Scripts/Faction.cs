@@ -1,14 +1,9 @@
-using UnityEngine;
-
-public enum Faction
+namespace Havengard.Health
 {
-    Neutral,
-    Friendly,
-    Enemy
-}
-
-public class FactionProvider : MonoBehaviour
-{
-    public Faction faction = Faction.Neutral;
-    public Faction GetFaction() => faction;
+    public enum Faction
+    {
+        Neutral,
+        Friendly,
+        Enemy
+    }
 }

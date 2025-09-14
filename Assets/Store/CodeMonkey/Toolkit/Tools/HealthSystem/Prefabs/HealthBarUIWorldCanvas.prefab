@@ -141,8 +141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56c2b2796cccb4a4a88bbac52be88448, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  getHealthSystemGameObject: {fileID: 0}
-  image: {fileID: 6848739073536652053}
+  slider: {fileID: 0}
 --- !u!1 &6848739073536652050
 GameObject:
   m_ObjectHideFlags: 0
@@ -318,7 +317,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &6848739074368699835
 MonoBehaviour:
   m_ObjectHideFlags: 0
