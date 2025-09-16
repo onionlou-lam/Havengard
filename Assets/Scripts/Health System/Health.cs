@@ -29,7 +29,7 @@ namespace Havengard.Health
             if (currentHealth <= 0f) return;
 
             currentHealth = Mathf.Clamp(currentHealth - amount, 0f, maxHealth);
-            OnDamaged?.Invoke();
+            OnDamaged?.Invoke(amount);
 
             if (currentHealth <= 0f)
             {
@@ -44,7 +44,7 @@ namespace Havengard.Health
             if (currentHealth <= 0f) return; // dead units can't be healed here (changeable)
 
             currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
-            OnHealed?.Invoke();
+            OnHealed?.Invoke(amount);
         }
 
         public Faction GetFaction()

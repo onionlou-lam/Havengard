@@ -2,7 +2,7 @@
 using Havengard.Health;
 using UnityEngine;
 
-public class FireballAbility : MonoBehaviour
+public class FireballAbility2D : MonoBehaviour
 {
     [Header("Prefabs")]
     public GameObject projectilePrefab;
@@ -27,7 +27,7 @@ public class FireballAbility : MonoBehaviour
 
         // Spawn projectile
         GameObject projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
-        FireballProjectile proj = projectile.AddComponent<FireballProjectile>();
+        FireballProjectile2D proj = projectile.AddComponent<FireballProjectile2D>();
         proj.Init(targetPosition, projectileSpeed, damage, dotDamage, dotDuration, impactEffect, dotEffect, casterFaction);
     }
 }

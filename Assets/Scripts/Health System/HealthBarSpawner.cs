@@ -16,8 +16,8 @@ namespace Havengard.UI
             if (GetComponent<IHealth>() is IHealth health)
             {
                 var go = Instantiate(healthBarPrefab, parentCanvas);
-                var ui = go.GetComponent<HealthBarUI>();
-                ui.Setup(health);
+                //var ui = go.GetComponent<HealthBarUI>();
+               // ui.Setup(health);
             }
         }
     }
