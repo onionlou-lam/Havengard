@@ -1,7 +1,10 @@
 using UnityEngine;
 
-public interface IEnemy
+namespace Havengard.Enemies
 {
-    void PerformAttack(GameObject target);
-    void OnDeath();
+    public interface IEnemy
+    {
+        void PerformAttack(GameObject target);
+        void OnDeath();
+    }
 }

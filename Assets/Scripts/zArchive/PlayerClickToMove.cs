@@ -18,7 +18,7 @@ public class PlayerClickToMove : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0)) // left click
+        if (Input.GetMouseButtonDown(1)) // right click
         {
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             targetPosition = new Vector2(mouseWorld.x, mouseWorld.y);

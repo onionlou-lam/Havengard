@@ -1,17 +1,36 @@
 using UnityEngine;
+using Havengard.HealthSystem;
+using Havengard.Combat;   // FactionUtility
 
-public class MeleeEnemy : UnitBase
+namespace Havengard.Units
 {
-    [Header("Melee Settings")]
-    public float meleeDamage = 15f;
-
-    protected override void PerformAttack(Transform target)
+    /// <summary>
+    /// Enemy that deals direct melee damage.
+    /// Respects faction rules (no friendly fire unless enabled).
+    /// </summary>
+    public class MeleeEnemy : EnemyUnit
     {
-        IHealth health = target.GetComponent<IHealth>();
-        if (health != null && health.GetFaction() != GetFaction())
+        [Header("Melee Settings")]
+        [SerializeField] private int damage = 10;
+        [SerializeField] private float attackCooldown = 1f;
+        [SerializeField] private bool friendlyFire = false;
+
+        private float lastAttackTime;
+
+        protected override void PerformAttack(GameObject target)
         {
-            health.TakeDamage(meleeDamage);
-            Debug.Log($"{name} slashes {target.name} for {meleeDamage} damage!");
+            if (Time.time < lastAttackTime + attackCooldown) return;
+            if (target == null) return;
+
+            if (Vector2.Distance(transform.position, target.transform.position) <= attackRange)
+            {
+                var targetHealth = target.GetComponent<IHealth>();
+                if (FactionUtility.CanDamage(GetMyFaction(), targetHealth, friendlyFire))
+                {
+                    targetHealth.GetHealthSystem().Damage(damage);
+                    lastAttackTime = Time.time;
+                }
+            }
         }
     }
 }

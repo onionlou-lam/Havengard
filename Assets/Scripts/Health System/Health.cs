@@ -1,75 +1,48 @@
-﻿using System.Collections;
+using System;                       // <-- needed for Action
 using UnityEngine;
+using Havengard.HealthSystem;
+using Havengard.Units;
+using Havengard.Heroes;
 
-namespace Havengard.Health
+namespace Havengard.HealthSystem
 {
-    [RequireComponent(typeof(FactionProvider))]
+    /// <summary>
+    /// MonoBehaviour wrapper for HealthSystem.
+    /// Used on all units (Player, Heroes, Allies, Enemies).
+    /// </summary>
+    [DisallowMultipleComponent]
     public class Health : MonoBehaviour, IHealth
     {
-        [SerializeField] private float maxHealth = 100f;
-        private float currentHealth;
-        private FactionProvider factionProvider;
+        [SerializeField] private int startingMaxHealth = 100;
+        [SerializeField] private Faction faction = Faction.Neutral;
 
-        public event System.Action<float> OnDamaged;
-        public event System.Action<float> OnHealed;
-        public event System.Action OnDeath;
+        private HealthSystem healthSystem;
 
-        public float CurrentHealth => currentHealth;
-        public float MaxHealth => maxHealth;
+        // Forwarded events (UI and gameplay can subscribe here)
+        public event Action OnDamaged;
+        public event Action OnHealed;
+        public event Action OnDeath;
 
         private void Awake()
         {
-            currentHealth = maxHealth;
-            factionProvider = GetComponent<FactionProvider>();
-        }
-
-        public void TakeDamage(float amount)
-        {
-            if (amount <= 0f) return;
-            if (currentHealth <= 0f) return;
-
-            currentHealth = Mathf.Clamp(currentHealth - amount, 0f, maxHealth);
-            OnDamaged?.Invoke(amount);
-
-            if (currentHealth <= 0f)
+            // If this object has a HeroInstance, use its stats for max HP
+            var hero = GetComponent<HeroInstance>();
+            if (hero != null)
             {
-                currentHealth = 0f;
-                OnDeath?.Invoke();
+                int maxHP = hero.GetStats().MaxHP;
+                healthSystem = new HealthSystem(maxHP);
             }
-        }
-
-        public void Heal(float amount)
-        {
-            if (amount <= 0f) return;
-            if (currentHealth <= 0f) return; // dead units can't be healed here (changeable)
-
-            currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
-            OnHealed?.Invoke(amount);
-        }
-
-        public Faction GetFaction()
-        {
-            return factionProvider != null ? factionProvider.Faction : Faction.Neutral;
-        }
-
-        public void ApplyDoT(float totalDamage, float duration, float tickInterval = 1f)
-        {
-            if (totalDamage <= 0f || duration <= 0f) return;
-            StartCoroutine(DoTCoroutine(totalDamage, duration, tickInterval));
-        }
-
-        private IEnumerator DoTCoroutine(float totalDamage, float duration, float tickInterval)
-        {
-            float ticks = Mathf.Max(1, Mathf.Floor(duration / tickInterval));
-            float damagePerTick = totalDamage / ticks;
-
-            float elapsed = 0f;
-            while (elapsed < duration && currentHealth > 0f)
+            else
             {
-                yield return new WaitForSeconds(tickInterval);
-                TakeDamage(damagePerTick);
-                elapsed += tickInterval;
+                healthSystem = new HealthSystem(startingMaxHealth);
             }
+
+            // Forward HealthSystem events to local events
+            healthSystem.OnHealthChanged += () => OnDamaged?.Invoke();
+            healthSystem.OnDeath += () => OnDeath?.Invoke();
         }
+
+        public HealthSystem GetHealthSystem() => healthSystem;
+        public Faction GetFaction() => faction;
     }
 }

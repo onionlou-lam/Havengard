@@ -1,47 +1,35 @@
-﻿/*using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
-using Havengard.Health;
 
-namespace Havengard.UI
+namespace Havengard.HealthSystem
 {
     public class HealthBarUI : MonoBehaviour
     {
-        [SerializeField] private Slider slider = null;
-        private IHealth trackedHealth;
+        [SerializeField] private Health health;
+        [SerializeField] private Image healthBar;
 
-        public void Setup(IHealth health)
+        private void Awake()
         {
-            if (health == null) return;
-            trackedHealth = health;
-            slider.maxValue = health.MaxHealth;
-            slider.value = health.CurrentHealth;
+            if (health == null) health = GetComponentInParent<Health>();
 
-            health.OnDamaged += UpdateBar;
-            health.OnHealed += UpdateBar;
-            health.OnDeath += HandleDeath;
+            if (health != null)
+            {
+                health.GetHealthSystem().OnHealthChanged += UpdateHealthBar;
+                health.GetHealthSystem().OnDeath += HandleDeath;
+            }
         }
 
-        private void UpdateBar()
+        private void UpdateHealthBar()
         {
-            if (trackedHealth == null) return;
-            slider.value = trackedHealth.CurrentHealth;
+            if (health == null) return;
+            float percent = health.GetHealthSystem().GetHealthNormalized();
+            healthBar.fillAmount = percent;
         }
 
         private void HandleDeath()
         {
-            if (slider != null) slider.value = 0f;
-            gameObject.SetActive(false);
-        }
-
-        private void OnDestroy()
-        {
-            if (trackedHealth != null)
-            {
-                trackedHealth.OnDamaged -= UpdateBar;
-                trackedHealth.OnHealed -= UpdateBar;
-                trackedHealth.OnDeath -= HandleDeath;
-            }
+            // Optional: hide bar or set to 0
+            healthBar.fillAmount = 0;
         }
     }
 }
-*/
