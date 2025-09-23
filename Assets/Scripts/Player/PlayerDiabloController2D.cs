@@ -1,16 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Havengard.Abilities;
+using Havengard.HealthSystem;
+using Havengard.Units;
 
 namespace Havengard.Player
 {
-    /// <summary>
-    /// Diablo-style PC controls:
-    /// - Left Click: move to ground
-    /// - Right Click: cast assigned ability (indexRightClick). If not holding Shift, will also move toward target clicked.
-    /// - QWER: cast abilities [0..3] at mouse target
-    /// - Hold Shift: attack/cast without moving (hold position)
-    /// - Space: roll/dodge toward movement direction or mouse direction (configurable), with cooldown
-    /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [DisallowMultipleComponent]
     public class PlayerDiabloController2D : MonoBehaviour
@@ -37,7 +31,7 @@ namespace Havengard.Player
 
         private float lastRollTime = -999f;
         private bool isRolling;
-        private Vector2 rollVelocity; // cached during roll
+        private Vector2 rollVelocity;
 
         private void Awake()
         {
@@ -76,30 +70,67 @@ namespace Havengard.Player
             }
             else
             {
-                // Idle (no WASD in this controller; you can add it if desired later)
                 rb.linearVelocity = Vector2.zero;
             }
         }
+
+        // --- INPUT HANDLING ---
 
         private void HandleMouseInput()
         {
             bool holdPosition = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-            if (Input.GetMouseButtonDown(0)) // Left click: move to ground point
+            if (Input.GetMouseButtonDown(0)) // Left click: move
             {
                 var world = MouseWorldOnPlane();
                 clickMoveTarget = new Vector2(world.x, world.y);
                 isClickMoving = true;
             }
 
-            if (Input.GetMouseButtonDown(1)) // Right click: cast ability at target (or ground), optionally move
+            if (Input.GetMouseButtonDown(1)) // Right click: cast
             {
+                AbilityBase rightClickAbility = abilityUser?.GetAbility(indexRightClick);
+                if (rightClickAbility == null) return;
+
                 GameObject target = MouseTarget();
-                abilityUser?.UseAbility(indexRightClick, target);
+                if (target != null)
+                {
+                    var health = target.GetComponent<IHealth>();
+                    if (health != null)
+                    {
+                        var faction = health.GetFaction();
+
+                        if (rightClickAbility.abilityType == AbilityType.Offensive &&
+                            faction == Faction.Enemy)
+                        {
+                            abilityUser.UseAbility(indexRightClick, target);
+                        }
+                        else if (rightClickAbility.abilityType == AbilityType.Supportive &&
+                                 (faction == Faction.Ally || faction == Faction.Player))
+                        {
+                            abilityUser.UseAbility(indexRightClick, target);
+                        }
+                        else if (rightClickAbility.abilityType == AbilityType.Utility)
+                        {
+                            CastAbilityAtMouse(indexRightClick);
+                        }
+                        else
+                        {
+                            CastAbilityAtMouse(indexRightClick);
+                        }
+                    }
+                    else
+                    {
+                        CastAbilityAtMouse(indexRightClick);
+                    }
+                }
+                else
+                {
+                    CastAbilityAtMouse(indexRightClick);
+                }
 
                 if (!holdPosition)
                 {
-                    // Move toward clicked thing (enemy or ground)
                     var world = MouseWorldOnPlane();
                     clickMoveTarget = new Vector2(world.x, world.y);
                     isClickMoving = true;
@@ -109,11 +140,10 @@ namespace Havengard.Player
 
         private void HandleKeyboardAbilities()
         {
-            // QWER map to 0..3
-            if (Input.GetKeyDown(KeyCode.Q)) abilityUser?.UseAbility(0, MouseTarget());
-            if (Input.GetKeyDown(KeyCode.W)) abilityUser?.UseAbility(1, MouseTarget());
-            if (Input.GetKeyDown(KeyCode.E)) abilityUser?.UseAbility(2, MouseTarget());
-            if (Input.GetKeyDown(KeyCode.R)) abilityUser?.UseAbility(3, MouseTarget());
+            if (Input.GetKeyDown(KeyCode.Q)) CastAbilityAtMouse(0);
+            if (Input.GetKeyDown(KeyCode.W)) CastAbilityAtMouse(1);
+            if (Input.GetKeyDown(KeyCode.E)) CastAbilityAtMouse(2);
+            if (Input.GetKeyDown(KeyCode.R)) CastAbilityAtMouse(3);
         }
 
         private void HandleRollInput()
@@ -127,12 +157,13 @@ namespace Havengard.Player
             StartCoroutine(RollRoutine(dir));
         }
 
+        // --- HELPERS ---
+
         private System.Collections.IEnumerator RollRoutine(Vector2 direction)
         {
             isRolling = true;
             lastRollTime = Time.time;
 
-            // Compute constant velocity for the roll
             float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
             rollVelocity = direction.normalized * speed;
 
@@ -150,24 +181,34 @@ namespace Havengard.Player
         private Vector3 MouseWorldOnPlane()
         {
             Vector3 w = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            w.z = 0f; // 2D plane
+            w.z = 0f;
             return w;
         }
 
         private GameObject MouseTarget()
         {
             Vector3 mw = MouseWorldOnPlane();
-            var hit = Physics2D.Raycast(mw, Vector2.zero);
+            RaycastHit2D hit = Physics2D.Raycast(mw, Vector2.zero);
             return hit.collider != null ? hit.collider.gameObject : null;
+        }
+
+        private void CastAbilityAtMouse(int index)
+        {
+            if (abilityUser == null) return;
+
+            Vector3 mouseWorldPos = MouseWorldOnPlane();
+            GameObject fakeTarget = new GameObject("CursorTarget");
+            fakeTarget.transform.position = mouseWorldPos;
+
+            abilityUser.UseAbility(index, fakeTarget);
+            Destroy(fakeTarget, 0.05f);
         }
 
         private Vector2 GetRollDirection()
         {
-            // If we're currently moving via click, roll along that vector
             if (isClickMoving)
                 return (clickMoveTarget - rb.position).normalized;
 
-            // Otherwise, roll toward mouse if configured
             if (rollTowardMouseIfIdle)
             {
                 Vector3 mw = MouseWorldOnPlane();
@@ -175,7 +216,6 @@ namespace Havengard.Player
                 if (dir.sqrMagnitude > 0.001f) return dir.normalized;
             }
 
-            // Default: no movement/roll
             return Vector2.zero;
         }
     }

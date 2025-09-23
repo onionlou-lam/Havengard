@@ -6,10 +6,9 @@ namespace Havengard.Abilities
     {
         string AbilityName { get; }
         float Cooldown { get; }
-        float ResourceCost { get; }
+        int ResourceCost { get; }
 
         bool CanCast(GameObject caster, GameObject target);
         void Cast(GameObject caster, GameObject target);
-        void Execute(GameObject caster, GameObject target);
     }
 }

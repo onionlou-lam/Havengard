@@ -10,27 +10,36 @@ namespace Havengard.Abilities
         public Faction sourceFaction;
         public bool friendlyFire = false;
 
-        public int damage = 10;
-        public float speed = 10f;
+        public int damage = 20;
+        public float speed = 12f;
         public float lifeTime = 5f;
 
-        private void Start()
+        private Vector3 direction;
+
+        public void Init(Vector3 dir, Faction faction, bool allowFriendlyFire, int dmg, float spd)
         {
+            direction = dir.normalized;
+            sourceFaction = faction;
+            friendlyFire = allowFriendlyFire;
+            damage = dmg;
+            speed = spd;
+
             Destroy(gameObject, lifeTime);
         }
 
         private void Update()
         {
-            transform.Translate(Vector3.right * (speed * Time.deltaTime));
+            transform.position += direction * (speed * Time.deltaTime);
         }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            var healthComp = other.GetComponent<IHealth>();
-            if (!FactionUtility.CanDamage(sourceFaction, healthComp, friendlyFire)) return;
+            var health = other.GetComponent<IHealth>();
+            if (!FactionUtility.CanDamage(sourceFaction, health, friendlyFire)) return;
 
-            healthComp.GetHealthSystem().Damage(damage);
-            Destroy(gameObject);
+            health.GetHealthSystem().Damage(damage);
+
+            Destroy(gameObject); // remove projectile after hit
         }
     }
 }

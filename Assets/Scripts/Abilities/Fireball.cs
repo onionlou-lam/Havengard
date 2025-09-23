@@ -1,41 +1,38 @@
-using UnityEngine;
 using Havengard.HealthSystem;
 using Havengard.Units;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
     [CreateAssetMenu(menuName = "Havengard/Abilities/Fireball")]
     public class Fireball : AbilityBase
     {
-        [SerializeField] private GameObject fireballPrefab;
-        [SerializeField] private float damage = 25f;
+        [SerializeField] private GameObject projectilePrefab;
+        [SerializeField] private int damage = 20;
+        [SerializeField] private float projectileSpeed = 12f;
+        [SerializeField] private bool friendlyFire = false;
 
         public override bool CanCast(GameObject caster, GameObject target)
         {
-            return fireballPrefab != null && target != null;
+            return projectilePrefab != null && caster != null;
         }
 
-        public override void Execute(GameObject caster, GameObject target)
+        public override void Cast(GameObject caster, GameObject target)
         {
-            if (fireballPrefab == null || target == null) return;
+            if (!CanCast(caster, target)) return;
 
-            var projGO = Instantiate(fireballPrefab, caster.transform.position, Quaternion.identity);
+            Vector3 dir = (target.transform.position - caster.transform.position).normalized;
+            GameObject projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
 
-            // Optional: initialize your projectile if it exposes an Init-like API
-            var projectile = projGO.GetComponent<MonoBehaviour>();
-            var casterHealth = caster.GetComponent<Health>();
-            Faction faction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
+            var proj = projGO.GetComponent<Projectile>();
+            if (proj != null)
+            {
+                var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
+                proj.Init(dir, casterFaction, friendlyFire, damage, projectileSpeed);
+            }
 
-            // If your projectile script has something like:
-            // void Init(Transform target, float dmg, Faction faction)
-            var method = projectile != null
-                ? projectile.GetType().GetMethod("Init")
-                : null;
-
-            if (method != null)
-                method.Invoke(projectile, new object[] { target.transform, damage, faction });
-
-            Debug.Log($"{caster.name} cast {AbilityName} toward {target.name}");
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+            projGO.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
     }
 }

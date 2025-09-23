@@ -1,47 +1,57 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Havengard.Abilities
 {
-    [DisallowMultipleComponent]
     public class AbilityUser : MonoBehaviour
     {
-        [SerializeField] private AbilityBase[] abilities;
-        private readonly Dictionary<AbilityBase, float> _lastCast = new();
+        [SerializeField] private List<AbilityBase> abilities = new List<AbilityBase>();
+        private float[] cooldownTimers;
 
-        public AbilityBase[] Abilities => abilities;
+        private void Awake()
+        {
+            cooldownTimers = new float[abilities.Count];
+        }
+
+        private void Update()
+        {
+            for (int i = 0; i < cooldownTimers.Length; i++)
+            {
+                if (cooldownTimers[i] > 0f)
+                    cooldownTimers[i] -= Time.deltaTime;
+            }
+        }
+
+        public AbilityBase GetAbility(int index)
+        {
+            if (index >= 0 && index < abilities.Count)
+                return abilities[index];
+            return null;
+        }
 
         public void UseAbility(int index, GameObject target)
         {
-            if (abilities == null || index < 0 || index >= abilities.Length) return;
-            var ability = abilities[index];
+            if (index < 0 || index >= abilities.Count) return;
+
+            AbilityBase ability = abilities[index];
             if (ability == null) return;
 
-            // Cooldown
-            _lastCast.TryGetValue(ability, out var last);
-            if (Time.time < last + ability.Cooldown) return;
-
-            // Resource check
-            if (ability.ResourceCost > 0f && TryGetComponent<IResource>(out var resource))
-            {
-                if (!resource.TryConsume(ability.ResourceCost)) return;
-            }
-
-            // Ability-specific check
+            if (cooldownTimers[index] > 0f) return;
             if (!ability.CanCast(gameObject, target)) return;
 
-            // Cast
-            ability.Execute(gameObject, target);
-            _lastCast[ability] = Time.time;
+            ability.Cast(gameObject, target);
+            cooldownTimers[index] = ability.Cooldown;
         }
-
-        /// <summary>
-        /// Assign a new set of abilities at runtime (e.g. when hero is recruited).
-        /// </summary>
-        public void AssignAbilities(AbilityBase[] newAbilities)
+        public void AssignAbilities(List<AbilityBase> newAbilities)
         {
             abilities = newAbilities;
-            _lastCast.Clear(); // reset cooldowns for new set
+            cooldownTimers = new float[abilities.Count];
+        }
+
+        public void AssignAbilities(AbilityBase[] newAbilities)
+        {
+            abilities = new List<AbilityBase>(newAbilities);
+            cooldownTimers = new float[abilities.Count];
         }
     }
 }

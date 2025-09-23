@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: Fireball
   m_EditorClassIdentifier: 
   abilityName: Fireball
-  damage: 25
   cooldown: 1.5
-  resourceCost: 10
+  resourceCost: 0
+  icon: {fileID: 0}
+  abilityType: 0
+  projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
+    type: 3}
+  damage: 25
+  projectileSpeed: 12
+  friendlyFire: 0

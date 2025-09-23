@@ -8,19 +8,24 @@ namespace Havengard.Abilities
     [CreateAssetMenu(menuName = "Havengard/Abilities/Cleave")]
     public class Cleave : AbilityBase
     {
-        public int damage = 15;
-        public float radius = 1.5f;
-        public bool friendlyFire = false;
+        [SerializeField] private int damage = 15;
+        [SerializeField] private float radius = 1.5f;
+        [SerializeField] private bool friendlyFire = false;
 
-        public override void Execute(GameObject caster, GameObject target)
+        public override bool CanCast(GameObject caster, GameObject target)
         {
-            var sourceFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
+            return caster != null;
+        }
 
+        public override void Cast(GameObject caster, GameObject target)
+        {
             Collider2D[] hits = Physics2D.OverlapCircleAll(caster.transform.position, radius);
+            var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
+
             foreach (var hit in hits)
             {
                 var health = hit.GetComponent<IHealth>();
-                if (FactionUtility.CanDamage(sourceFaction, health, friendlyFire))
+                if (FactionUtility.CanDamage(casterFaction, health, friendlyFire))
                 {
                     health.GetHealthSystem().Damage(damage);
                 }
