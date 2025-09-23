@@ -1,22 +1,15 @@
 using UnityEngine;
 
-namespace Havengard.Enemies
+namespace Havengard.Units
 {
-    public class AbilityEnemy : EnemyBase
+    /// <summary>
+    /// Enemy that attacks only with AbilityUser (slot 0).
+    /// </summary>
+    public class AbilityEnemy : EnemyUnit
     {
-        private Havengard.Abilities.AbilityUser abilityUser;
-
-        protected override void Awake()
-        {
-            base.Awake();
-            abilityUser = GetComponent<Havengard.Abilities.AbilityUser>();
-        }
-
-        public override void PerformAttack(GameObject target)
+        protected override void PerformAttack(GameObject target)
         {
             if (abilityUser == null || target == null) return;
-
-            // Example: use the first ability
             abilityUser.UseAbility(0, target);
         }
     }

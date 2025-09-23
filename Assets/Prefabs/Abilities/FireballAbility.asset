@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 897a62a71ea5b274cbfa916289f16367, type: 3}
+  m_Name: FireballAbility
+  m_EditorClassIdentifier: 
+  abilityName: Fireball
+  cooldown: 0
+  resourceCost: 0
+  projectilePrefab: {fileID: 1227639079253139919, guid: 6d8488585db66dc4f9c9a0e23a14851f,
+    type: 3}
+  castEffect: {fileID: 19828932, guid: 6b3488aa97f1d514d8a4fa45cc3b2dad, type: 3}
+  impactEffect: {fileID: 19811720, guid: 11306af72e9741044bdf0bbbcc5c69de, type: 3}
+  dotEffect: {fileID: 19864882, guid: 996caa051abc4be4d8b39b565b8694b5, type: 3}
+  projectileSpeed: 5
+  damage: 20
+  dotDamage: 3
+  dotDuration: 5

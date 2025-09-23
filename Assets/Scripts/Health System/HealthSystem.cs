@@ -1,111 +1,87 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
+using System;
 
 namespace Havengard.HealthSystem
 {
     /// <summary>
-    /// Core Health System logic.
-    /// Manages damage, healing, death, and broadcasts events for UI or gameplay systems.
+    /// A flexible health system that supports taking damage, healing, max HP scaling, and death events.
+    /// Used by all units (Player, Heroes, Allies, Enemies).
     /// </summary>
+    [Serializable]
     public class HealthSystem
     {
-        public event EventHandler OnHealthChanged;
-        public event EventHandler OnHealthMaxChanged;
-        public event EventHandler OnDamaged;
-        public event EventHandler OnHealed;
-        public event EventHandler OnDead;
+        private int maxHealth;
+        private int currentHealth;
 
-        private float healthMax;
-        private float health;
+        public event Action OnHealthChanged;
+        public event Action OnDeath;
 
-        public HealthSystem(float healthMax)
+        public HealthSystem(int maxHealth)
         {
-            this.healthMax = healthMax;
-            health = healthMax;
+            this.maxHealth = Mathf.Max(1, maxHealth);
+            currentHealth = this.maxHealth;
         }
 
-        public float GetHealth() => health;
-        public float GetHealthMax() => healthMax;
-        public float GetHealthNormalized() => healthMax > 0 ? health / healthMax : 0f;
+        // ---- Queries ----
+        public int GetHealth() => currentHealth;
+        public int GetMaxHealth() => maxHealth;
+        public float GetHealthNormalized() => (float)currentHealth / maxHealth;
 
-        public void Damage(float amount)
+        // ---- Modification ----
+        public void Damage(int amount)
         {
-            if (IsDead()) return;
+            if (amount <= 0) return;
 
-            health = Mathf.Max(0, health - amount);
-            OnHealthChanged?.Invoke(this, EventArgs.Empty);
-            OnDamaged?.Invoke(this, EventArgs.Empty);
-
-            if (health <= 0) Die();
+            currentHealth -= amount;
+            if (currentHealth <= 0)
+            {
+                currentHealth = 0;
+                OnHealthChanged?.Invoke();
+                OnDeath?.Invoke();
+            }
+            else
+            {
+                OnHealthChanged?.Invoke();
+            }
         }
 
-        public void Heal(float amount)
+        public void Heal(int amount)
         {
-            if (IsDead()) return;
+            if (amount <= 0) return;
 
-            health = Mathf.Min(healthMax, health + amount);
-            OnHealthChanged?.Invoke(this, EventArgs.Empty);
-            OnHealed?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void HealToFull()
-        {
-            if (IsDead()) return;
-
-            health = healthMax;
-            OnHealthChanged?.Invoke(this, EventArgs.Empty);
-            OnHealed?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void SetHealthMax(float newMax, bool resetToFull = true)
-        {
-            healthMax = newMax;
-            if (resetToFull) health = healthMax;
-
-            OnHealthMaxChanged?.Invoke(this, EventArgs.Empty);
-            OnHealthChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void SetHealth(float newHealth)
-        {
-            health = Mathf.Clamp(newHealth, 0, healthMax);
-            OnHealthChanged?.Invoke(this, EventArgs.Empty);
-
-            if (health <= 0) Die();
-        }
-
-        public bool IsDead() => health <= 0;
-
-        private void Die()
-        {
-            health = 0;
-            OnDead?.Invoke(this, EventArgs.Empty);
+            currentHealth += amount;
+            if (currentHealth > maxHealth) currentHealth = maxHealth;
+            OnHealthChanged?.Invoke();
         }
 
         /// <summary>
-        /// Utility: tries to retrieve a HealthSystem from a GameObject.
+        /// Directly sets the current health (clamped).
         /// </summary>
-        public static bool TryGet(GameObject obj, out HealthSystem healthSystem, bool logErrors = false)
+        public void SetHealth(int newValue)
         {
-            healthSystem = null;
+            currentHealth = Mathf.Clamp(newValue, 0, maxHealth);
+            OnHealthChanged?.Invoke();
+            if (currentHealth == 0)
+                OnDeath?.Invoke();
+        }
 
-            if (obj == null)
-            {
-                if (logErrors) Debug.LogError("HealthSystem.TryGet failed: target GameObject is null.");
-                return false;
-            }
+        /// <summary>
+        /// Changes the maximum health. Optionally refill to full HP or preserve % HP.
+        /// </summary>
+        public void SetMaxHealth(int newMax, bool refill = true)
+        {
+            if (newMax < 1) newMax = 1;
 
-            if (obj.TryGetComponent(out IHealth provider))
-            {
-                healthSystem = provider.GetHealthSystem();
-                if (healthSystem != null) return true;
+            float percent = (maxHealth > 0) ? (float)currentHealth / maxHealth : 1f;
+            maxHealth = newMax;
 
-                if (logErrors) Debug.LogError($"HealthSystem on '{obj.name}' is null. Check initialization order.");
-                return false;
-            }
+            if (refill)
+                currentHealth = maxHealth;
+            else
+                currentHealth = Mathf.RoundToInt(maxHealth * percent);
 
-            if (logErrors) Debug.LogError($"GameObject '{obj.name}' does not provide a HealthSystem.");
-            return false;
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+            OnHealthChanged?.Invoke();
         }
     }
 }

@@ -10,5 +10,6 @@ namespace Havengard.Abilities
 
         bool CanCast(GameObject caster, GameObject target);
         void Cast(GameObject caster, GameObject target);
+        void Execute(GameObject caster, GameObject target);
     }
 }

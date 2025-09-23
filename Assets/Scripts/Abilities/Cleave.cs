@@ -1,26 +1,28 @@
 ﻿using UnityEngine;
 using Havengard.HealthSystem;
+using Havengard.Units;
+using Havengard.Combat;
 
 namespace Havengard.Abilities
 {
     [CreateAssetMenu(menuName = "Havengard/Abilities/Cleave")]
     public class Cleave : AbilityBase
     {
-        [SerializeField] private float radius = 2f;
-        [SerializeField] private float damage = 15f;
+        public int damage = 15;
+        public float radius = 1.5f;
+        public bool friendlyFire = false;
 
-        protected override void Execute(GameObject caster, GameObject target)
+        public override void Execute(GameObject caster, GameObject target)
         {
-            var casterHealth = caster.GetComponent<Health>();
-            if (casterHealth == null) return;
+            var sourceFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
 
             Collider2D[] hits = Physics2D.OverlapCircleAll(caster.transform.position, radius);
             foreach (var hit in hits)
             {
-                if (hit.gameObject == caster) continue;
-                if (hit.TryGetComponent<Health>(out var health))
+                var health = hit.GetComponent<IHealth>();
+                if (FactionUtility.CanDamage(sourceFaction, health, friendlyFire))
                 {
-                    health.TakeDamage(damage, casterHealth.GetFaction());
+                    health.GetHealthSystem().Damage(damage);
                 }
             }
         }

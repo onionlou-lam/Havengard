@@ -1,3 +1,5 @@
+using Havengard.Units;
+
 namespace Havengard.HealthSystem
 {
     public interface IHealth

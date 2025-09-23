@@ -1,49 +1,48 @@
-using System;
+using System;                       // <-- needed for Action
 using UnityEngine;
+using Havengard.HealthSystem;
+using Havengard.Units;
+using Havengard.Heroes;
 
 namespace Havengard.HealthSystem
 {
-    public enum Faction
-    {
-        Neutral,
-        Player,
-        Enemy
-    }
-    [RequireComponent(typeof(Collider2D))]
+    /// <summary>
+    /// MonoBehaviour wrapper for HealthSystem.
+    /// Used on all units (Player, Heroes, Allies, Enemies).
+    /// </summary>
+    [DisallowMultipleComponent]
     public class Health : MonoBehaviour, IHealth
     {
-        [Header("Settings")]
-        [SerializeField] private float maxHealth = 100f;
+        [SerializeField] private int startingMaxHealth = 100;
         [SerializeField] private Faction faction = Faction.Neutral;
 
         private HealthSystem healthSystem;
 
+        // Forwarded events (UI and gameplay can subscribe here)
         public event Action OnDamaged;
         public event Action OnHealed;
         public event Action OnDeath;
 
-        public Faction GetFaction() => faction;
-        public HealthSystem GetHealthSystem() => healthSystem;
-
         private void Awake()
         {
-            healthSystem = new HealthSystem(maxHealth);
-
-            healthSystem.OnDamaged += (s, e) => OnDamaged?.Invoke();
-            healthSystem.OnHealed += (s, e) => OnHealed?.Invoke();
-            healthSystem.OnDead += (s, e) =>
+            // If this object has a HeroInstance, use its stats for max HP
+            var hero = GetComponent<HeroInstance>();
+            if (hero != null)
             {
-                OnDeath?.Invoke();
-                Destroy(gameObject); // You can swap this for animation/respawn
-            };
+                int maxHP = hero.GetStats().MaxHP;
+                healthSystem = new HealthSystem(maxHP);
+            }
+            else
+            {
+                healthSystem = new HealthSystem(startingMaxHealth);
+            }
+
+            // Forward HealthSystem events to local events
+            healthSystem.OnHealthChanged += () => OnDamaged?.Invoke();
+            healthSystem.OnDeath += () => OnDeath?.Invoke();
         }
 
-        public void TakeDamage(float amount, Faction sourceFaction)
-        {
-            if (sourceFaction == faction) return; // ?? Prevent friendly fire
-            healthSystem.Damage(amount);
-        }
-
-        public void Heal(float amount) => healthSystem.Heal(amount);
+        public HealthSystem GetHealthSystem() => healthSystem;
+        public Faction GetFaction() => faction;
     }
 }

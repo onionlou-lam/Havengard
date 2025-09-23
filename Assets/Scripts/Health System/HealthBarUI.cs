@@ -3,52 +3,33 @@ using UnityEngine.UI;
 
 namespace Havengard.HealthSystem
 {
-    /// <summary>
-    /// Simple world-space or screen-space health bar UI.
-    /// Updates an Image's fill amount based on a linked HealthSystem.
-    /// </summary>
     public class HealthBarUI : MonoBehaviour
     {
-        [Tooltip("GameObject that provides a HealthSystem (via IGetHealthSystem). Optional.")]
-        [SerializeField] private GameObject healthSource;
+        [SerializeField] private Health health;
+        [SerializeField] private Image healthBar;
 
-        [Tooltip("Image representing the health bar fill.")]
-        [SerializeField] private Image healthFillImage;
-
-        private HealthSystem healthSystem;
-
-        private void Start()
+        private void Awake()
         {
-            if (healthSource != null && HealthSystem.TryGet(healthSource, out HealthSystem found))
+            if (health == null) health = GetComponentInParent<Health>();
+
+            if (health != null)
             {
-                SetHealthSystem(found);
+                health.GetHealthSystem().OnHealthChanged += UpdateHealthBar;
+                health.GetHealthSystem().OnDeath += HandleDeath;
             }
         }
 
-        public void SetHealthSystem(HealthSystem newHealthSystem)
-        {
-            if (healthSystem != null)
-                healthSystem.OnHealthChanged -= OnHealthChanged;
-
-            healthSystem = newHealthSystem;
-            UpdateHealthBar();
-
-            if (healthSystem != null)
-                healthSystem.OnHealthChanged += OnHealthChanged;
-        }
-
-        private void OnHealthChanged(object sender, System.EventArgs e) => UpdateHealthBar();
-
         private void UpdateHealthBar()
         {
-            if (healthFillImage != null && healthSystem != null)
-                healthFillImage.fillAmount = healthSystem.GetHealthNormalized();
+            if (health == null) return;
+            float percent = health.GetHealthSystem().GetHealthNormalized();
+            healthBar.fillAmount = percent;
         }
 
-        private void OnDestroy()
+        private void HandleDeath()
         {
-            if (healthSystem != null)
-                healthSystem.OnHealthChanged -= OnHealthChanged;
+            // Optional: hide bar or set to 0
+            healthBar.fillAmount = 0;
         }
     }
 }

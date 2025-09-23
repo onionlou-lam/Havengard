@@ -1,37 +1,41 @@
 using UnityEngine;
 using Havengard.HealthSystem;
-using Havengard.Character;
+using Havengard.Units;
 
 namespace Havengard.Abilities
 {
-    [CreateAssetMenu(fileName = "Fireball", menuName = "Abilities/Fireball")]
+    [CreateAssetMenu(menuName = "Havengard/Abilities/Fireball")]
     public class Fireball : AbilityBase
     {
         [SerializeField] private GameObject fireballPrefab;
         [SerializeField] private float damage = 25f;
 
-        protected override void Execute(GameObject caster, GameObject target)
+        public override bool CanCast(GameObject caster, GameObject target)
         {
-            if (target == null || fireballPrefab == null) return;
+            return fireballPrefab != null && target != null;
+        }
 
-            // Resource check
-            if (caster.TryGetComponent(out ResourceSystem resource))
-            {
-                if (resource.Current < resourceCost) return;
-                resource.Consume(resourceCost);
-            }
+        public override void Execute(GameObject caster, GameObject target)
+        {
+            if (fireballPrefab == null || target == null) return;
 
-            // Spawn fireball
-            Vector3 spawnPos = caster.transform.position;
-            GameObject projectileGO = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+            var projGO = Instantiate(fireballPrefab, caster.transform.position, Quaternion.identity);
 
-            if (projectileGO.TryGetComponent(out Projectile projectile))
-            {
-                Faction casterFaction = caster.GetComponent<Faction>();
-                projectile.Init(target.transform, damage, casterFaction);
-            }
+            // Optional: initialize your projectile if it exposes an Init-like API
+            var projectile = projGO.GetComponent<MonoBehaviour>();
+            var casterHealth = caster.GetComponent<Health>();
+            Faction faction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
 
-            Debug.Log($"{caster.name} cast {abilityName} toward {target.name}");
+            // If your projectile script has something like:
+            // void Init(Transform target, float dmg, Faction faction)
+            var method = projectile != null
+                ? projectile.GetType().GetMethod("Init")
+                : null;
+
+            if (method != null)
+                method.Invoke(projectile, new object[] { target.transform, damage, faction });
+
+            Debug.Log($"{caster.name} cast {AbilityName} toward {target.name}");
         }
     }
 }
