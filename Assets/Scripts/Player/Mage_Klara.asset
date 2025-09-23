@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a6717ea6c3db458336a867c44d21c, type: 3}
+  m_Name: Mage_Klara
+  m_EditorClassIdentifier: 
+  heroName: Klara
+  backstory: A mage who has practiced magic for over 20 years.
+  portrait: {fileID: 2027235796, guid: dd82824da76dca04ba7e12c1e88d50e1, type: 3}
+  playerClass: {fileID: 11400000, guid: 9a9f2646e0fdc5a4788efb5c4a55eaf5, type: 2}
+  startingAbilities:
+  - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+  subclass: Fire
+  baseHP: 100
+  baseAttack: 10
+  baseDefense: 5
+  baseResource: 50
+  passiveTraits: []
