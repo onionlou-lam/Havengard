@@ -8,7 +8,6 @@ namespace Havengard.Abilities
     [CreateAssetMenu(menuName = "Havengard/Abilities/Cleave")]
     public class Cleave : AbilityBase
     {
-        [SerializeField] private int damage = 15;
         [SerializeField] private float radius = 1.5f;
         [SerializeField] private bool friendlyFire = false;
 
@@ -27,7 +26,9 @@ namespace Havengard.Abilities
                 var health = hit.GetComponent<IHealth>();
                 if (FactionUtility.CanDamage(casterFaction, health, friendlyFire))
                 {
-                    health.GetHealthSystem().Damage(damage);
+                    // Use CombatCalculator for damage
+                    int finalDamage = CombatCalculator.CalculateDamage(caster, hit.gameObject);
+                    health.GetHealthSystem().Damage(finalDamage);
                 }
             }
         }

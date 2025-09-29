@@ -1,5 +1,6 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
@@ -27,6 +28,15 @@ namespace Havengard.Abilities
             if (index >= 0 && index < abilities.Count)
                 return abilities[index];
             return null;
+        }
+        public void AddAbility(AbilityBase newAbility)
+        {
+            if (newAbility == null) return;
+            if (!abilities.Contains(newAbility))
+            {
+                abilities.Add(newAbility);
+                Array.Resize(ref cooldownTimers, abilities.Count);
+            }
         }
 
         public void UseAbility(int index, GameObject target)

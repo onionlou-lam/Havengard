@@ -5,33 +5,28 @@ namespace Havengard.Progression
 {
     public class ExperienceSystem : MonoBehaviour
     {
-        [SerializeField] private PlayerClass playerClass;
-        public PlayerClass ClassData => playerClass;
-
-        public int Level { get; private set; } = 1;
         public int CurrentEXP { get; private set; }
+        public int Level { get; private set; } = 1;
 
-        public event Action<int> OnLevelUp;
-        public event Action<int> OnExpGained;
+        private int[] expToLevel;
 
-        public void SetClass(PlayerClass newClass)
+        public event Action<int> OnLevelUp; // passes new level
+
+        public void InitEXPTable(int[] expTable)
         {
-            playerClass = newClass;
-            Level = 1;
-            CurrentEXP = 0;
+            expToLevel = expTable;
         }
 
         public void AddEXP(int amount)
         {
             CurrentEXP += amount;
-            OnExpGained?.Invoke(amount);
 
-            while (Level - 1 < playerClass.expToLevel.Length &&
-                   CurrentEXP >= playerClass.expToLevel[Level - 1])
+            while (Level - 1 < expToLevel.Length && CurrentEXP >= expToLevel[Level - 1])
             {
-                CurrentEXP -= playerClass.expToLevel[Level - 1];
+                CurrentEXP -= expToLevel[Level - 1];
                 Level++;
                 OnLevelUp?.Invoke(Level);
+                Debug.Log($"Level up! New level: {Level}");
             }
         }
     }

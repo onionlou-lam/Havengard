@@ -10,8 +10,8 @@ namespace Havengard.Abilities
         public Faction sourceFaction;
         public bool friendlyFire = false;
 
-        public int damage = 20;
-        public float speed = 12f;
+        public int damage = 10;
+        public float speed = 10f;
         public float lifeTime = 5f;
 
         private Vector3 direction;
@@ -37,9 +37,11 @@ namespace Havengard.Abilities
             var health = other.GetComponent<IHealth>();
             if (!FactionUtility.CanDamage(sourceFaction, health, friendlyFire)) return;
 
-            health.GetHealthSystem().Damage(damage);
+            // Apply defense reduction
+            int finalDamage = CombatCalculator.CalculateDamage(gameObject, other.gameObject);
+            health.GetHealthSystem().Damage(finalDamage);
 
-            Destroy(gameObject); // remove projectile after hit
+            Destroy(gameObject);
         }
     }
 }
