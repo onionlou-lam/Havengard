@@ -15,10 +15,12 @@ MonoBehaviour:
   abilityName: Fireball
   cooldown: 1.5
   resourceCost: 0
-  icon: {fileID: 0}
+  icon: {fileID: 176730863, guid: df5d64f59dbad444e942aad2fe5ff7b8, type: 3}
   abilityType: 0
   projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
     type: 3}
-  damage: 25
+  impactEffectPrefab: {fileID: 0}
+  impactSound: {fileID: 0}
+  impactSoundVolume: 0.8
   projectileSpeed: 12
   friendlyFire: 0
