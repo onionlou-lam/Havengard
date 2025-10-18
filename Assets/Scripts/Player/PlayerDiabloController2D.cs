@@ -2,6 +2,7 @@
 using Havengard.Abilities;
 using Havengard.HealthSystem;
 using Havengard.Units;
+using Havengard.Statuses;
 
 namespace Havengard.Player
 {
@@ -14,7 +15,6 @@ namespace Havengard.Player
         [SerializeField] private float stoppingDistance = 0.1f;
 
         [Header("Right-Click Ability")]
-        [Tooltip("Ability index to cast on right click (e.g., 0 for primary).")]
         [SerializeField] private int indexRightClick = 0;
 
         [Header("Roll / Dodge")]
@@ -25,10 +25,10 @@ namespace Havengard.Player
 
         private Rigidbody2D rb;
         private AbilityUser abilityUser;
+        private StatusEffectInstance activeEffect;
 
         private Vector2 clickMoveTarget;
         private bool isClickMoving;
-
         private float lastRollTime = -999f;
         private bool isRolling;
         private Vector2 rollVelocity;
@@ -42,6 +42,24 @@ namespace Havengard.Player
 
         private void Update()
         {
+            // --- STATUS CHECK ---
+            activeEffect = GetComponent<StatusEffectInstance>();
+            if (activeEffect != null)
+            {
+                var data = activeEffect.Data;
+                if (data.causesStun || data.causesRoot)
+                {
+                    rb.linearVelocity = Vector2.zero;
+                    return; // disable all input while stunned/rooted
+                }
+                if (data.causesSilence)
+                {
+                    // player can move, but can't cast
+                    HandleMovementOnly();
+                    return;
+                }
+            }
+
             if (isRolling) return;
 
             HandleMouseInput();
@@ -68,66 +86,41 @@ namespace Havengard.Player
                     rb.linearVelocity = Vector2.zero;
                 }
             }
-            else
+            else rb.linearVelocity = Vector2.zero;
+        }
+
+        // --- MOVEMENT ONLY (for silence) ---
+        private void HandleMovementOnly()
+        {
+            if (Input.GetMouseButtonDown(0))
             {
-                rb.linearVelocity = Vector2.zero;
+                var world = MouseWorldOnPlane();
+                clickMoveTarget = new Vector2(world.x, world.y);
+                isClickMoving = true;
             }
         }
 
         // --- INPUT HANDLING ---
-
         private void HandleMouseInput()
         {
             bool holdPosition = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-            if (Input.GetMouseButtonDown(0)) // Left click: move
+            if (Input.GetMouseButtonDown(0))
             {
                 var world = MouseWorldOnPlane();
                 clickMoveTarget = new Vector2(world.x, world.y);
                 isClickMoving = true;
             }
 
-            if (Input.GetMouseButtonDown(1)) // Right click: cast
+            if (Input.GetMouseButtonDown(1))
             {
+                if (activeEffect != null && activeEffect.Data.causesSilence) return; // cannot cast if silenced
+
                 AbilityBase rightClickAbility = abilityUser?.GetAbility(indexRightClick);
                 if (rightClickAbility == null) return;
 
                 GameObject target = MouseTarget();
-                if (target != null)
-                {
-                    var health = target.GetComponent<IHealth>();
-                    if (health != null)
-                    {
-                        var faction = health.GetFaction();
-
-                        if (rightClickAbility.abilityType == AbilityType.Offensive &&
-                            faction == Faction.Enemy)
-                        {
-                            abilityUser.UseAbility(indexRightClick, target);
-                        }
-                        else if (rightClickAbility.abilityType == AbilityType.Supportive &&
-                                 (faction == Faction.Ally || faction == Faction.Player))
-                        {
-                            abilityUser.UseAbility(indexRightClick, target);
-                        }
-                        else if (rightClickAbility.abilityType == AbilityType.Utility)
-                        {
-                            CastAbilityAtMouse(indexRightClick);
-                        }
-                        else
-                        {
-                            CastAbilityAtMouse(indexRightClick);
-                        }
-                    }
-                    else
-                    {
-                        CastAbilityAtMouse(indexRightClick);
-                    }
-                }
-                else
-                {
-                    CastAbilityAtMouse(indexRightClick);
-                }
+                abilityUser.UseAbility(indexRightClick, target);
 
                 if (!holdPosition)
                 {
@@ -140,6 +133,8 @@ namespace Havengard.Player
 
         private void HandleKeyboardAbilities()
         {
+            if (activeEffect != null && activeEffect.Data.causesSilence) return;
+
             if (Input.GetKeyDown(KeyCode.Q)) CastAbilityAtMouse(0);
             if (Input.GetKeyDown(KeyCode.W)) CastAbilityAtMouse(1);
             if (Input.GetKeyDown(KeyCode.E)) CastAbilityAtMouse(2);
@@ -150,6 +145,7 @@ namespace Havengard.Player
         {
             if (!Input.GetKeyDown(KeyCode.Space)) return;
             if (Time.time < lastRollTime + rollCooldown) return;
+            if (activeEffect != null && activeEffect.Data.causesRoot) return; // can't roll if rooted
 
             Vector2 dir = GetRollDirection();
             if (dir.sqrMagnitude < 0.0001f) return;
@@ -158,7 +154,6 @@ namespace Havengard.Player
         }
 
         // --- HELPERS ---
-
         private System.Collections.IEnumerator RollRoutine(Vector2 direction)
         {
             isRolling = true;
@@ -215,7 +210,6 @@ namespace Havengard.Player
                 Vector2 dir = (new Vector2(mw.x, mw.y) - rb.position);
                 if (dir.sqrMagnitude > 0.001f) return dir.normalized;
             }
-
             return Vector2.zero;
         }
     }

@@ -1,65 +1,94 @@
-using UnityEngine;
-using Havengard.HealthSystem;
 using Havengard.Abilities;
+using Havengard.Combat;
+using Havengard.HealthSystem;
+using Havengard.Statuses;
 using Havengard.Units;
+using UnityEngine;
+using UnityEngine.AI;
 
 namespace Havengard.Allies
 {
-    /// <summary>
-    /// Ally "sub-hero". Stays near spawn but will chase/attack enemies within aggro range.
-    /// Uses AbilityUser to cast abilities like the player.
-    /// </summary>
     [RequireComponent(typeof(Health))]
+    [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(AbilityUser))]
     public class AllyHero : MonoBehaviour
     {
         [SerializeField] private float aggroRange = 6f;
-        [SerializeField] private float chaseSpeed = 3f;
         [SerializeField] private float attackRange = 1.5f;
 
         private Vector2 spawnPoint;
-        private Rigidbody2D rb;
+        private NavMeshAgent agent;
         private AbilityUser abilityUser;
         private Health health;
+        private AttackEffectHandler attackEffects;
 
         private void Awake()
         {
             spawnPoint = transform.position;
-            rb = GetComponent<Rigidbody2D>();
+            agent = GetComponent<NavMeshAgent>();
             abilityUser = GetComponent<AbilityUser>();
             health = GetComponent<Health>();
+            attackEffects = GetComponent<AttackEffectHandler>();
+
+            agent.updateRotation = false;
+            agent.updateUpAxis = false;
         }
 
         private void Update()
         {
+            var effect = GetComponent<StatusEffectInstance>();
+            if (effect != null)
+            {
+                if (effect.IsStunned() || effect.IsRooted())
+                {
+                    agent.ResetPath();
+                    return;
+                }
+                if (effect.IsSilenced())
+                {
+                    MoveToEnemiesOnly();
+                    return;
+                }
+            }
+
             GameObject target = FindClosestEnemy();
             if (target != null)
             {
                 float dist = Vector2.Distance(transform.position, target.transform.position);
                 if (dist > attackRange)
                 {
-                    Vector2 dir = (target.transform.position - transform.position).normalized;
-                    rb.linearVelocity = dir * chaseSpeed;
+                    agent.SetDestination(target.transform.position);
                 }
                 else
                 {
-                    rb.linearVelocity = Vector2.zero;
-                    abilityUser.UseAbility(0, target); // basic attack
+                    agent.ResetPath();
+
+                    attackEffects?.PlayAttackEffect();
+                    abilityUser.UseAbility(0, target);
+                    attackEffects?.PlayImpactEffect(target.transform.position);
                 }
             }
             else
             {
-                // No enemies: return to spawn and idle
-                if (Vector2.Distance(transform.position, spawnPoint) > 0.1f)
-                {
-                    Vector2 dir = (spawnPoint - (Vector2)transform.position).normalized;
-                    rb.linearVelocity = dir * chaseSpeed;
-                }
-                else
-                {
-                    rb.linearVelocity = Vector2.zero;
-                }
+                ReturnToSpawn();
             }
+        }
+
+        private void MoveToEnemiesOnly()
+        {
+            GameObject target = FindClosestEnemy();
+            if (target != null)
+                agent.SetDestination(target.transform.position);
+            else
+                agent.ResetPath();
+        }
+
+        private void ReturnToSpawn()
+        {
+            if (Vector2.Distance(transform.position, spawnPoint) > 0.5f)
+                agent.SetDestination(spawnPoint);
+            else
+                agent.ResetPath();
         }
 
         private GameObject FindClosestEnemy()

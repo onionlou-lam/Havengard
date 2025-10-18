@@ -11,7 +11,7 @@ namespace Havengard.Abilities
     {
         [Header("Wall Settings")]
         [SerializeField] private GameObject wallPrefab;
-        [SerializeField] private float wallDuration = 6f;
+        [SerializeField] private float wallDuration = 6f;   // total lifespan
         [SerializeField] private float width = 3f;
         [SerializeField] private bool friendlyFire = false;
 
@@ -29,11 +29,9 @@ namespace Havengard.Abilities
 
             Vector3 dir = (mousePos - caster.transform.position).normalized;
 
-            // Decide orientation
             bool isHorizontal = Mathf.Abs(dir.x) > Mathf.Abs(dir.y);
             Quaternion rotation = isHorizontal ? Quaternion.identity : Quaternion.Euler(0, 0, 90);
 
-            // Slightly offset the wall so it spawns between player & cursor
             Vector3 spawnPos = caster.transform.position + dir * (width * 0.5f);
 
             GameObject wall = Instantiate(wallPrefab, spawnPos, rotation);
@@ -44,9 +42,9 @@ namespace Havengard.Abilities
 
             var wallComp = wall.GetComponent<WallOfFireZone>();
             if (wallComp != null)
-                wallComp.Init(casterFaction, friendlyFire, baseDamage);
-
-            Destroy(wall, wallDuration);
+            {
+                wallComp.Init(casterFaction, friendlyFire, baseDamage, wallDuration);
+            }
         }
     }
 }
