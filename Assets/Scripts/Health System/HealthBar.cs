@@ -15,24 +15,34 @@ public class HealthBar : MonoBehaviour
         health.OnDamaged += UpdateBar;
         health.OnHealed += UpdateBar;
         health.OnDeath += HandleDeath;
-
         UpdateBar();
+    }
+
+    public void SetOffset(Vector3 newOffset)
+    {
+        offset = newOffset;
     }
 
     void LateUpdate()
     {
         if (targetHealth != null)
+        {
             transform.position = targetHealth.transform.position + offset;
+            transform.rotation = Quaternion.identity; // stay upright in 2D
+        }
     }
 
     private void UpdateBar()
     {
+        if (targetHealth == null) return;
         float normalized = targetHealth.GetHealthSystem().GetHealthNormalized();
         fillImage.fillAmount = normalized;
     }
-
     private void HandleDeath()
     {
-        Destroy(gameObject);
+        if (HealthBarPool.Instance != null)
+            HealthBarPool.Instance.Return(this);
+        else
+            Destroy(gameObject);
     }
 }

@@ -10,6 +10,7 @@ TagManager:
   - World
   - NoMask
   - Friendly
+  - Projectile
   layers:
   - Default
   - TransparentFX
@@ -17,17 +18,17 @@ TagManager:
   - 
   - Water
   - UI
-  - Ground
-  - Wall
-  - Obstacles
   - Player
-  - ObstaclesDoors
-  - NoPathfinding
-  - Enemies
-  - NoCollisions
-  - Hole
+  - Ally
+  - Enemy
   - Projectile
-  - Friendly
+  - Walls
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 

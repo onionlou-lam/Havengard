@@ -43,7 +43,7 @@ namespace Havengard.Player
 
             // Disable physics influence, keep collider for collision only
             rb.isKinematic = true;
-            rb.simulated = false;
+            rb.simulated = true;
 
             // Configure NavMeshAgent for 2D usage
             agent.updateRotation = false;

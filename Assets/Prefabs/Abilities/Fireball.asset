@@ -19,8 +19,9 @@ MonoBehaviour:
   abilityType: 0
   projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
     type: 3}
-  impactEffectPrefab: {fileID: 0}
-  impactSound: {fileID: 0}
-  impactSoundVolume: 0.8
-  projectileSpeed: 12
+  projectileSpeed: 5.5
+  baseDamage: 25
+  explosionRadius: 2.5
+  explosionVFX: {fileID: 123764, guid: 5077e2ec8ec48d247af6fecd8d5bb756, type: 3}
+  explosionSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
   friendlyFire: 0

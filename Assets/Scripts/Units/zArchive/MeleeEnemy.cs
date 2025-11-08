@@ -1,4 +1,4 @@
-using Havengard.Combat;
+/*using Havengard.Combat;
 using Havengard.Enemies;
 using Havengard.HealthSystem;
 using Havengard.Statuses;
@@ -34,3 +34,4 @@ namespace Havengard.Units
         }
     }
 }
+*/
