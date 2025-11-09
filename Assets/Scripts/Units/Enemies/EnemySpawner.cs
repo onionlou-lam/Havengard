@@ -1,51 +1,25 @@
-using UnityEngine;
+﻿using UnityEngine;
+using Havengard.Units;   // ⬅️ important
 
 namespace Havengard.Units
 {
     public class EnemySpawner : MonoBehaviour
     {
-        [Header("Spawn Setup")]
-        [SerializeField] private GameObject[] enemyPrefabs;
+        [Header("Enemy Prefabs")]
+        [SerializeField] private UnitBase[] enemyPrefabs; // was EnemyUnit[]
         [SerializeField] private Transform[] spawnPoints;
-        [SerializeField] private Transform gateTarget;
 
-        [Header("Timing")]
-        [SerializeField] private float spawnInterval = 2.5f;
-        [SerializeField] private int maxAlive = 20;
-
-        private float timer;
-
-        private void Update()
+        public UnitBase SpawnRandom()
         {
-            timer -= Time.deltaTime;
-            if (timer <= 0f)
-            {
-                timer = spawnInterval;
-                TrySpawnEnemy();
-            }
-        }
-
-        private void TrySpawnEnemy()
-        {
-            if (enemyPrefabs.Length == 0 || spawnPoints.Length == 0) return;
-            if (CountAliveEnemies() >= maxAlive) return;
-
+            if (enemyPrefabs == null || enemyPrefabs.Length == 0) return null;
             var prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-            var point = spawnPoints[Random.Range(0, spawnPoints.Length)];
-
-            var enemyObj = Instantiate(prefab, point.position, Quaternion.identity);
-
-            if (enemyObj.TryGetComponent<EnemyUnit>(out var enemy))
-            {
-                enemy.GetType().GetField("gateTarget",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                    ?.SetValue(enemy, gateTarget);
-            }
+            var spawn = spawnPoints.Length > 0 ? spawnPoints[Random.Range(0, spawnPoints.Length)] : transform;
+            return Instantiate(prefab, spawn.position, Quaternion.identity);
         }
 
-        private int CountAliveEnemies()
+        public T Spawn<T>(T prefab, Vector3 position) where T : UnitBase
         {
-            return FindObjectsOfType<EnemyUnit>().Length;
+            return Instantiate(prefab, position, Quaternion.identity);
         }
     }
 }

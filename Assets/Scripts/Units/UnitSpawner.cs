@@ -1,60 +1,37 @@
-using UnityEngine;
-using Havengard.Units;
+﻿using UnityEngine;
+using Havengard.Units; 
 
-namespace Havengard.Spawning
+namespace Havengard.Units
 {
-    /// <summary>
-    /// Generic spawner for both enemies and allies.
-    /// - Enemies: assign Enemy prefabs + Gate reference.
-    /// - Allies: assign Ally prefabs + no Gate required.
-    /// </summary>
     public class UnitSpawner : MonoBehaviour
     {
-        [Header("Spawn Setup")]
-        [SerializeField] private GameObject[] unitPrefabs;
-        [SerializeField] private Transform[] spawnPoints;
+        [Header("Generic Spawner")]
+        [SerializeField] private Transform defaultSpawnPoint;
 
-        [Tooltip("Assign the Gate for enemies. Leave empty for allies.")]
-        [SerializeField] private Transform gateTarget;
-
-        [Header("Timing")]
-        [SerializeField] private float spawnInterval = 3f;
-        [SerializeField] private int maxAlive = 20;
-
-        private float timer;
-
-        private void Update()
+        // Spawn any NavMesh-based unit (enemy, ally, boss, etc.)
+        public UnitBase Spawn(UnitBase prefab, Vector3? position = null, Quaternion? rotation = null)
         {
-            timer -= Time.deltaTime;
-            if (timer <= 0f)
-            {
-                timer = spawnInterval;
-                TrySpawnUnit();
-            }
+            Vector3 pos = position ?? (defaultSpawnPoint ? defaultSpawnPoint.position : transform.position);
+            Quaternion rot = rotation ?? Quaternion.identity;
+            return Instantiate(prefab, pos, rot);
         }
 
-        private void TrySpawnUnit()
+        // Overload for Melee
+        public MeleeEnemy SpawnMelee(MeleeEnemy prefab, Vector3? position = null, Quaternion? rotation = null)
         {
-            if (unitPrefabs.Length == 0 || spawnPoints.Length == 0) return;
-            if (CountAliveUnits() >= maxAlive) return;
-
-            var prefab = unitPrefabs[Random.Range(0, unitPrefabs.Length)];
-            var point = spawnPoints[Random.Range(0, spawnPoints.Length)];
-
-            var unitObj = Instantiate(prefab, point.position, Quaternion.identity);
-
-            // If spawned unit is Enemy, assign Gate reference
-            if (unitObj.TryGetComponent<EnemyUnit>(out var enemy) && gateTarget != null)
-            {
-                enemy.GetType().GetField("gateTarget",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                    ?.SetValue(enemy, gateTarget);
-            }
+            return (MeleeEnemy)Spawn((UnitBase)prefab, position, rotation);
         }
 
-        private int CountAliveUnits()
+        // Overload for Ranged
+        public RangedEnemy SpawnRanged(RangedEnemy prefab, Vector3? position = null, Quaternion? rotation = null)
         {
-            return FindObjectsOfType<UnitBase>().Length;
+            return (RangedEnemy)Spawn((UnitBase)prefab, position, rotation);
+        }
+
+        // Overload for Allies
+        public AllyUnit SpawnAlly(AllyUnit prefab, Vector3? position = null, Quaternion? rotation = null)
+        {
+            return (AllyUnit)Spawn((UnitBase)prefab, position, rotation);
         }
     }
 }

@@ -1,55 +1,34 @@
-using System.Collections;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using Havengard.Units;   // ⬅️ important
 
-namespace Havengard.Spawning
+namespace Havengard.Units
 {
-    /// <summary>
-    /// Manages sequential spawning of waves from ScriptableObject definitions.
-    /// </summary>
     public class WaveManager : MonoBehaviour
     {
-        [SerializeField] private WaveData[] waves;
+        [Header("Wave Prefabs")]
+        [SerializeField] private UnitBase[] enemyPrefabs; // was EnemyUnit[]
         [SerializeField] private Transform[] spawnPoints;
-        [SerializeField] private Transform gateTarget;
-        [SerializeField] private float delayBetweenWaves = 5f;
 
-        private int currentWaveIndex;
+        private readonly List<UnitBase> activeEnemies = new(); // was List<EnemyUnit>
 
-        private void Start()
+        public void SpawnWave(int count)
         {
-            StartCoroutine(RunWaves());
+            for (int i = 0; i < count; i++)
+            {
+                var prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+                var spawn = spawnPoints[Random.Range(0, spawnPoints.Length)];
+                var enemy = Instantiate(prefab, spawn.position, Quaternion.identity);
+                activeEnemies.Add(enemy);
+            }
         }
 
-        private IEnumerator RunWaves()
+        public int ActiveEnemyCount() => activeEnemies.RemoveAll(e => e == null) >= 0 ? activeEnemies.Count : 0;
+
+        // Optional: call this occasionally to prune nulls
+        public void Prune()
         {
-            for (currentWaveIndex = 0; currentWaveIndex < waves.Length; currentWaveIndex++)
-            {
-                yield return StartCoroutine(SpawnWave(waves[currentWaveIndex]));
-                yield return new WaitForSeconds(delayBetweenWaves);
-            }
-            Debug.Log("All waves completed!");
-        }
-
-        private IEnumerator SpawnWave(WaveData wave)
-        {
-            foreach (var entry in wave.entries)
-            {
-                for (int i = 0; i < entry.count; i++)
-                {
-                    var point = spawnPoints[Random.Range(0, spawnPoints.Length)];
-                    var unit = Instantiate(entry.unitPrefab, point.position, Quaternion.identity);
-
-                    // If enemy, assign Gate
-                    if (unit.TryGetComponent<Havengard.Units.EnemyUnit>(out var enemy) && gateTarget != null)
-                    {
-                        enemy.GetType().GetField("gateTarget",
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                            ?.SetValue(enemy, gateTarget);
-                    }
-
-                    yield return new WaitForSeconds(entry.interval);
-                }
-            }
+            activeEnemies.RemoveAll(e => e == null);
         }
     }
 }

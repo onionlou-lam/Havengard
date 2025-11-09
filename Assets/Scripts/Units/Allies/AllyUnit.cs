@@ -7,7 +7,7 @@ namespace Havengard.Units
     /// <summary>
     /// Ally unit: guards its spawn, but chases and attacks enemies in range.
     /// </summary>
-    public class AllyUnit : UnitBaseNavMesh
+    public class AllyUnit : UnitBase
     {
         private Vector2 spawnPoint;
 

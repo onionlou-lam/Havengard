@@ -62,6 +62,19 @@ namespace Havengard.HealthSystem
             UnitTargetManager.Unregister(this);
             isRegistered = false;
         }
+        public void Damage(int amount)
+        {
+            if (amount <= 0) return;
+            healthSystem.Damage(amount);
+            OnDamaged?.Invoke();
+        }
+
+        public void Heal(int amount)
+        {
+            if (amount <= 0) return;
+            healthSystem.Heal(amount);
+            OnHealed?.Invoke();
+        }
 
         public HealthSystem GetHealthSystem() => healthSystem;
         public Faction GetFaction() => faction;

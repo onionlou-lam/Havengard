@@ -16,7 +16,11 @@ namespace Havengard.Statuses
         private StatsComponent stats;
         private float remainingTime;
         private Coroutine tickRoutine;
-        private bool controlsDisabled;
+        
+        // Below isn't used at the moment but can be used for gating enmies later if needed.
+#pragma warning disable CS0414
+        [SerializeField] private bool controlsDisabled = false;
+#pragma warning restore CS0414
 
         public void Apply(StatusEffectData data, IHealth target)
         {
