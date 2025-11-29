@@ -35,7 +35,6 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     private void detectTile()
     {
-        Debug.Log("test1");
         if (Input.GetMouseButtonDown(0))
         {
             Debug.Log("test2");

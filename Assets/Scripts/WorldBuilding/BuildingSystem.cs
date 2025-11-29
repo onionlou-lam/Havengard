@@ -12,8 +12,10 @@ public class BuildingSystem : MonoBehaviour
 
     public GameObject prefab1;
     public GameObject prefab2;
+    public GameObject frostTower;
 
     private PlaceableObject objectToPlace;
+    public bool isPlacingObject;
 
     #region Unity methods
     private void Awake()
@@ -24,13 +26,28 @@ public class BuildingSystem : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.C))
+        if (Input.GetKeyDown(KeyCode.F))
         {
-            InitializeWithObject(prefab1);
+            InitializeWithObject(frostTower);
+            isPlacingObject = true;
         }
         if (Input.GetKeyDown(KeyCode.V))
         {
             InitializeWithObject(prefab2);
+        }
+        if(isPlacingObject)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                isPlacingObject = false;
+                objectToPlace = null;
+            }
+            else
+            {
+                Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 position = SnapCoordinateToGrid(mousePosition);
+                objectToPlace.transform.position = position;
+            }
         }
     }
 
@@ -60,7 +77,8 @@ public class BuildingSystem : MonoBehaviour
 
     public void InitializeWithObject(GameObject prefab)
     {
-        Vector3 position = SnapCoordinateToGrid(Vector3.zero);
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 position = SnapCoordinateToGrid(mousePosition);
         GameObject obj = Instantiate(prefab, position, Quaternion.identity);
         objectToPlace = obj.GetComponent<PlaceableObject>();
         obj.AddComponent<ObjectDrag>();
