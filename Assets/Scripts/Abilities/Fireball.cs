@@ -1,38 +1,51 @@
-using Havengard.HealthSystem;
-using Havengard.Units;
 using UnityEngine;
+using Havengard.Units;
+using Havengard.HealthSystem;
+using Havengard.Combat;
+using Havengard.Character;
 
 namespace Havengard.Abilities
 {
     [CreateAssetMenu(menuName = "Havengard/Abilities/Fireball")]
     public class Fireball : AbilityBase
     {
+        [Header("Projectile Settings")]
         [SerializeField] private GameObject projectilePrefab;
-        [SerializeField] private int damage = 20;
-        [SerializeField] private float projectileSpeed = 12f;
+        [SerializeField] private float projectileSpeed = 10f;
+        [SerializeField] private int baseDamage = 25;
+        [SerializeField] private float explosionRadius = 2.5f;
+        [SerializeField] private GameObject explosionVFX;
+        [SerializeField] private AudioClip explosionSFX;
         [SerializeField] private bool friendlyFire = false;
 
         public override bool CanCast(GameObject caster, GameObject target)
         {
-            return projectilePrefab != null && caster != null;
+            return projectilePrefab != null;
         }
 
         public override void Cast(GameObject caster, GameObject target)
         {
-            if (!CanCast(caster, target)) return;
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorld.z = 0;
 
-            Vector3 dir = (target.transform.position - caster.transform.position).normalized;
-            GameObject projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
+            Vector2 direction = (mouseWorld - caster.transform.position).normalized;
 
-            var proj = projGO.GetComponent<Projectile>();
-            if (proj != null)
+            var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
+            var stats = caster.GetComponent<StatsComponent>()?.CurrentStats;
+            int attackPower = stats != null ? stats.Attack : baseDamage;
+
+            GameObject proj = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
+
+            var projectile = proj.GetComponent<Projectile>();
+            if (projectile != null)
             {
-                var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
-                proj.Init(dir, casterFaction, friendlyFire, damage, projectileSpeed);
-            }
+                projectile.Init(direction, casterFaction, friendlyFire, attackPower, projectileSpeed);
+                projectile.ConfigureImpactEffects(explosionVFX, null, explosionSFX);
 
-            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            projGO.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+                // add explosion handler
+                var explosion = proj.AddComponent<FireballExplosion>();
+                explosion.Setup(explosionRadius, casterFaction, friendlyFire, attackPower);
+            }
         }
     }
 }

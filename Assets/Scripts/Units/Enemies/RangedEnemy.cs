@@ -1,55 +1,59 @@
+using Havengard.Abilities;
+using Havengard.Combat;
+using Havengard.HealthSystem;
 using UnityEngine;
-using Havengard.Abilities; // Projectile script
-using Havengard.Combat;    // FactionUtility (projectile uses its own check on hit)
+using static UnityEngine.RuleTile.TilingRuleOutput;
 
 namespace Havengard.Units
 {
-    /// <summary>
-    /// Enemy that attacks from range using projectiles.
-    /// Respects faction rules (no friendly fire unless enabled).
-    /// </summary>
-    public class RangedEnemy : EnemyUnit
+    public class RangedEnemy : UnitBase // or : UnitBase
     {
-        [Header("Ranged Settings")]
-        [SerializeField] private GameObject projectilePrefab;
-        [SerializeField] private float projectileSpeed = 10f;
-        [SerializeField] private int damage = 8;
-        [SerializeField] private float attackCooldown = 1.5f;
-        [SerializeField] private bool friendlyFire = false;
+        [Header("Ranged")]
+        [SerializeField] protected GameObject projectilePrefab;
+        [SerializeField] protected float projectileSpeed = 10f;
+        [SerializeField] protected int projectileDamage = 8;
+        [SerializeField] protected float attackCooldown = 1.25f;
+        [SerializeField] protected bool friendlyFire = false;
 
-        private float lastAttackTime;
+        protected float lastAttackTime;
 
         protected override void PerformAttack(GameObject target)
         {
-            if (Time.time < lastAttackTime + attackCooldown) return;
-            if (target == null) return;
+            if (Time.time < lastAttackTime + attackCooldown || target == null) return;
 
-            if (Vector2.Distance(transform.position, target.transform.position) <= attackRange)
-            {
-                ShootProjectile(target);
-                lastAttackTime = Time.time;
-            }
-        }
-
-        private void ShootProjectile(GameObject target)
-        {
-            if (projectilePrefab == null) return;
+            var th = target.GetComponent<IHealth>();
+            if (th == null || !FactionUtility.CanDamage(GetMyFaction(), th, friendlyFire)) return;
 
             Vector3 dir = (target.transform.position - transform.position).normalized;
-            GameObject projGO = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+            Quaternion rot = Quaternion.LookRotation(Vector3.forward, dir);
 
-            var proj = projGO.GetComponent<Projectile>();
-            if (proj != null)
+            var projGO = Instantiate(projectilePrefab, transform.position, rot);
+            if (projGO.TryGetComponent<Projectile>(out var proj))
             {
-                proj.sourceFaction = GetMyFaction();
-                proj.friendlyFire = friendlyFire;
-                proj.damage = damage;
-                proj.speed = projectileSpeed;
+                proj.Init(dir, GetMyFaction(), friendlyFire, projectileDamage, projectileSpeed);
             }
 
-            // Rotate projectile to face its travel direction
-            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            projGO.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+            lastAttackTime = Time.time;
+        }
+
+        protected override GameObject FindTarget()
+        {
+            GameObject closest = null;
+            float closestDist = Mathf.Infinity;
+            var myFaction = GetMyFaction();
+
+            foreach (var enemy in UnitTargetManager.GetEnemiesOf(myFaction))
+            {
+                var obj = (enemy as MonoBehaviour).gameObject;
+                float d = Vector2.Distance(transform.position, obj.transform.position);
+                if (d < closestDist && d <= aggroRange)
+                {
+                    closestDist = d;
+                    closest = obj;
+                }
+            }
+
+            return closest;
         }
     }
 }

@@ -1,30 +1,28 @@
 using Havengard.Abilities;
-using Havengard.Heroes;
 using Havengard.Progression;
+using Havengard.Units;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Havengard.Heroes
 {
-    [CreateAssetMenu(menuName = "Havengard/Hero")]
+    [CreateAssetMenu(menuName = "Havengard/Hero Data")]
     public class HeroData : ScriptableObject
     {
-        [Header("Identity")]
         public string heroName;
-        [TextArea] public string backstory;
         public Sprite portrait;
+        public Faction faction = Faction.Ally;
 
-        [Header("Class & Abilities")]
-        public PlayerClass playerClass;
-        public AbilityBase[] startingAbilities;
-        public string subclass; // e.g. "Fire Mage"
+        [Header("Class Reference")]
+        public PlayerClass heroClass;   // link to WarriorClass, MageClass, etc.
 
-        [Header("Base Stats")]
-        public int baseHP = 100;
-        public int baseAttack = 10;
-        public int baseDefense = 5;
-        public int baseResource = 50;
-
-        [Header("Traits")]
-        public Trait[] passiveTraits;
+        [Header("Hero Overrides")]
+        public List<AbilityBase> startingAbilities; // subset of class allowed abilities
+        public string backstory;
+        public bool overrideStats;
+        public int overrideHP;
+        public int overrideAttack;
+        public int overrideDefense;
+        public int overrideResource;
     }
 }

@@ -2,37 +2,69 @@ using UnityEngine;
 using UnityEngine.UI;
 using Havengard.HealthSystem;
 
-public class HealthBar : MonoBehaviour
+namespace Havengard.HealthSystem
 {
-    [SerializeField] private Image fillImage;
-    [SerializeField] private Vector3 offset = new Vector3(0, 1.5f, 0);
-
-    private Health targetHealth;
-
-    public void Init(Health health)
+    /// <summary>
+    /// World-space health bar that follows a Health component.
+    /// </summary>
+    public class HealthBar : MonoBehaviour
     {
-        targetHealth = health;
-        health.OnDamaged += UpdateBar;
-        health.OnHealed += UpdateBar;
-        health.OnDeath += HandleDeath;
+        [SerializeField] private Image fillImage;
+        [SerializeField] private Vector3 offset = new Vector3(0, 1.0f, 0);
 
-        UpdateBar();
-    }
+        private Health target;
+        private HealthSystem healthSystem;
+        private bool subscribed;
 
-    void LateUpdate()
-    {
-        if (targetHealth != null)
-            transform.position = targetHealth.transform.position + offset;
-    }
+        public void Init(Health health, Vector3 worldOffset)
+        {
+            Unhook();
 
-    private void UpdateBar()
-    {
-        float normalized = targetHealth.GetHealthSystem().GetHealthNormalized();
-        fillImage.fillAmount = normalized;
-    }
+            target = health;
+            offset = worldOffset;
 
-    private void HandleDeath()
-    {
-        Destroy(gameObject);
+            if (!target)
+                return;
+
+            healthSystem = target.GetHealthSystem();
+            if (healthSystem != null)
+            {
+                healthSystem.OnHealthChanged += UpdateBar;
+                healthSystem.OnDeath += HandleDeath;
+                subscribed = true;
+            }
+
+            UpdateBar();
+        }
+
+        private void LateUpdate()
+        {
+            if (!target) return;
+            transform.position = target.transform.position + offset;
+            transform.rotation = Quaternion.identity;
+        }
+
+        private void UpdateBar()
+        {
+            if (healthSystem == null || fillImage == null) return;
+            float normalized = healthSystem.GetHealthNormalized();
+            fillImage.fillAmount = normalized;
+        }
+
+        private void HandleDeath()
+        {
+            Destroy(gameObject);
+            Unhook();
+        }
+
+        private void OnDisable() => Unhook();
+
+        private void Unhook()
+        {
+            if (!subscribed || healthSystem == null) return;
+            healthSystem.OnHealthChanged -= UpdateBar;
+            healthSystem.OnDeath -= HandleDeath;
+            subscribed = false;
+        }
     }
 }

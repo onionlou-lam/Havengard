@@ -1,87 +1,180 @@
 using UnityEngine;
+using UnityEngine.AI;
+using System.Collections.Generic;
+using System.Linq;
 using Havengard.Abilities;
 using Havengard.HealthSystem;
-using Havengard.Units; // for Faction
+using Havengard.Combat;
 
 namespace Havengard.Units
 {
-    [RequireComponent(typeof(Rigidbody2D))]
+    /// <summary>
+    /// Base class for all NavMesh-driven units (Player, Allies, Enemies, Bosses).
+    /// Handles movement, targeting, attacking, and faction logic.
+    /// </summary>
+    [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Health))]
-    [RequireComponent(typeof(AbilityUser))]
+    [DisallowMultipleComponent]
     public abstract class UnitBase : MonoBehaviour
     {
-        protected Rigidbody2D rb;
+        [Header("General Settings")]
+        [SerializeField] protected float aggroRange = 8f;
+        [SerializeField] protected float attackRange = 2f;
+        [SerializeField] protected float moveSpeed = 3.5f;
+        [SerializeField] protected float retargetInterval = 0.5f; // seconds between scans
+
+        protected NavMeshAgent agent;
         protected Health health;
         protected AbilityUser abilityUser;
-
-        [Header("Unit Movement/Combat")]
-        [SerializeField] protected float moveSpeed = 3f;
-        [SerializeField] protected float attackRange = 1.5f;
-        [SerializeField] protected float aggroRange = 6f;
-
         protected GameObject currentTarget;
+
+        private float nextScanTime = 0f;
+        private bool isDead;
+
+        // --------------------------------------------------------------------
+        #region Unity Lifecycle
+        // --------------------------------------------------------------------
 
         protected virtual void Awake()
         {
-            rb = GetComponent<Rigidbody2D>();
+            agent = GetComponent<NavMeshAgent>();
+            agent.updateRotation = false;
+            agent.updateUpAxis = false;
+            agent.speed = moveSpeed;
+
             health = GetComponent<Health>();
             abilityUser = GetComponent<AbilityUser>();
 
             if (health != null)
-            {
-                // Optional death hook if subclasses need it
                 health.OnDeath += HandleDeath;
-            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            if (health != null)
+                health.OnDeath -= HandleDeath;
         }
 
         protected virtual void Update()
         {
-            currentTarget = FindTarget();
+            if (isDead) return;
+
+            HandleTargeting();
             HandleMovementAndAttack();
         }
+        #endregion
 
-        protected abstract GameObject FindTarget();
+        // --------------------------------------------------------------------
+        #region Targeting & AI Logic
+        // --------------------------------------------------------------------
 
+        /// <summary>
+        /// Caches target scanning to run only at intervals.
+        /// </summary>
+        protected virtual void HandleTargeting()
+        {
+            if (Time.time < nextScanTime) return;
+            nextScanTime = Time.time + retargetInterval;
+
+            currentTarget = FindTarget();
+        }
+
+        /// <summary>
+        /// Finds the closest valid enemy using the shared UnitTargetManager.
+        /// Subclasses can override this if they need custom targeting logic.
+        /// </summary>
+        protected virtual GameObject FindTarget()
+        {
+            GameObject closest = null;
+            float closestDist = Mathf.Infinity;
+            Faction myFaction = GetMyFaction();
+
+            foreach (var h in UnitTargetManager.RegisteredUnits)
+            {
+                if (h == null) continue;
+                if (!FactionUtility.CanDamage(myFaction, h, false))
+                    continue;
+
+                var obj = (h as MonoBehaviour).gameObject;
+                float dist = Vector2.Distance(transform.position, obj.transform.position);
+                if (dist < closestDist && dist <= aggroRange)
+                {
+                    closest = obj;
+                    closestDist = dist;
+                }
+            }
+
+            return closest;
+        }
+
+        /// <summary>
+        /// Handles movement and attack range checking via NavMesh.
+        /// </summary>
         protected virtual void HandleMovementAndAttack()
         {
             if (currentTarget == null)
             {
-                rb.linearVelocity = Vector2.zero;
+                agent.ResetPath();
                 return;
             }
 
             float dist = Vector2.Distance(transform.position, currentTarget.transform.position);
+
             if (dist > attackRange)
             {
-                Vector2 dir = (currentTarget.transform.position - transform.position).normalized;
-                rb.linearVelocity = dir * moveSpeed;
+                // Move toward target
+                agent.isStopped = false;
+                agent.SetDestination(currentTarget.transform.position);
             }
             else
             {
-                rb.linearVelocity = Vector2.zero;
+                // Stop and attack
+                agent.isStopped = true;
                 PerformAttack(currentTarget);
             }
         }
 
-        protected virtual void PerformAttack(GameObject target)
-        {
-            // Default behavior if using AbilityUser slot 0.
-            abilityUser?.UseAbility(0, target);
-        }
+        #endregion
 
-        protected virtual void HandleDeath()
+        // --------------------------------------------------------------------
+        #region Combat & Faction
+        // --------------------------------------------------------------------
+
+        /// <summary>
+        /// Core attack behavior. Must be implemented by subclasses.
+        /// </summary>
+        protected abstract void PerformAttack(GameObject target);
+
+        /// <summary>
+        /// Returns this unit's faction.
+        /// </summary>
+        protected virtual Faction GetMyFaction()
         {
-            // Default: destroy on death; subclasses can override.
-            Destroy(gameObject);
+            var h = GetComponent<IHealth>();
+            return h != null ? h.GetFaction() : Faction.Neutral;
         }
 
         /// <summary>
-        /// Helper for enemies/allies to read their own faction from IHealth/Health.
+        /// Called when health reaches 0.
         /// </summary>
-        protected Faction GetMyFaction()
+        protected virtual void HandleDeath()
         {
-            var ih = GetComponent<IHealth>();
-            return ih != null ? ih.GetFaction() : Faction.Neutral;
+            isDead = true;
+            agent.isStopped = true;
+            agent.ResetPath();
         }
+
+        #endregion
+
+#if UNITY_EDITOR
+        protected virtual void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, aggroRange);
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, attackRange);
+        }
+#endif
     }
 }
