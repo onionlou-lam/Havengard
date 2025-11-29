@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6113142500658347300}
   - component: {fileID: 3538767121880264274}
+  - component: {fileID: 8295675246716200937}
+  - component: {fileID: -3313816533089472255}
   m_Layer: 0
   m_Name: House_Medium(static)
   m_TagString: Untagged
@@ -88,6 +90,39 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &8295675246716200937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4518328826235332484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e85e3ff15019494d8eb7d5f977f5e5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &-3313816533089472255
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4518328826235332484}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.5559769, y: 3.2525868, z: 0.2}
+  m_Center: {x: 0.015335083, y: -0.28370643, z: 0}
 --- !u!1 &6901656698331408050
 GameObject:
   m_ObjectHideFlags: 0

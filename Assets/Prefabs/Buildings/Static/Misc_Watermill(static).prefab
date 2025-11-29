@@ -152,6 +152,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5602506928420233478}
   - component: {fileID: 4517600438170488856}
+  - component: {fileID: 9106715872052803903}
+  - component: {fileID: -2418338633830704012}
   m_Layer: 0
   m_Name: Misc_Watermill(static)
   m_TagString: Untagged
@@ -231,6 +233,39 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &9106715872052803903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5352962604352051797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e85e3ff15019494d8eb7d5f977f5e5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &-2418338633830704012
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5352962604352051797}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.9565902, y: 1.80527, z: 0.2}
+  m_Center: {x: -0.36829495, y: -0.3423649, z: 0}
 --- !u!1 &5513450584553923478
 GameObject:
   m_ObjectHideFlags: 0
