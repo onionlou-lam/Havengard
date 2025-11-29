@@ -5,40 +5,50 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class HealthBarSpawner : MonoBehaviour
 {
+    [SerializeField] private GameObject healthBarPrefab;
     [SerializeField] private bool hideForNeutral = true;
-    [SerializeField] private float scaleMultiplier = 1f;
 
-    private HealthBar activeBar;
+    [Header("Offset (world units)")]
+    [SerializeField] private float yOffset = 1.0f;   // absolute Y offset above the unit
 
-    void Start()
+    private HealthBar spawnedBar;
+
+    private void Start()
     {
-        if (!TryGetComponent(out Health health)) return;
-        if (hideForNeutral && health.GetFaction() == Faction.Neutral) return;
+        var health = GetComponent<Health>();
+        if (!health)
+        {
+            Debug.LogWarning($"HealthBarSpawner on {name} has no Health component.");
+            return;
+        }
 
-        // Use pooled health bar instead of Instantiate
-        var hb = HealthBarPool.Instance != null
-            ? HealthBarPool.Instance.Get()
-            : Instantiate(Resources.Load<GameObject>("HealthBarPrefab")).GetComponent<HealthBar>();
+        if (hideForNeutral && health.GetFaction() == Faction.Neutral)
+            return;
 
-        hb.Init(health);
+        if (!healthBarPrefab)
+        {
+            Debug.LogWarning($"HealthBarSpawner on {name} has no healthBarPrefab assigned.");
+            return;
+        }
 
-        float spriteHeight = GetSpriteHeight();
-        Vector3 offset = new Vector3(0, spriteHeight + 0.3f, 0);
-        hb.SetOffset(offset);
-        hb.transform.localScale *= scaleMultiplier;
+        var barGO = Instantiate(healthBarPrefab);
+        spawnedBar = barGO.GetComponent<HealthBar>();
 
-        activeBar = hb;
-    }
+        if (!spawnedBar)
+        {
+            Debug.LogError($"HealthBar prefab {healthBarPrefab.name} is missing HealthBar component.");
+            Destroy(barGO);
+            return;
+        }
 
-    private float GetSpriteHeight()
-    {
-        var sr = GetComponentInChildren<SpriteRenderer>();
-        return sr != null ? sr.bounds.size.y : 1f;
+        // Use absolute offset instead of sprite height + extra
+        Vector3 offset = new Vector3(0, yOffset, 0);
+        spawnedBar.Init(health, offset);
     }
 
     private void OnDestroy()
     {
-        if (activeBar != null && HealthBarPool.Instance != null)
-            HealthBarPool.Instance.Return(activeBar);
+        if (spawnedBar != null)
+            Destroy(spawnedBar.gameObject);
     }
 }

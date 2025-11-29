@@ -15,8 +15,9 @@ namespace Havengard.Statuses
         private IHealth targetHealth;
         private StatsComponent stats;
         private float remainingTime;
-        private Coroutine tickRoutine;
-        
+        private bool ended;
+        private Coroutine tickRoutine;        
+
         // Below isn't used at the moment but can be used for gating enmies later if needed.
 #pragma warning disable CS0414
         [SerializeField] private bool controlsDisabled = false;
@@ -24,6 +25,9 @@ namespace Havengard.Statuses
 
         public void Apply(StatusEffectData data, IHealth target)
         {
+            var hs = target?.GetHealthSystem();
+            if (hs != null) hs.OnDeath += OnTargetDeath;
+
             Data = data;
             targetHealth = target;
             stats = (target as MonoBehaviour)?.GetComponent<StatsComponent>();
@@ -66,7 +70,7 @@ namespace Havengard.Statuses
 
         private IEnumerator TickDamage()
         {
-            while (remainingTime > 0f)
+            while (remainingTime > 0f && !ended)
             {
                 if (targetHealth == null) yield break;
                 targetHealth.GetHealthSystem().Damage(Data.tickDamage);
@@ -112,6 +116,18 @@ namespace Havengard.Statuses
             {
                 remainingTime = newData.duration;
             }
+        }
+        private void OnTargetDeath()
+        {
+            ended = true;
+            EndEffect();
+        }
+        private void EndEffect()
+        {
+            RemoveModifiers();
+            var hs = targetHealth?.GetHealthSystem();
+            if (hs != null) hs.OnDeath -= OnTargetDeath;
+            Destroy(this);
         }
 
         public bool IsStunned() => Data != null && Data.causesStun;
