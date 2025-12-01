@@ -20,6 +20,7 @@ namespace Havengard.Units
             if (h != null && FactionUtility.CanDamage(GetMyFaction(), h, false))
             {
                 h.GetHealthSystem().Damage(meleeDamage);
+                Debug.Log($"Melee Enemy attacks, dealing {meleeDamage} damage.");
                 lastAttackTime = Time.time;
             }
         }
