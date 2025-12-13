@@ -1,3 +1,5 @@
+// Assets/Scripts/Character/ResourceSystem.cs
+using System;                      // <-- added for Action
 using UnityEngine;
 using Havengard.Abilities;
 
@@ -13,18 +15,31 @@ namespace Havengard.Character
         public float Current { get; private set; }
         public float Max => maxResource;
 
+        /// <summary>
+        /// Fired whenever Current or Max changes.
+        /// Used by UI bars.
+        /// </summary>
+        public event Action OnResourceChanged;
+
         private void Awake()
         {
             Current = maxResource;
+            RaiseChanged();
         }
+
+        // ------------- IResource implementation -------------
 
         /// <summary>
         /// Try to consume resource. Returns false if not enough.
         /// </summary>
         public bool TryConsume(float amount)
         {
+            if (amount <= 0f) return true;
+
             if (Current < amount) return false;
+
             Current -= amount;
+            RaiseChanged();
             return true;
         }
 
@@ -33,7 +48,10 @@ namespace Havengard.Character
         /// </summary>
         public void Regenerate(float amount)
         {
+            if (amount <= 0f) return;
+
             Current = Mathf.Min(Current + amount, maxResource);
+            RaiseChanged();
         }
 
         /// <summary>
@@ -42,6 +60,7 @@ namespace Havengard.Character
         public void SetToMax()
         {
             Current = maxResource;
+            RaiseChanged();
         }
 
         /// <summary>
@@ -54,6 +73,7 @@ namespace Havengard.Character
 
             Current = refill ? maxResource : maxResource * percent;
             Current = Mathf.Clamp(Current, 0, maxResource);
+            RaiseChanged();
         }
 
         /// <summary>
@@ -62,6 +82,14 @@ namespace Havengard.Character
         public void Set(float value)
         {
             Current = Mathf.Clamp(value, 0, maxResource);
+            RaiseChanged();
+        }
+
+        // ------------- Helpers -------------
+
+        private void RaiseChanged()
+        {
+            OnResourceChanged?.Invoke();
         }
     }
 }

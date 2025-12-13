@@ -1,8 +1,8 @@
-﻿using UnityEngine;
-using UnityEngine.AI;
-using Havengard.Abilities;
+﻿using Havengard.Abilities;
 using Havengard.HealthSystem;
 using Havengard.Units;
+using UnityEngine;
+using UnityEngine.AI;
 
 namespace Havengard.Player
 {
@@ -14,6 +14,12 @@ namespace Havengard.Player
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private float stoppingDistance = 0.1f;
+
+        [Header("Animator")]
+        [SerializeField] private Animator animator;
+
+        [Tooltip("If true, idle will keep the last facing direction instead of snapping to (0,0).")]
+        [SerializeField] private bool keepLastFacingOnIdle = true;
 
         [Header("Right-Click Ability")]
         [SerializeField] private int indexRightClick = 0;
@@ -35,17 +41,26 @@ namespace Havengard.Player
         private bool isRolling;
         private Vector2 rollVelocity;
 
+        private Vector2 lastFacingDir = Vector2.down;
+
+        // Animator parameter hashes (avoid string typos)
+        private static readonly int AnimIsMoving = Animator.StringToHash("IsMoving");
+        private static readonly int AnimHorizontal = Animator.StringToHash("Horizontal");
+        private static readonly int AnimVertical = Animator.StringToHash("Vertical");
+        private static readonly int AnimIdleFrame = Animator.StringToHash("IdleFrame");
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
             abilityUser = GetComponent<AbilityUser>();
             agent = GetComponent<NavMeshAgent>();
+            if (animator == null) animator = GetComponent<Animator>();
 
-            // Disable physics influence, keep collider for collision only
+            // Rigidbody2D used for collisions; NavMeshAgent moves transform.
             rb.bodyType = RigidbodyType2D.Kinematic;
             rb.simulated = true;
 
-            // Configure NavMeshAgent for 2D usage
+            // Configure NavMeshAgent for top-down 2D
             agent.updateRotation = false;
             agent.updateUpAxis = false;
             agent.speed = moveSpeed;
@@ -56,21 +71,25 @@ namespace Havengard.Player
 
         private void Update()
         {
-            if (isRolling) return;
+            if (isRolling)
+            {
+                UpdateAnimatorFromVelocity(rollVelocity);
+                return;
+            }
 
             HandleMouseInput();
             HandleKeyboardAbilities();
             HandleRollInput();
 
-            if (isClickMoving)
-                agent.speed = moveSpeed;
-            else
+            // If we stopped click-moving, avoid constantly ResetPath every frame.
+            if (!isClickMoving && agent.hasPath)
                 agent.ResetPath();
+
+            UpdateAnimatorFromNavMesh();
         }
 
         private void FixedUpdate()
         {
-            // Roll logic still uses manual movement
             if (isRolling)
             {
                 rb.linearVelocity = rollVelocity;
@@ -83,7 +102,7 @@ namespace Havengard.Player
                 if (!agent.pathPending && agent.remainingDistance <= stoppingDistance)
                 {
                     isClickMoving = false;
-                    agent.ResetPath();
+                    if (agent.hasPath) agent.ResetPath();
                 }
             }
         }
@@ -105,25 +124,23 @@ namespace Havengard.Player
             if (Input.GetMouseButtonDown(1)) // Right click: cast
             {
                 AbilityBase rightClickAbility = abilityUser?.GetAbility(indexRightClick);
-                if (rightClickAbility == null) return;
-
-                GameObject target = MouseTarget();
-                if (target != null)
+                if (rightClickAbility != null)
                 {
-                    var health = target.GetComponent<IHealth>();
-                    if (health != null)
+                    GameObject target = MouseTarget();
+                    if (target != null)
                     {
-                        var faction = health.GetFaction();
+                        var health = target.GetComponent<IHealth>();
+                        if (health != null)
+                        {
+                            var faction = health.GetFaction();
 
-                        if (rightClickAbility.abilityType == AbilityType.Offensive &&
-                            faction == Faction.Enemy)
-                        {
-                            abilityUser.UseAbility(indexRightClick, target);
-                        }
-                        else if (rightClickAbility.abilityType == AbilityType.Supportive &&
-                                 (faction == Faction.Ally || faction == Faction.Player))
-                        {
-                            abilityUser.UseAbility(indexRightClick, target);
+                            if (rightClickAbility.abilityType == AbilityType.Offensive && faction == Faction.Enemy)
+                                abilityUser.UseAbility(indexRightClick, target);
+                            else if (rightClickAbility.abilityType == AbilityType.Supportive &&
+                                     (faction == Faction.Ally || faction == Faction.Player))
+                                abilityUser.UseAbility(indexRightClick, target);
+                            else
+                                CastAbilityAtMouse(indexRightClick);
                         }
                         else
                         {
@@ -134,10 +151,6 @@ namespace Havengard.Player
                     {
                         CastAbilityAtMouse(indexRightClick);
                     }
-                }
-                else
-                {
-                    CastAbilityAtMouse(indexRightClick);
                 }
 
                 if (!holdPosition)
@@ -169,12 +182,14 @@ namespace Havengard.Player
             StartCoroutine(RollRoutine(dir));
         }
 
-        // --- HELPERS ---
-
         private System.Collections.IEnumerator RollRoutine(Vector2 direction)
         {
             isRolling = true;
             lastRollTime = Time.time;
+
+            // Stop navmesh movement while rolling
+            isClickMoving = false;
+            if (agent.hasPath) agent.ResetPath();
 
             float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
             rollVelocity = direction.normalized * speed;
@@ -189,6 +204,8 @@ namespace Havengard.Player
             isRolling = false;
             rb.linearVelocity = Vector2.zero;
         }
+
+        // --- HELPERS ---
 
         private Vector3 MouseWorldOnPlane()
         {
@@ -228,7 +245,41 @@ namespace Havengard.Player
                 if (dir.sqrMagnitude > 0.001f) return dir.normalized;
             }
 
-            return Vector2.zero;
+            // fallback to last facing
+            return lastFacingDir.sqrMagnitude > 0.001f ? lastFacingDir : Vector2.down;
+        }
+
+        // --- ANIMATOR CONTROL ---
+
+        private void UpdateAnimatorFromNavMesh()
+        {
+            // desiredVelocity is usually more reliable than velocity for animation
+            Vector2 v = agent != null ? (Vector2)agent.desiredVelocity : Vector2.zero;
+            UpdateAnimatorFromVelocity(v);
+        }
+
+        private void UpdateAnimatorFromVelocity(Vector2 velocity)
+        {
+            bool moving = velocity.sqrMagnitude > 0.001f;
+            animator.SetBool(AnimIsMoving, moving);
+
+            if (moving)
+            {
+                Vector2 dir = velocity.normalized;
+                lastFacingDir = dir;
+
+                animator.SetFloat(AnimHorizontal, dir.x);
+                animator.SetFloat(AnimVertical, dir.y);
+            }
+            else
+            {
+                // keep last facing direction
+                animator.SetFloat(AnimHorizontal, lastFacingDir.x);
+                animator.SetFloat(AnimVertical, lastFacingDir.y);
+
+                // force “first frame”
+                animator.SetFloat(AnimIdleFrame, 0f);
+            }
         }
     }
 }

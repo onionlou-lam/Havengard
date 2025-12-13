@@ -33,6 +33,6 @@ namespace Havengard.Progression
         public int resourceGrowth = 5;
 
         [Header("Class Abilities")]
-        public ClassAbility[] classAbilities; // includes requiredLevel
+        public ClassAbility[] classAbilities; // each has AbilityBase ability + int requiredLevel
     }
 }

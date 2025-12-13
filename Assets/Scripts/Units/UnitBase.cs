@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.AI;
-using System.Collections.Generic;
-using System.Linq;
 using Havengard.Abilities;
 using Havengard.HealthSystem;
 using Havengard.Combat;
@@ -22,6 +20,10 @@ namespace Havengard.Units
         [SerializeField] protected float attackRange = 2f;
         [SerializeField] protected float moveSpeed = 3.5f;
         [SerializeField] protected float retargetInterval = 0.5f; // seconds between scans
+
+        [Header("Targeting")]
+        [Tooltip("Layers this unit can target (Player, Ally, Gate, etc.). If empty, will search all layers.")]
+        [SerializeField] private LayerMask targetLayers = ~0; // default: everything
 
         protected NavMeshAgent agent;
         protected Health health;
@@ -62,6 +64,7 @@ namespace Havengard.Units
             HandleTargeting();
             HandleMovementAndAttack();
         }
+
         #endregion
 
         // --------------------------------------------------------------------
@@ -80,8 +83,8 @@ namespace Havengard.Units
         }
 
         /// <summary>
-        /// Finds the closest valid enemy using the shared UnitTargetManager.
-        /// Subclasses can override this if they need custom targeting logic.
+        /// Finds the closest valid enemy using Physics2D overlap + faction filtering.
+        /// Subclasses can override this if they need custom targeting, but usually don't need to.
         /// </summary>
         protected virtual GameObject FindTarget()
         {
@@ -89,18 +92,25 @@ namespace Havengard.Units
             float closestDist = Mathf.Infinity;
             Faction myFaction = GetMyFaction();
 
-            foreach (var h in UnitTargetManager.RegisteredUnits)
+            // 2D physics scan in a circle around this unit
+            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, aggroRange, targetLayers);
+
+            foreach (var hit in hits)
             {
-                if (h == null) continue;
-                if (!FactionUtility.CanDamage(myFaction, h, false))
+                if (hit == null) continue;
+
+                var healthTarget = hit.GetComponent<IHealth>();
+                if (healthTarget == null) continue;
+
+                // Skip if same faction or otherwise not a valid damage target
+                if (!FactionUtility.CanDamage(myFaction, healthTarget, false))
                     continue;
 
-                var obj = (h as MonoBehaviour).gameObject;
-                float dist = Vector2.Distance(transform.position, obj.transform.position);
-                if (dist < closestDist && dist <= aggroRange)
+                float dist = Vector2.Distance(transform.position, hit.transform.position);
+                if (dist < closestDist)
                 {
-                    closest = obj;
                     closestDist = dist;
+                    closest = hit.gameObject;
                 }
             }
 
@@ -114,6 +124,7 @@ namespace Havengard.Units
         {
             if (currentTarget == null)
             {
+                agent.isStopped = true;
                 agent.ResetPath();
                 return;
             }
@@ -146,7 +157,7 @@ namespace Havengard.Units
         protected abstract void PerformAttack(GameObject target);
 
         /// <summary>
-        /// Returns this unit's faction.
+        /// Returns this unit's faction from its IHealth, or Neutral if none.
         /// </summary>
         protected virtual Faction GetMyFaction()
         {

@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Mage_Klara
   m_EditorClassIdentifier: 
   heroName: Klara
-  backstory: A mage who has practiced magic for over 20 years.
-  portrait: {fileID: 2027235796, guid: dd82824da76dca04ba7e12c1e88d50e1, type: 3}
-  playerClass: {fileID: 11400000, guid: 9a9f2646e0fdc5a4788efb5c4a55eaf5, type: 2}
+  portrait: {fileID: 271228395, guid: 221b0f1bb684595458ed8f18b969f88e, type: 3}
+  faction: 1
+  heroClass: {fileID: 11400000, guid: 9a9f2646e0fdc5a4788efb5c4a55eaf5, type: 2}
   startingAbilities:
   - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
-  subclass: Fire
-  baseHP: 100
-  baseAttack: 10
-  baseDefense: 5
-  baseResource: 50
-  passiveTraits: []
+  backstory: A mage who has practiced magic for over 20 years.
+  overrideStats: 0
+  overrideHP: 0
+  overrideAttack: 0
+  overrideDefense: 0
+  overrideResource: 0

@@ -31,8 +31,12 @@ namespace Havengard.Abilities
             Vector2 direction = (mouseWorld - caster.transform.position).normalized;
 
             var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
-            var stats = caster.GetComponent<StatsComponent>()?.CurrentStats;
-            int attackPower = stats != null ? stats.Attack : baseDamage;
+
+            // Get attack power from stats if present, otherwise fall back to baseDamage
+            var statsComp = caster.GetComponent<StatsComponent>();
+            int attackPower = statsComp != null && statsComp.CurrentStats != null
+                ? statsComp.CurrentStats.Attack
+                : baseDamage;
 
             GameObject proj = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
 
@@ -42,7 +46,6 @@ namespace Havengard.Abilities
                 projectile.Init(direction, casterFaction, friendlyFire, attackPower, projectileSpeed);
                 projectile.ConfigureImpactEffects(explosionVFX, null, explosionSFX);
 
-                // add explosion handler
                 var explosion = proj.AddComponent<FireballExplosion>();
                 explosion.Setup(explosionRadius, casterFaction, friendlyFire, attackPower);
             }

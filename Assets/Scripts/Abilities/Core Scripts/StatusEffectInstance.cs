@@ -15,19 +15,14 @@ namespace Havengard.Statuses
         private IHealth targetHealth;
         private StatsComponent stats;
         private float remainingTime;
-        private bool ended;
-        private Coroutine tickRoutine;        
+        private Coroutine tickRoutine;
 
-        // Below isn't used at the moment but can be used for gating enmies later if needed.
 #pragma warning disable CS0414
         [SerializeField] private bool controlsDisabled = false;
 #pragma warning restore CS0414
 
         public void Apply(StatusEffectData data, IHealth target)
         {
-            var hs = target?.GetHealthSystem();
-            if (hs != null) hs.OnDeath += OnTargetDeath;
-
             Data = data;
             targetHealth = target;
             stats = (target as MonoBehaviour)?.GetComponent<StatsComponent>();
@@ -36,14 +31,12 @@ namespace Havengard.Statuses
             var targetMono = target as MonoBehaviour;
             if (targetMono != null)
             {
-                // Spawn attached VFX
                 if (data.attachVFX != null)
                 {
                     var fx = Instantiate(data.attachVFX, targetMono.transform.position, Quaternion.identity, targetMono.transform);
                     Destroy(fx, data.duration);
                 }
 
-                // Play sound
                 if (data.applySFX != null)
                     AudioSource.PlayClipAtPoint(data.applySFX, targetMono.transform.position);
             }
@@ -70,7 +63,7 @@ namespace Havengard.Statuses
 
         private IEnumerator TickDamage()
         {
-            while (remainingTime > 0f && !ended)
+            while (remainingTime > 0f)
             {
                 if (targetHealth == null) yield break;
                 targetHealth.GetHealthSystem().Damage(Data.tickDamage);
@@ -80,7 +73,7 @@ namespace Havengard.Statuses
 
         private void ApplyModifiers()
         {
-            if (stats != null)
+            if (stats != null && stats.CurrentStats != null)
             {
                 stats.CurrentStats.MoveSpeed *= Data.moveSpeedMultiplier;
                 stats.CurrentStats.AttackSpeed *= Data.attackSpeedMultiplier;
@@ -94,7 +87,7 @@ namespace Havengard.Statuses
 
         private void RemoveModifiers()
         {
-            if (stats != null)
+            if (stats != null && stats.CurrentStats != null)
             {
                 stats.CurrentStats.MoveSpeed /= Data.moveSpeedMultiplier;
                 stats.CurrentStats.AttackSpeed /= Data.attackSpeedMultiplier;
@@ -109,25 +102,17 @@ namespace Havengard.Statuses
         {
             if (Data.stackable)
             {
-                var newInstance = (targetHealth as MonoBehaviour).gameObject.AddComponent<StatusEffectInstance>();
-                newInstance.Apply(newData, targetHealth);
+                var targetMono = targetHealth as MonoBehaviour;
+                if (targetMono != null)
+                {
+                    var newInstance = targetMono.gameObject.AddComponent<StatusEffectInstance>();
+                    newInstance.Apply(newData, targetHealth);
+                }
             }
             else if (Data.refreshDurationOnReapply)
             {
                 remainingTime = newData.duration;
             }
-        }
-        private void OnTargetDeath()
-        {
-            ended = true;
-            EndEffect();
-        }
-        private void EndEffect()
-        {
-            RemoveModifiers();
-            var hs = targetHealth?.GetHealthSystem();
-            if (hs != null) hs.OnDeath -= OnTargetDeath;
-            Destroy(this);
         }
 
         public bool IsStunned() => Data != null && Data.causesStun;

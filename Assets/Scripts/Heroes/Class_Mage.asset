@@ -14,7 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   className: Mage
   classIcon: {fileID: -237935084, guid: 27af6e58adc8aee4196626d4c075e6ec, type: 3}
+  baseHP: 100
+  baseAttack: 10
+  baseDefense: 5
+  baseResource: 50
+  baseAttackSpeed: 1
+  baseMoveSpeed: 3
+  baseCritChance: 0.1
+  baseCritMultiplier: 2
   baseRollCooldown: 4
   expToLevel: 64000000fa000000f4010000e8030000
-  allowedAbilities:
-  - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+  hpGrowth: 10
+  attackGrowth: 2
+  defenseGrowth: 1
+  resourceGrowth: 5
+  classAbilities:
+  - ability: {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+    requiredLevel: 0

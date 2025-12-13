@@ -1,37 +1,31 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using Havengard.HealthSystem;
 
 public class HealthBarHUD : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Health health;       // Player Health component
-    [SerializeField] private Image healthBar;     // Fill image in the HUD
+    [SerializeField] private Health health;           // Player Health
+    [SerializeField] private Image healthBar;         // Fill image
+    [SerializeField] private TextMeshProUGUI healthText; // "HP / Max" text
 
     private HealthSystem healthSystem;
 
     private void Awake()
     {
-        // Try to auto-find player if not assigned
         if (health == null)
         {
             var player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
-            {
                 health = player.GetComponent<Health>();
-                //Debug.Log($"[HealthBarHUD] Found player Health on {player.name}");
-            }
-            else
-            {
-                Debug.LogWarning("[HealthBarHUD] No object with tag 'Player' found. Assign Health manually in inspector.");
-            }
         }
     }
 
     private void OnEnable()
     {
         TryHook();
-        UpdateBar();   // do an initial draw
+        UpdateBar();
     }
 
     private void OnDisable()
@@ -41,18 +35,14 @@ public class HealthBarHUD : MonoBehaviour
 
     private void Update()
     {
-        // Safety net: if the hookup failed earlier (e.g. player spawned later),
-        // keep trying until we succeed.
-        if ((health == null || healthSystem == null))
-        {
+        if (health == null || healthSystem == null)
             TryHook();
-        }
 
-        // As a fallback, update every frame so the HUD never lags behind.
         if (healthSystem != null && healthBar != null)
         {
             float normalized = healthSystem.GetHealthNormalized();
             healthBar.fillAmount = normalized;
+            UpdateHealthText();
         }
     }
 
@@ -60,28 +50,18 @@ public class HealthBarHUD : MonoBehaviour
     {
         if (health == null)
         {
-            // Re-try auto-find in case player spawned after Awake
             var player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
-            {
                 health = player.GetComponent<Health>();
-                Debug.Log($"[HealthBarHUD] (Retry) Found player Health on {player.name}");
-            }
         }
 
         if (health == null || healthSystem != null) return;
 
         healthSystem = health.GetHealthSystem();
-        if (healthSystem == null)
-        {
-            Debug.LogWarning("[HealthBarHUD] HealthSystem is null on assigned Health.");
-            return;
-        }
+        if (healthSystem == null) return;
 
         healthSystem.OnHealthChanged += UpdateBar;
         healthSystem.OnDeath += UpdateBar;
-
-        Debug.Log($"[HealthBarHUD] Hooked into HealthSystem. Start HP = {healthSystem.GetHealth()}/{healthSystem.GetMaxHealth()}");
     }
 
     private void Unhook()
@@ -99,7 +79,15 @@ public class HealthBarHUD : MonoBehaviour
 
         float normalized = healthSystem.GetHealthNormalized();
         healthBar.fillAmount = normalized;
-        // Uncomment if you want spam for debugging:
-        // Debug.Log($"[HealthBarHUD] Health bar updated: {normalized}");
+        UpdateHealthText();
+    }
+
+    private void UpdateHealthText()
+    {
+        if (healthText == null || healthSystem == null) return;
+
+        int current = healthSystem.GetHealth();
+        int max = healthSystem.GetMaxHealth();
+        healthText.text = $"{current} / {max}";
     }
 }
