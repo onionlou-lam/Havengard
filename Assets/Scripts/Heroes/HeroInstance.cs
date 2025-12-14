@@ -45,27 +45,27 @@ namespace Havengard.Heroes
         public EXPSystem ExpSystem => expSystem;
         public bool IsOnQuest => isOnQuest;
 
-        public Stats GetStats() => stats != null ? stats.CurrentStats : null;
+        public Stats GetStats() => (stats != null) ? stats.CurrentStats : null;
 
         private void Awake()
         {
-            // Find core components (root first, then children)
-            abilityUser ??= GetComponent<AbilityUser>() ?? GetComponentInChildren<AbilityUser>();
-            health ??= GetComponent<Health>() ?? GetComponentInChildren<Health>();
-            resourceSystem ??= GetComponent<ResourceSystem>() ?? GetComponentInChildren<ResourceSystem>();
-            stats ??= GetComponent<StatsComponent>() ?? GetComponentInChildren<StatsComponent>();
-            expSystem ??= GetComponent<EXPSystem>() ?? GetComponentInChildren<EXPSystem>();
+            // Resolve components (don’t assume Awake order)
+            abilityUser ??= GetComponent<AbilityUser>();
+            expSystem ??= GetComponent<EXPSystem>();
+            health ??= GetComponent<Health>();
+            resourceSystem ??= GetComponent<ResourceSystem>();
+            stats ??= GetComponent<StatsComponent>();
+
+            // Ensure StatsComponent has a runtime instance
+            if (stats != null && stats.CurrentStats == null)
+                stats.SetCurrentStats(null);
 
             Debug.Log($"[HeroInstance] Awake on {name}. HeroData={(heroData ? heroData.name : "NULL")} Class={(Class ? Class.name : "NULL")}");
 
             if (heroData != null)
-            {
                 InitializeFromData(heroData, Class);
-            }
             else
-            {
                 Debug.LogWarning($"[HeroInstance] {name} has no HeroData assigned.");
-            }
         }
 
         public void Init(HeroData data)
@@ -76,13 +76,13 @@ namespace Havengard.Heroes
 
         private void InitializeFromData(HeroData data, PlayerClass playerClassData)
         {
-            // Check which component is missing
+            // Guard checks
             var missing = new List<string>();
             if (stats == null) missing.Add("StatsComponent");
             if (health == null) missing.Add("Health");
             if (resourceSystem == null) missing.Add("ResourceSystem");
             if (abilityUser == null) missing.Add("AbilityUser");
-            if (expSystem == null) missing.Add("ExpSystem");
+            if (expSystem == null) missing.Add("EXPSystem");
 
             if (missing.Count > 0)
             {
@@ -102,25 +102,33 @@ namespace Havengard.Heroes
                 return;
             }
 
+            // Ensure runtime stats container exists
+            if (stats.CurrentStats == null)
+                stats.SetCurrentStats(null);
+
             // ----- 1) Stats -----
             int baseHP = data.overrideStats ? data.overrideHP : playerClassData.baseHP;
             int baseAttack = data.overrideStats ? data.overrideAttack : playerClassData.baseAttack;
             int baseDefense = data.overrideStats ? data.overrideDefense : playerClassData.baseDefense;
             int baseResource = data.overrideStats ? data.overrideResource : playerClassData.baseResource;
 
-            stats.CurrentStats.MaxHP = baseHP;
-            stats.CurrentStats.Attack = baseAttack;
-            stats.CurrentStats.Defense = baseDefense;
-            stats.CurrentStats.MaxResource = baseResource;
+            stats.CurrentStats.MaxHP = Mathf.Max(1, baseHP);
+            stats.CurrentStats.Attack = Mathf.Max(0, baseAttack);
+            stats.CurrentStats.Defense = Mathf.Max(0, baseDefense);
+            stats.CurrentStats.MaxResource = Mathf.Max(1, baseResource);
+
             stats.CurrentStats.AttackSpeed = playerClassData.baseAttackSpeed;
             stats.CurrentStats.MoveSpeed = playerClassData.baseMoveSpeed;
             stats.CurrentStats.CritChance = playerClassData.baseCritChance;
             stats.CurrentStats.CritMultiplier = playerClassData.baseCritMultiplier;
 
-            // ----- 2) Health & resource -----
-            var hs = health.GetHealthSystem();
-            hs.SetMaxHealth(stats.CurrentStats.MaxHP, true);
-            resourceSystem.SetMax(stats.CurrentStats.MaxResource, true);
+            // ----- 2) Health & Resource -----
+            // Health now safely initialises itself lazily, and can sync from stats
+            health.SetStartingMaxHealth(stats.CurrentStats.MaxHP);
+            health.SetMaxHealthFromStats(refill: true);
+
+            // ResourceSystem naming: your version uses SetMax(...)
+            resourceSystem.SetMax(stats.CurrentStats.MaxResource, refill: true);
 
             // ----- 3) Abilities -----
             var unlockedAbilities = new List<AbilityBase>();
@@ -138,6 +146,7 @@ namespace Havengard.Heroes
             else
             {
                 Debug.LogWarning($"[HeroInstance] {name} PlayerClass {playerClassData.name} has no expToLevel table.");
+                expSystem.InitEXPTable(new int[] { 100 }); // safe default
             }
 
             expSystem.OnLevelUp -= HandleLevelUp;
@@ -147,16 +156,16 @@ namespace Havengard.Heroes
         private void HandleLevelUp(int newLevel)
         {
             var classData = Class;
-            if (classData == null || stats == null) return;
+            if (classData == null || stats == null || stats.CurrentStats == null) return;
 
             stats.CurrentStats.MaxHP += classData.hpGrowth;
             stats.CurrentStats.Attack += classData.attackGrowth;
             stats.CurrentStats.Defense += classData.defenseGrowth;
             stats.CurrentStats.MaxResource += classData.resourceGrowth;
 
-            var hs = health.GetHealthSystem();
-            hs.SetMaxHealth(stats.CurrentStats.MaxHP, false);
-            resourceSystem.SetMax(stats.CurrentStats.MaxResource, false);
+            health.SetStartingMaxHealth(stats.CurrentStats.MaxHP);
+            health.SetMaxHealthFromStats(refill: false);
+            resourceSystem.SetMax(stats.CurrentStats.MaxResource, refill: false);
 
             Debug.Log($"[HeroInstance] {(Data != null ? Data.heroName : name)} reached level {newLevel}.");
         }

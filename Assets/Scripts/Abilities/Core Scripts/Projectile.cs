@@ -72,7 +72,7 @@ namespace Havengard.Abilities
             }
 
             // Check for hit targets
-            var health = other.GetComponent<IHealth>();
+            var health = other.GetComponentInParent<IHealth>();
             if (health == null) return;
             if (alreadyHit.Contains(health)) return;
             if (!FactionUtility.CanDamage(SourceFaction, health, FriendlyFire)) return;
@@ -80,6 +80,7 @@ namespace Havengard.Abilities
             alreadyHit.Add(health);
 
             int damageToDeal = Mathf.RoundToInt(Damage * Mathf.Pow(damageFalloffPerPierce, pierceCount));
+            Debug.Log($"[Projectile] Damaging {other.name} for {damageToDeal}. HP before={health.GetHealthSystem()?.GetHealth()}");
             health.GetHealthSystem().Damage(damageToDeal);
 
             pierceCount++;

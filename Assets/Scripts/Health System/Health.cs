@@ -1,96 +1,108 @@
-using System;                       // for Action
+using System;
 using UnityEngine;
 using Havengard.Units;
 
 namespace Havengard.HealthSystem
 {
-    /// <summary>
-    /// MonoBehaviour wrapper for HealthSystem.
-    /// Used on all units (Player, Heroes, Allies, Enemies).
-    /// </summary>
     [DisallowMultipleComponent]
     public class Health : MonoBehaviour, IHealth
     {
         [Header("Config")]
-        [Tooltip("Fallback max health if no stats component is present.")]
+        [Tooltip("Fallback max health if no stats component is present or not initialised yet.")]
         [SerializeField] private int startingMaxHealth = 100;
 
         [Tooltip("Faction for damage-filtering (Player, Ally, Enemy, Neutral, etc.).")]
         [SerializeField] private Faction faction = Faction.Neutral;
 
         private HealthSystem healthSystem;
+        private bool hooked;
 
-        // Forwarded events (UI and gameplay can subscribe here)
         public event Action OnDamaged;
         public event Action OnHealed;
         public event Action OnDeath;
 
         private void Awake()
         {
-            try
-            {
-                // Try to pull MaxHP from a StatsComponent if one exists,
-                // otherwise fall back to startingMaxHealth.
-                int maxHP = startingMaxHealth;
-
-                var statsComponent = GetComponent<Character.StatsComponent>();
-                if (statsComponent != null && statsComponent.CurrentStats.MaxHP > 0)
-                {
-                    maxHP = statsComponent.CurrentStats.MaxHP;
-                }
-
-                healthSystem = new HealthSystem(maxHP);
-
-                // Forward HealthSystem events
-                healthSystem.OnHealthChanged += HandleHealthChanged;
-                healthSystem.OnDeath += HandleDeath;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[Health] Error during Awake on {name}: {ex.Message}\n{ex.StackTrace}");
-                // Do NOT disable the component – leave it enabled so you can see errors.
-            }
+            // Don’t rely on script execution order. Create system if needed.
+            EnsureInitialized();
         }
 
         private void OnDestroy()
         {
-            if (healthSystem == null) return;
-
-            healthSystem.OnHealthChanged -= HandleHealthChanged;
-            healthSystem.OnDeath -= HandleDeath;
-            Debug.Log("HandleDeath OnDestroy called");
+            Unhook();
         }
 
-        // -------- Event forwarding --------
+        private void EnsureInitialized()
+        {
+            if (healthSystem != null) return;
+
+            int maxHP = Mathf.Max(1, startingMaxHealth);
+
+            // Pull from stats if available (and already initialised)
+            var statsComponent = GetComponent<Havengard.Character.StatsComponent>();
+            if (statsComponent != null && statsComponent.CurrentStats != null && statsComponent.CurrentStats.MaxHP > 0)
+            {
+                maxHP = statsComponent.CurrentStats.MaxHP;
+            }
+
+            healthSystem = new HealthSystem(maxHP);
+            Hook();
+        }
+
+        private void Hook()
+        {
+            if (hooked || healthSystem == null) return;
+            healthSystem.OnHealthChanged += HandleHealthChanged;
+            healthSystem.OnDeath += HandleDeath;
+            hooked = true;
+        }
+
+        private void Unhook()
+        {
+            if (!hooked || healthSystem == null) return;
+            healthSystem.OnHealthChanged -= HandleHealthChanged;
+            healthSystem.OnDeath -= HandleDeath;
+            hooked = false;
+        }
 
         private void HandleHealthChanged()
         {
+            // For UI this is fine. You can split damaged/healed later.
             OnDamaged?.Invoke();
-            OnHealed?.Invoke(); // you can split these out later if you want
+            OnHealed?.Invoke();
         }
 
         private void HandleDeath()
         {
             OnDeath?.Invoke();
-            Debug.Log("HandleDeath called");
         }
 
-        // -------- IHealth implementation --------
-
-        public HealthSystem GetHealthSystem() => healthSystem;
+        // -------- IHealth --------
+        public HealthSystem GetHealthSystem()
+        {
+            EnsureInitialized();
+            return healthSystem;
+        }
 
         public Faction GetFaction() => faction;
 
-        // Optional helper: allows other systems to override faction at runtime
-        public void SetFaction(Faction newFaction)
-        {
-            faction = newFaction;
-        }
+        // -------- helpers --------
+        public void SetFaction(Faction newFaction) => faction = newFaction;
 
-        // Optional helper: allows other systems to override starting max HP before Awake runs
-        public void SetStartingMaxHealth(int value)
+        public void SetStartingMaxHealth(int value) => startingMaxHealth = Mathf.Max(1, value);
+
+        /// <summary>
+        /// Call after stats are updated (e.g., HeroInstance init / level up).
+        /// </summary>
+        public void SetMaxHealthFromStats(bool refill = true)
         {
-            startingMaxHealth = Mathf.Max(1, value);
+            var statsComponent = GetComponent<Havengard.Character.StatsComponent>();
+            if (statsComponent == null || statsComponent.CurrentStats == null) return;
+
+            int newMax = Mathf.Max(1, statsComponent.CurrentStats.MaxHP);
+
+            EnsureInitialized();
+            healthSystem.SetMaxHealth(newMax, refill);
         }
     }
 }

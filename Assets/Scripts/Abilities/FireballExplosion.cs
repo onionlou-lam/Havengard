@@ -37,7 +37,7 @@ namespace Havengard.Abilities
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, radius);
             foreach (var hit in hits)
             {
-                var health = hit.GetComponent<IHealth>();
+                var health = hit.GetComponentInParent<IHealth>();
                 if (health == null) continue;
                 if (!FactionUtility.CanDamage(casterFaction, health, friendlyFire)) continue;
 

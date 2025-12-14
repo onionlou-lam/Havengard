@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Havengard.HealthSystem;
 
 namespace Havengard.HealthSystem
 {
     /// <summary>
     /// World-space health bar that follows a Health component.
+    /// Subscribes to Health wrapper events (not the HealthSystem instance) so it stays valid
+    /// even if stats/health are initialised after the bar spawns.
     /// </summary>
     public class HealthBar : MonoBehaviour
     {
@@ -13,7 +14,6 @@ namespace Havengard.HealthSystem
         [SerializeField] private Vector3 offset = new Vector3(0, 1.0f, 0);
 
         private Health target;
-        private HealthSystem healthSystem;
         private bool subscribed;
 
         public void Init(Health health, Vector3 worldOffset)
@@ -26,13 +26,11 @@ namespace Havengard.HealthSystem
             if (!target)
                 return;
 
-            healthSystem = target.GetHealthSystem();
-            if (healthSystem != null)
-            {
-                healthSystem.OnHealthChanged += UpdateBar;
-                healthSystem.OnDeath += HandleDeath;
-                subscribed = true;
-            }
+            // Subscribe to the wrapper events (stable even if HealthSystem instance changes)
+            target.OnDamaged += UpdateBar;
+            target.OnHealed += UpdateBar;
+            target.OnDeath += HandleDeath;
+            subscribed = true;
 
             UpdateBar();
         }
@@ -46,24 +44,30 @@ namespace Havengard.HealthSystem
 
         private void UpdateBar()
         {
-            if (healthSystem == null || fillImage == null) return;
-            float normalized = healthSystem.GetHealthNormalized();
-            fillImage.fillAmount = normalized;
+            if (!target || fillImage == null) return;
+
+            var hs = target.GetHealthSystem();
+            if (hs == null) return;
+
+            fillImage.fillAmount = hs.GetHealthNormalized();
         }
 
         private void HandleDeath()
         {
-            Destroy(gameObject);
             Unhook();
+            Destroy(gameObject);
         }
 
         private void OnDisable() => Unhook();
 
         private void Unhook()
         {
-            if (!subscribed || healthSystem == null) return;
-            healthSystem.OnHealthChanged -= UpdateBar;
-            healthSystem.OnDeath -= HandleDeath;
+            if (!subscribed || !target) return;
+
+            target.OnDamaged -= UpdateBar;
+            target.OnHealed -= UpdateBar;
+            target.OnDeath -= HandleDeath;
+
             subscribed = false;
         }
     }

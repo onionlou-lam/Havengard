@@ -32,11 +32,15 @@ namespace Havengard.Abilities
 
             var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
 
-            // Get attack power from stats if present, otherwise fall back to baseDamage
+            // Stats-based damage, but never allow 0 damage due to init ordering/default stats
+            int attackPower = baseDamage;
             var statsComp = caster.GetComponent<StatsComponent>();
-            int attackPower = statsComp != null && statsComp.CurrentStats != null
-                ? statsComp.CurrentStats.Attack
-                : baseDamage;
+            if (statsComp != null && statsComp.CurrentStats != null)
+            {
+                attackPower = statsComp.CurrentStats.Attack;
+                if (attackPower <= 0)
+                    attackPower = baseDamage;
+            }
 
             GameObject proj = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
 
