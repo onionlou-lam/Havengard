@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4360714388509780850}
   - component: {fileID: 5019712902273299591}
   m_Layer: 12
-  m_Name: Enemy_Skeleton sprite
+  m_Name: S_SkeletonMage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76,7 +76,7 @@ SpriteRenderer:
   m_SortingLayerID: 47421343
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: -1499481780, guid: 4f091c9205e61664ead79cd432e61cfc, type: 3}
+  m_Sprite: {fileID: 73264199, guid: 884b4490c4cb34a4aa620331614cf01c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -102,12 +102,12 @@ GameObject:
   - component: {fileID: 7138767768894893251}
   - component: {fileID: 6000806853737202261}
   - component: {fileID: 7423889796915975064}
-  - component: {fileID: 4526056595879205656}
   - component: {fileID: 4109229266819288528}
+  - component: {fileID: 3939497062379929881}
   - component: {fileID: -6487053401893932263}
   - component: {fileID: 6095935069233576111}
   m_Layer: 8
-  m_Name: ENEMY_Skeleton (test) NAVMESH
+  m_Name: SkeletonMage
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0440ea8cb8e55e44c948b492532c7115, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingMaxHealth: 100
+  startingMaxHealth: 80
   faction: 3
 --- !u!114 &7138767768894893251
 MonoBehaviour:
@@ -221,7 +221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   abilities:
-  - {fileID: 11400000, guid: c7bed211421c4f54faad8b41a657e596, type: 2}
+  - {fileID: 11400000, guid: 3cfa79c94ec14e24aaa8f04d6e04f409, type: 2}
   resourceComponent: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
@@ -261,27 +261,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &4526056595879205656
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4627157592179431975}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c16c34b2e28ef3d438976e0ff5bbbfe3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  aggroRange: 6
-  attackRange: 1.5
-  moveSpeed: 3
-  retargetInterval: 0.5
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  meleeDamage: 10
-  attackCooldown: 1
 --- !u!114 &4109229266819288528
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,6 +279,31 @@ MonoBehaviour:
   sfxVolume: 0.8
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1
+--- !u!114 &3939497062379929881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4627157592179431975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56502c5864fb75742b921aa2a6b5354a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  aggroRange: 5
+  attackRange: 4
+  moveSpeed: 2
+  retargetInterval: 0.5
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 192
+  projectilePrefab: {fileID: 4805287870985771033, guid: c5ab75821e313034688b2ac02e2b1576,
+    type: 3}
+  projectileSpeed: 10
+  projectileDamage: 8
+  attackCooldown: 1.25
+  friendlyFire: 0
 --- !u!114 &-6487053401893932263
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -312,7 +316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c068002020d006b42bac93fab3f22db7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  healthBarPrefab: {fileID: 6848739074368699834, guid: b8d996614fd48f64f9fd7ac659383754,
+  healthBarPrefab: {fileID: 3704963769496374681, guid: 59bdd2a9f0577e34eaded50dcf5c44e9,
     type: 3}
   hideForNeutral: 0
   yOffset: 1

@@ -1,4 +1,4 @@
-using UnityEngine;
+/* using UnityEngine;
 
 namespace Havengard.Spawning
 {
@@ -17,3 +17,4 @@ namespace Havengard.Spawning
         public WaveEntry[] entries;
     }
 }
+*/

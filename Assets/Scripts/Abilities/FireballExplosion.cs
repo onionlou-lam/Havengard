@@ -44,7 +44,7 @@ namespace Havengard.Abilities
                 health.GetHealthSystem().Damage(damage);
             }
 
-            Debug.Log($"Fireball exploded at {transform.position}, radius={radius}, damage={damage}");
+            //Debug.Log($"Fireball exploded at {transform.position}, radius={radius}, damage={damage}");
         }
 
 #if UNITY_EDITOR

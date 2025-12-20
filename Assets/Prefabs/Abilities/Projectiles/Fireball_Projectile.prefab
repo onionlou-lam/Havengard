@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7047824589023881734}
   - component: {fileID: 994751592843161150}
   - component: {fileID: 8229038650667717016}
+  - component: {fileID: -6133071700954543189}
   m_Layer: 9
   m_Name: Fireball_Projectile
   m_TagString: Projectile
@@ -117,6 +118,26 @@ MonoBehaviour:
   canPierce: 0
   maxPierces: 0
   damageFalloffPerPierce: 1
+--- !u!114 &-6133071700954543189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8114323997476065967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49efb715a1395643b158a8846980bcd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  impactParticle: {fileID: 123764, guid: 5077e2ec8ec48d247af6fecd8d5bb756, type: 3}
+  projectileParticle: {fileID: 23576084807554222}
+  muzzleParticle: {fileID: 0}
+  trailParticles:
+  - {fileID: 23576084807529204}
+  - {fileID: 23576084807574018}
+  colliderRadius: 1
+  collideOffset: 0.15
 --- !u!1001 &23576084807433632
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -237,6 +258,24 @@ PrefabInstance:
 --- !u!4 &23576084807369172 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 490612, guid: 11306af72e9741044bdf0bbbcc5c69de,
+    type: 3}
+  m_PrefabInstance: {fileID: 23576084807433632}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &23576084807529204 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 102228, guid: 11306af72e9741044bdf0bbbcc5c69de,
+    type: 3}
+  m_PrefabInstance: {fileID: 23576084807433632}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &23576084807554222 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 141582, guid: 11306af72e9741044bdf0bbbcc5c69de,
+    type: 3}
+  m_PrefabInstance: {fileID: 23576084807433632}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &23576084807574018 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 155554, guid: 11306af72e9741044bdf0bbbcc5c69de,
     type: 3}
   m_PrefabInstance: {fileID: 23576084807433632}
   m_PrefabAsset: {fileID: 0}

@@ -1,12 +1,11 @@
+using UnityEngine;
 using Havengard.Abilities;
 using Havengard.Combat;
 using Havengard.HealthSystem;
-using UnityEngine;
-using static UnityEngine.RuleTile.TilingRuleOutput;
 
 namespace Havengard.Units
 {
-    public class RangedEnemy : UnitBase // or : UnitBase
+    public class RangedEnemy : UnitBase
     {
         [Header("Ranged")]
         [SerializeField] protected GameObject projectilePrefab;
@@ -19,41 +18,41 @@ namespace Havengard.Units
 
         protected override void PerformAttack(GameObject target)
         {
-            if (Time.time < lastAttackTime + attackCooldown || target == null) return;
+            if (target == null) return;
+            if (projectilePrefab == null)
+            {
+                Debug.LogWarning($"[RangedEnemy] {name} has no projectilePrefab assigned.");
+                return;
+            }
+
+            if (Time.time < lastAttackTime + attackCooldown) return;
 
             var th = target.GetComponent<IHealth>();
-            if (th == null || !FactionUtility.CanDamage(GetMyFaction(), th, friendlyFire)) return;
+            if (th == null) return;
+            if (!FactionUtility.CanDamage(GetMyFaction(), th, friendlyFire)) return;
 
-            Vector3 dir = (target.transform.position - transform.position).normalized;
-            Quaternion rot = Quaternion.LookRotation(Vector3.forward, dir);
+            Vector2 dir2D = (target.transform.position - transform.position).normalized;
 
-            var projGO = Instantiate(projectilePrefab, transform.position, rot);
+            // 2D-friendly rotation so projectile faces direction (optional, but nice)
+            float angle = Mathf.Atan2(dir2D.y, dir2D.x) * Mathf.Rad2Deg;
+            Quaternion rot = Quaternion.AngleAxis(angle, Vector3.forward);
+
+            GameObject projGO = Instantiate(projectilePrefab, transform.position, rot);
+
             if (projGO.TryGetComponent<Projectile>(out var proj))
             {
-                proj.Init(dir, GetMyFaction(), friendlyFire, projectileDamage, projectileSpeed);
+                proj.Init(dir2D, GetMyFaction(), friendlyFire, projectileDamage, projectileSpeed);
+            }
+            else
+            {
+                Debug.LogWarning($"[RangedEnemy] Projectile prefab '{projectilePrefab.name}' is missing Projectile component.");
             }
 
             lastAttackTime = Time.time;
         }
 
-        protected override GameObject FindTarget()
-        {
-            GameObject closest = null;
-            float closestDist = Mathf.Infinity;
-            var myFaction = GetMyFaction();
-
-            foreach (var enemy in UnitTargetManager.GetEnemiesOf(myFaction))
-            {
-                var obj = (enemy as MonoBehaviour).gameObject;
-                float d = Vector2.Distance(transform.position, obj.transform.position);
-                if (d < closestDist && d <= aggroRange)
-                {
-                    closestDist = d;
-                    closest = obj;
-                }
-            }
-
-            return closest;
-        }
+        // IMPORTANT:
+        // Do NOT override FindTarget right now.
+        // We want UnitBase.FindTarget() (Physics2D.OverlapCircleAll) so aggro works consistently.
     }
 }
