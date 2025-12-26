@@ -79,8 +79,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
   m_SortingOrder: 100
   m_Sprite: {fileID: -1709175380, guid: 043bb196fc0a3314481aa09704da1b13, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 114506030c43d4f43bd72debe0dec731, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  impactEffectPrefab: {fileID: 0}
+  impactEffectPrefab: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
   impactMissEffectPrefab: {fileID: 0}
   impactSound: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
   destroyOnImpact: 1

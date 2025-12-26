@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2341084bbe603c147915a3dba720aa73, type: 3}
-  m_Name: Fireball
+  m_Name: Frost Bolt
   m_EditorClassIdentifier: 
-  abilityName: Fireball
+  abilityName: Frost Bolt
   cooldown: 1.5
   resourceCost: 5
-  icon: {fileID: 176730863, guid: df5d64f59dbad444e942aad2fe5ff7b8, type: 3}
+  icon: {fileID: 1887636575, guid: 3a21515680322e04caaf73e054fe47a0, type: 3}
   abilityType: 0
-  projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
+  projectilePrefab: {fileID: 8421857012688822738, guid: a90d1d3621b5d384fa0043eea4a95c3d,
     type: 3}
   projectileSpeed: 3
   baseDamage: 20
   useCasterAttackForProjectile: 1
   explosionRadius: 2.5
-  aoeDamageMultiplier: 0.5
+  aoeDamageMultiplier: 0.25
   aoeDamageBonus: 5
-  explosionVFX: {fileID: 123764, guid: 5077e2ec8ec48d247af6fecd8d5bb756, type: 3}
-  explosionSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
-  burnEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
+  explosionVFX: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
+  explosionSFX: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}
+  burnEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
   friendlyFire: 0

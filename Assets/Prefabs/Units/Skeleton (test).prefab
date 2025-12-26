@@ -275,7 +275,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   aggroRange: 6
   attackRange: 1.5
-  moveSpeed: 3
+  moveSpeed: 1.5
   retargetInterval: 0.5
   targetLayers:
     serializedVersion: 2

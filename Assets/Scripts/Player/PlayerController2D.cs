@@ -113,12 +113,21 @@ namespace Havengard.Player
         {
             bool holdPosition = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-            if (Input.GetMouseButtonDown(0)) // Left click: move
+            if (Input.GetMouseButtonDown(0)) // Left click: move uynless holding Shift to hold position
             {
-                var world = MouseWorldOnPlane();
-                clickMoveTarget = new Vector2(world.x, world.y);
-                isClickMoving = true;
-                agent.SetDestination(clickMoveTarget);
+                if (!holdPosition)
+                {
+                    var world = MouseWorldOnPlane();
+                    clickMoveTarget = new Vector2(world.x, world.y);
+                    isClickMoving = true;
+                    agent.SetDestination(clickMoveTarget);
+                }
+                else
+                {
+                    // Ensure we stay put if we were already moving
+                    isClickMoving = false;
+                    if (agent.hasPath) agent.ResetPath();
+                }
             }
 
             if (Input.GetMouseButtonDown(1)) // Right click: cast
