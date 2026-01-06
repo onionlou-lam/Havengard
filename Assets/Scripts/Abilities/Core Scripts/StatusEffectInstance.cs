@@ -1,21 +1,24 @@
 using UnityEngine;
 using System.Collections;
 using Havengard.HealthSystem;
-using Havengard.Combat;
 using Havengard.Character;
 
 namespace Havengard.Statuses
 {
-    /// <summary>
-    /// Handles runtime application of a status effect (damage over time, stuns, slows, buffs, etc.)
-    /// </summary>
+    [DisallowMultipleComponent]
     public class StatusEffectInstance : MonoBehaviour
     {
         public StatusEffectData Data { get; private set; }
+
         private IHealth targetHealth;
         private StatsComponent stats;
         private float remainingTime;
+
         private Coroutine tickRoutine;
+
+        // Stacking
+        private int stacks = 1;
+        private StatusVFXStack vfxStack;
 
 #pragma warning disable CS0414
         [SerializeField] private bool controlsDisabled = false;
@@ -25,21 +28,27 @@ namespace Havengard.Statuses
         {
             Data = data;
             targetHealth = target;
-            stats = (target as MonoBehaviour)?.GetComponent<StatsComponent>();
-            remainingTime = data.duration;
 
             var targetMono = target as MonoBehaviour;
-            if (targetMono != null)
+            if (targetMono == null)
             {
-                if (data.attachVFX != null)
-                {
-                    var fx = Instantiate(data.attachVFX, targetMono.transform.position, Quaternion.identity, targetMono.transform);
-                    Destroy(fx, data.duration);
-                }
-
-                if (data.applySFX != null)
-                    AudioSource.PlayClipAtPoint(data.applySFX, targetMono.transform.position);
+                Destroy(this);
+                return;
             }
+
+            stats = targetMono.GetComponent<StatsComponent>();
+            vfxStack = targetMono.GetComponent<StatusVFXStack>();
+            if (vfxStack == null) vfxStack = targetMono.gameObject.AddComponent<StatusVFXStack>();
+
+            remainingTime = Mathf.Max(0.01f, data.duration);
+            stacks = 1;
+
+            // VFX (one stack on first apply)
+            if (data.attachVFX != null)
+                vfxStack.AddStack(data.attachVFX, data.duration);
+
+            if (data.applySFX != null)
+                AudioSource.PlayClipAtPoint(data.applySFX, targetMono.transform.position);
 
             ApplyModifiers();
 
@@ -66,19 +75,27 @@ namespace Havengard.Statuses
             while (remainingTime > 0f)
             {
                 if (targetHealth == null) yield break;
-                targetHealth.GetHealthSystem().Damage(Data.tickDamage);
-                yield return new WaitForSeconds(Data.tickInterval);
+
+                // Stackable DoT = tickDamage * stacks
+                int tick = Data.tickDamage * Mathf.Max(1, stacks);
+                targetHealth.GetHealthSystem().Damage(tick);
+
+                yield return new WaitForSeconds(Mathf.Max(0.01f, Data.tickInterval));
             }
         }
 
         private void ApplyModifiers()
         {
-            if (stats != null && stats.CurrentStats != null)
+            if (stats != null)
             {
-                stats.CurrentStats.MoveSpeed *= Data.moveSpeedMultiplier;
-                stats.CurrentStats.AttackSpeed *= Data.attackSpeedMultiplier;
-                stats.CurrentStats.Attack = Mathf.RoundToInt(stats.CurrentStats.Attack * Data.damageMultiplier);
-                stats.CurrentStats.Defense = Mathf.RoundToInt(stats.CurrentStats.Defense * Data.defenseMultiplier);
+                // NOTE: this assumes CurrentStats is a class or you have setter methods.
+                // If CurrentStats is a struct, you MUST modify a local copy and assign back.
+                var s = stats.CurrentStats;
+                s.MoveSpeed *= Data.moveSpeedMultiplier;
+                s.AttackSpeed *= Data.attackSpeedMultiplier;
+                s.Attack = Mathf.RoundToInt(s.Attack * Data.damageMultiplier);
+                s.Defense = Mathf.RoundToInt(s.Defense * Data.defenseMultiplier);
+                stats.SetCurrentStats(s);
             }
 
             if (Data.causesStun || Data.causesRoot || Data.causesSilence)
@@ -87,33 +104,47 @@ namespace Havengard.Statuses
 
         private void RemoveModifiers()
         {
-            if (stats != null && stats.CurrentStats != null)
+            if (stats != null)
             {
-                stats.CurrentStats.MoveSpeed /= Data.moveSpeedMultiplier;
-                stats.CurrentStats.AttackSpeed /= Data.attackSpeedMultiplier;
-                stats.CurrentStats.Attack = Mathf.RoundToInt(stats.CurrentStats.Attack / Data.damageMultiplier);
-                stats.CurrentStats.Defense = Mathf.RoundToInt(stats.CurrentStats.Defense / Data.defenseMultiplier);
+                var s = stats.CurrentStats;
+                s.MoveSpeed /= Data.moveSpeedMultiplier;
+                s.AttackSpeed /= Data.attackSpeedMultiplier;
+                s.Attack = Mathf.RoundToInt(s.Attack / Data.damageMultiplier);
+                s.Defense = Mathf.RoundToInt(s.Defense / Data.defenseMultiplier);
+                stats.SetCurrentStats(s);
             }
 
             controlsDisabled = false;
         }
 
+        /// <summary>
+        /// Called when the same effect is applied again.
+        /// Stack if allowed, otherwise refresh if configured.
+        /// </summary>
         public void RefreshOrStack(StatusEffectData newData)
         {
+            if (newData == null || Data == null) return;
+
             if (Data.stackable)
             {
-                var targetMono = targetHealth as MonoBehaviour;
-                if (targetMono != null)
-                {
-                    var newInstance = targetMono.gameObject.AddComponent<StatusEffectInstance>();
-                    newInstance.Apply(newData, targetHealth);
-                }
+                stacks++;
+
+                // Optionally refresh duration when stacking
+                if (Data.refreshDurationOnReapply)
+                    remainingTime = Mathf.Max(remainingTime, newData.duration);
+
+                // Add another VFX stack for feedback
+                if (newData.attachVFX != null && vfxStack != null)
+                    vfxStack.AddStack(newData.attachVFX, newData.duration);
             }
             else if (Data.refreshDurationOnReapply)
             {
                 remainingTime = newData.duration;
             }
         }
+
+        // Backwards-compatible alias if any scripts still call "Reapply"
+        public void Reapply(StatusEffectData newData) => RefreshOrStack(newData);
 
         public bool IsStunned() => Data != null && Data.causesStun;
         public bool IsRooted() => Data != null && Data.causesRoot;

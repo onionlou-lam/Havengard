@@ -25,6 +25,13 @@ namespace Havengard.Units
         [Tooltip("Layers this unit can target (Player, Ally, Gate, etc.). If empty, will search all layers.")]
         [SerializeField] private LayerMask targetLayers = ~0; // default: everything
 
+        [Header("Animator")]
+        [SerializeField] private Animator animator;
+
+        [Tooltip("If true, idle will keep the last facing direction instead of snapping to (0,0).")]
+        [SerializeField] private bool keepLastFacingOnIdle = true;
+        private Vector2 lastFacingDir = Vector2.down;
+
         protected NavMeshAgent agent;
         protected Health health;
         protected AbilityUser abilityUser;
@@ -33,6 +40,11 @@ namespace Havengard.Units
         private float nextScanTime = 0f;
         private bool isDead;
 
+        // Animator parameter hashes (avoid string typos)
+        private static readonly int AnimIsMoving = Animator.StringToHash("IsMoving");
+        private static readonly int AnimHorizontal = Animator.StringToHash("Horizontal");
+        private static readonly int AnimVertical = Animator.StringToHash("Vertical");
+        private static readonly int AnimIdleFrame = Animator.StringToHash("IdleFrame");
         // --------------------------------------------------------------------
         #region Unity Lifecycle
         // --------------------------------------------------------------------
@@ -176,7 +188,38 @@ namespace Havengard.Units
         }
 
         #endregion
+        // --- ANIMATOR CONTROL ---
 
+        private void UpdateAnimatorFromNavMesh()
+        {
+            // desiredVelocity is usually more reliable than velocity for animation
+            Vector2 v = agent != null ? (Vector2)agent.desiredVelocity : Vector2.zero;
+            UpdateAnimatorFromVelocity(v);
+        }
+
+        private void UpdateAnimatorFromVelocity(Vector2 velocity)
+        {
+            bool moving = velocity.sqrMagnitude > 0.001f;
+            animator.SetBool(AnimIsMoving, moving);
+
+            if (moving)
+            {
+                Vector2 dir = velocity.normalized;
+                lastFacingDir = dir;
+
+                animator.SetFloat(AnimHorizontal, dir.x);
+                animator.SetFloat(AnimVertical, dir.y);
+            }
+            else
+            {
+                // keep last facing direction
+                animator.SetFloat(AnimHorizontal, lastFacingDir.x);
+                animator.SetFloat(AnimVertical, lastFacingDir.y);
+
+                // force “first frame”
+                animator.SetFloat(AnimIdleFrame, 0f);
+            }
+        }
 #if UNITY_EDITOR
         protected virtual void OnDrawGizmosSelected()
         {

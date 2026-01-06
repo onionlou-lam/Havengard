@@ -18,7 +18,7 @@ MonoBehaviour:
   category: 1
   damageType: 1
   duration: 3
-  stackable: 1
+  stackable: 0
   refreshDurationOnReapply: 1
   causesDamage: 1
   tickDamage: 5

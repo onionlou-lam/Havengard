@@ -1,24 +1,30 @@
 using UnityEngine;
-using Havengard.HealthSystem;
 
 namespace Havengard.Statuses
 {
     public static class StatusEffectApplier
     {
+        /// <summary>
+        /// Applies an effect to a target gameObject. If it already has a StatusEffectInstance,
+        /// we refresh/stack instead of trying to add a duplicate component.
+        /// </summary>
         public static void ApplyEffect(GameObject target, StatusEffectData effect)
         {
-            var health = target.GetComponent<IHealth>();
+            if (target == null || effect == null) return;
+
+            var health = target.GetComponent<Havengard.HealthSystem.IHealth>();
             if (health == null) return;
 
-            var existing = target.GetComponent<StatusEffectInstance>();
-            if (existing != null && existing.Data == effect)
+            var inst = target.GetComponent<StatusEffectInstance>();
+            if (inst == null)
             {
-                existing.RefreshOrStack(effect);
-                return;
+                inst = target.AddComponent<StatusEffectInstance>();
+                inst.Apply(effect, health);
             }
-
-            var instance = target.AddComponent<StatusEffectInstance>();
-            instance.Apply(effect, health);
+            else
+            {
+                inst.RefreshOrStack(effect);
+            }
         }
     }
 }

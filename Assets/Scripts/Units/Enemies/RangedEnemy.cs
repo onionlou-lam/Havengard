@@ -27,9 +27,9 @@ namespace Havengard.Units
 
             if (Time.time < lastAttackTime + attackCooldown) return;
 
-            var th = target.GetComponent<IHealth>();
-            if (th == null) return;
-            if (!FactionUtility.CanDamage(GetMyFaction(), th, friendlyFire)) return;
+            var targetHP = target.GetComponent<IHealth>();
+            if (targetHP == null) return;
+            if (!FactionUtility.CanDamage(GetMyFaction(), targetHP, friendlyFire)) return;
 
             Vector2 dir2D = (target.transform.position - transform.position).normalized;
 

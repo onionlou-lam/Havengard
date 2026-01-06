@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 6518375280535118874}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -12.6, y: -8.013413, z: -0.066607684}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -40,9 +40,25 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1207443749077226180}
     m_Modifications:
+    - target: {fileID: 122216, guid: cc4ccd4782f35fb4bae18c8ff25f65fe, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
+    - target: {fileID: 153472, guid: cc4ccd4782f35fb4bae18c8ff25f65fe, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
+    - target: {fileID: 164416, guid: cc4ccd4782f35fb4bae18c8ff25f65fe, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 187646, guid: cc4ccd4782f35fb4bae18c8ff25f65fe, type: 3}
       propertyPath: m_Name
       value: DamageOverTimeFire
+      objectReference: {fileID: 0}
+    - target: {fileID: 187646, guid: cc4ccd4782f35fb4bae18c8ff25f65fe, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 436526, guid: cc4ccd4782f35fb4bae18c8ff25f65fe, type: 3}
       propertyPath: m_LocalScale.x

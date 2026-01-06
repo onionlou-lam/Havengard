@@ -16,10 +16,10 @@ namespace Havengard.Units
             if (target == null) return;
             if (Time.time < lastAttackTime + attackCooldown) return;
 
-            var h = target.GetComponent<IHealth>();
-            if (h != null && FactionUtility.CanDamage(GetMyFaction(), h, false))
+            var targetHP = target.GetComponent<IHealth>();
+            if (targetHP != null && FactionUtility.CanDamage(GetMyFaction(), targetHP, false))
             {
-                h.GetHealthSystem().Damage(meleeDamage);
+                targetHP.GetHealthSystem().Damage(meleeDamage);
                 Debug.Log($"[MeleeEnemy] {name} attacks {target.name}, dealing {meleeDamage} damage.");
                 lastAttackTime = Time.time;
             }

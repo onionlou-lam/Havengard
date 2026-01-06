@@ -21,11 +21,8 @@ MonoBehaviour:
     type: 3}
   projectileSpeed: 3
   baseDamage: 20
-  useCasterAttackForProjectile: 1
-  explosionRadius: 2.5
-  aoeDamageMultiplier: 0.5
-  aoeDamageBonus: 5
-  explosionVFX: {fileID: 123764, guid: 5077e2ec8ec48d247af6fecd8d5bb756, type: 3}
-  explosionSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
-  burnEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
   friendlyFire: 0
+  useExplosion: 1
+  explosionRadius: 2.5
+  statusEffectOnExplosion: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57,
+    type: 2}

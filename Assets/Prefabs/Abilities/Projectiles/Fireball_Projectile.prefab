@@ -112,21 +112,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lifetime: 5
   wallsLayerName: Walls
-  wallsTag: Wall
+  damageableLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   impactHitVFX: {fileID: 123764, guid: 3b27aad227ac92c4f9dd4ff950b4a74d, type: 3}
   impactWallVFX: {fileID: 123764, guid: 3b27aad227ac92c4f9dd4ff950b4a74d, type: 3}
   impactSound: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
   impactSoundVolume: 0.8
   destroyOnImpact: 1
-  muzzleVFX: {fileID: 104278, guid: 6563e2b3916df5045b3f264f8ecdadf5, type: 3}
-  muzzleLifetime: 1.5
-  projectileVFX: {fileID: 141582, guid: 11306af72e9741044bdf0bbbcc5c69de, type: 3}
-  trailVFX:
-  - {fileID: 23576084807529204}
-  detachedTrailLifetime: 2
+  destroyDelayAfterImpact: 0
   canPierce: 0
   maxPierces: 0
   damageFalloffPerPierce: 1
+  debugHits: 1
 --- !u!1001 &23576084807433632
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -255,12 +253,6 @@ PrefabInstance:
 --- !u!4 &23576084807369172 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 490612, guid: 11306af72e9741044bdf0bbbcc5c69de,
-    type: 3}
-  m_PrefabInstance: {fileID: 23576084807433632}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &23576084807529204 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 102228, guid: 11306af72e9741044bdf0bbbcc5c69de,
     type: 3}
   m_PrefabInstance: {fileID: 23576084807433632}
   m_PrefabAsset: {fileID: 0}

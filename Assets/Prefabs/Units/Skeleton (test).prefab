@@ -239,6 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   expValue: 20
   goldValue: 5
+  celestiumValue: 0
 --- !u!195 &7423889796915975064
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -280,6 +281,8 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 192
+  animator: {fileID: 0}
+  keepLastFacingOnIdle: 1
   meleeDamage: 10
   attackCooldown: 1
 --- !u!114 &4109229266819288528
@@ -330,10 +333,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damageNumberPrefab: {fileID: 5311707734964029550}
   healNumberPrefab: {fileID: 0}
-  followHealthBarIfPresent: 1
-  fallbackWorldOffset: {x: 0, y: 0.9, z: 0}
-  spawnOffset: {x: 0, y: 0.15, z: 0}
-  minimumAmountToShow: 1
+  worldOffset: {x: 0, y: 0.8, z: 0}
+  followTarget: 1
+  showZeroChanges: 1
 --- !u!1001 &2314952537500789743
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -397,7 +399,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: BaseDamage
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8025833854401254819, guid: 74f165e2ed56bd041a924039cf092681, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

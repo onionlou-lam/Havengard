@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Havengard.HealthSystem;
 using Havengard.Units;
@@ -21,9 +22,7 @@ namespace Havengard.Abilities
         [SerializeField] private float lifetime = 5f;
 
         [Header("Collision")]
-        [Tooltip("Optional: if set, projectile will treat this layer as walls/solid geometry.")]
         [SerializeField] private string wallsLayerName = "Walls";
-        [Tooltip("Optional: if set, projectile will treat this tag as walls/solid geometry.")]
         [SerializeField] private string wallsTag = "Wall";
 
         [Header("Impact Settings")]
@@ -33,17 +32,16 @@ namespace Havengard.Abilities
         [SerializeField] private float impactSoundVolume = 0.8f;
         [SerializeField] private bool destroyOnImpact = true;
 
-        [Header("Projectile VFX (Optional)")]
-        [SerializeField] private GameObject muzzleVFX;
-        [SerializeField] private float muzzleLifetime = 1.5f;
-        [SerializeField] private GameObject projectileVFX;
-        [SerializeField] private GameObject[] trailVFX;
-        [SerializeField] private float detachedTrailLifetime = 2f;
-
         [Header("Piercing Settings")]
         [SerializeField] private bool canPierce = false;
         [SerializeField] private int maxPierces = 0;
         [SerializeField, Range(0.1f, 1f)] private float damageFalloffPerPierce = 1f;
+
+        /// <summary>
+        /// (impactPoint, hitWasUnit)
+        /// Subscribe with SetImpactListener/AddImpactListener.
+        /// </summary>
+        public event Action<Vector3, bool> OnImpacted;
 
         private Vector2 direction;
         private Rigidbody2D rb;
@@ -52,10 +50,6 @@ namespace Havengard.Abilities
 
         private int pierceCount = 0;
         private readonly HashSet<IHealth> alreadyHit = new HashSet<IHealth>();
-
-        private GameObject projectileVfxInstance;
-        private readonly List<GameObject> trailInstances = new List<GameObject>();
-
         private int wallsLayer = -1;
 
         private void Awake()
@@ -67,23 +61,47 @@ namespace Havengard.Abilities
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.freezeRotation = true;
 
-            // We are using trigger-based hits
-            if (col != null) col.isTrigger = true;
+            // Trigger-based hits (works with Tilemap/Composite colliders as long as ONE side has a Rigidbody2D)
+            col.isTrigger = true;
 
             wallsLayer = !string.IsNullOrWhiteSpace(wallsLayerName)
                 ? LayerMask.NameToLayer(wallsLayerName)
                 : -1;
         }
 
+        private void OnEnable()
+        {
+            // If something reuses/enables this projectile again (pooling or scene toggles),
+            // make sure it is in a valid state.
+            if (hasImpacted || !col.enabled)
+                ResetForReuse();
+        }
+
+        /// <summary>
+        /// Call this when reusing projectiles (pooling) OR if you ever see later projectiles with disabled collider.
+        /// </summary>
+        public void ResetForReuse()
+        {
+            hasImpacted = false;
+            pierceCount = 0;
+            alreadyHit.Clear();
+
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            if (col != null)
+                col.enabled = true;
+        }
+
         public void Init(Vector2 dir, Faction faction, bool allowFriendlyFire, int dmg, float projectileSpeed)
         {
+            ResetForReuse();
+
             direction = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector2.right;
             SourceFaction = faction;
             FriendlyFire = allowFriendlyFire;
             Damage = dmg;
             Speed = projectileSpeed;
-
-            SpawnLaunchVFX();
 
             if (lifetime > 0f)
                 Destroy(gameObject, lifetime);
@@ -91,36 +109,8 @@ namespace Havengard.Abilities
 
         private void FixedUpdate()
         {
-            // Critical: once impacted, never re-apply velocity
             if (hasImpacted) return;
-
-            if (rb != null)
-                rb.linearVelocity = direction * Speed;
-        }
-
-        private void SpawnLaunchVFX()
-        {
-            if (muzzleVFX != null)
-            {
-                var muzzle = Instantiate(muzzleVFX, transform.position, transform.rotation);
-                Destroy(muzzle, Mathf.Max(0.1f, muzzleLifetime));
-            }
-
-            if (projectileVFX != null)
-            {
-                projectileVfxInstance = Instantiate(projectileVFX, transform.position, transform.rotation, transform);
-            }
-
-            if (trailVFX != null && trailVFX.Length > 0)
-            {
-                foreach (var t in trailVFX)
-                {
-                    if (t == null) continue;
-                    Transform parent = projectileVfxInstance != null ? projectileVfxInstance.transform : transform;
-                    var trail = Instantiate(t, parent.position, parent.rotation, parent);
-                    trailInstances.Add(trail);
-                }
-            }
+            rb.linearVelocity = direction * Speed;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -130,16 +120,16 @@ namespace Havengard.Abilities
             // WALL HIT
             if (IsWall(other))
             {
-                Impact(position: other.ClosestPoint(transform.position), hitTransform: other.transform, hitUnit: false);
+                Vector3 p = other.ClosestPoint(transform.position);
+                Impact(p, hitUnit: false);
 
-                // Stop + destroy so it can't ghost through
                 if (destroyOnImpact)
                     Destroy(gameObject);
 
                 return;
             }
 
-            // UNIT HIT (use parent so child colliders work)
+            // UNIT HIT
             var health = other.GetComponentInParent<IHealth>();
             if (health == null) return;
             if (alreadyHit.Contains(health)) return;
@@ -150,11 +140,13 @@ namespace Havengard.Abilities
             int damageToDeal = Mathf.RoundToInt(Damage * Mathf.Pow(damageFalloffPerPierce, pierceCount));
             damageToDeal = Mathf.Max(0, damageToDeal);
 
+            // Apply damage
             health.GetHealthSystem()?.Damage(damageToDeal);
 
             pierceCount++;
 
-            Impact(position: other.ClosestPoint(transform.position), hitTransform: other.transform, hitUnit: true);
+            Vector3 hitPoint = other.ClosestPoint(transform.position);
+            Impact(hitPoint, hitUnit: true);
 
             if (!canPierce || pierceCount > maxPierces)
             {
@@ -165,26 +157,23 @@ namespace Havengard.Abilities
 
         private bool IsWall(Collider2D other)
         {
-            if (wallsLayer >= 0 && other.gameObject.layer == wallsLayer)
-                return true;
-
-            if (!string.IsNullOrWhiteSpace(wallsTag) && other.CompareTag(wallsTag))
-                return true;
-
+            if (wallsLayer >= 0 && other.gameObject.layer == wallsLayer) return true;
+            if (!string.IsNullOrWhiteSpace(wallsTag) && other.CompareTag(wallsTag)) return true;
             return false;
         }
 
-        private void Impact(Vector3 position, Transform hitTransform, bool hitUnit)
+        private void Impact(Vector3 position, bool hitUnit)
         {
             hasImpacted = true;
 
-            // Prevent further triggers immediately
+            // stop further triggers + movement
             if (col != null) col.enabled = false;
-
-            // Stop motion immediately
             if (rb != null) rb.linearVelocity = Vector2.zero;
 
-            // Spawn VFX
+            // notify listeners (explosions, special effects, etc.)
+            OnImpacted?.Invoke(position, hitUnit);
+
+            // vfx
             var vfx = hitUnit ? impactHitVFX : impactWallVFX;
             if (vfx != null)
             {
@@ -192,30 +181,38 @@ namespace Havengard.Abilities
                 Destroy(fx, 2f);
             }
 
-            // Play SFX
+            // sfx
             if (impactSound != null)
-                AudioSource.PlayClipAtPoint(impactSound, position, impactSoundVolume);
-
-            DetachTrails();
+                AudioSource.PlayClipAtPoint(impactSound, position, Mathf.Clamp01(impactSoundVolume));
         }
 
-        private void DetachTrails()
+        // ---------------------------
+        // Impact Listener API (NEW)
+        // ---------------------------
+
+        /// <summary>
+        /// Typical use: projectile.SetImpactListener(explosion.HandleProjectileImpact);
+        /// If clearExisting=true (default), it replaces any previous listeners.
+        /// </summary>
+        public void SetImpactListener(Action<Vector3, bool> listener, bool clearExisting = true)
         {
-            for (int i = 0; i < trailInstances.Count; i++)
-            {
-                var trail = trailInstances[i];
-                if (trail == null) continue;
-
-                trail.transform.SetParent(null, worldPositionStays: true);
-                Destroy(trail, Mathf.Max(0.1f, detachedTrailLifetime));
-            }
-
-            if (projectileVfxInstance != null)
-            {
-                projectileVfxInstance.transform.SetParent(null, worldPositionStays: true);
-                Destroy(projectileVfxInstance, Mathf.Max(0.1f, detachedTrailLifetime));
-            }
+            if (clearExisting) OnImpacted = null;
+            if (listener != null) OnImpacted += listener;
         }
+
+        public void AddImpactListener(Action<Vector3, bool> listener)
+        {
+            if (listener != null) OnImpacted += listener;
+        }
+
+        public void RemoveImpactListener(Action<Vector3, bool> listener)
+        {
+            if (listener != null) OnImpacted -= listener;
+        }
+
+        // ---------------------------
+        // Config helpers
+        // ---------------------------
 
         public void ConfigureImpactEffects(GameObject hitVfx, GameObject wallVfx, AudioClip hitSound, float volume = 0.8f)
         {

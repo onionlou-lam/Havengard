@@ -21,7 +21,13 @@ MonoBehaviour:
     type: 3}
   projectileSpeed: 5.5
   baseDamage: 10
+  useCasterAttack: 1
+  hasExplosion: 1
   explosionRadius: 0
-  explosionVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
-  explosionSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
+  aoeDamageMultiplier: 1
+  aoeDamageBonus: 0
+  statusEffect: {fileID: 0}
+  impactHitVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
+  impactWallVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
+  impactSFX: {fileID: 8300000, guid: e0cd8d02ee159ee4ab2be506b7a17c39, type: 3}
   friendlyFire: 0

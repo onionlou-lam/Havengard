@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 8421857012688822738}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -22.618, y: -4.359398, z: -0.023391485}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -118,12 +118,7 @@ MonoBehaviour:
   impactSound: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}
   impactSoundVolume: 0.8
   destroyOnImpact: 1
-  muzzleVFX: {fileID: 0}
-  muzzleLifetime: 1.5
-  projectileVFX: {fileID: 0}
-  trailVFX:
-  - {fileID: 4001027606611353950}
-  detachedTrailLifetime: 2
+  destroyDelayAfterImpact: 0
   canPierce: 0
   maxPierces: 0
   damageFalloffPerPierce: 1
@@ -277,12 +272,6 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
---- !u!1 &4001027606611353950 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 174728, guid: 5535b349e6ff989468a2e66903f14be3,
-    type: 3}
-  m_PrefabInstance: {fileID: 4001027606611446742}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4001027606611568082 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 421380, guid: 5535b349e6ff989468a2e66903f14be3,
