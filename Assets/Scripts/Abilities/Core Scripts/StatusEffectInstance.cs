@@ -1,10 +1,14 @@
+﻿using System.Collections;
 using UnityEngine;
-using System.Collections;
 using Havengard.HealthSystem;
 using Havengard.Character;
 
 namespace Havengard.Statuses
 {
+    /// <summary>
+    /// Runtime instance of a status effect on a unit.
+    /// Supports internal stack counting (no duplicate components).
+    /// </summary>
     [DisallowMultipleComponent]
     public class StatusEffectInstance : MonoBehaviour
     {
@@ -12,17 +16,14 @@ namespace Havengard.Statuses
 
         private IHealth targetHealth;
         private StatsComponent stats;
-        private float remainingTime;
 
+        private float remainingTime;
         private Coroutine tickRoutine;
 
-        // Stacking
-        private int stacks = 1;
-        private StatusVFXStack vfxStack;
+        private int stackCount = 1;
 
-#pragma warning disable CS0414
-        [SerializeField] private bool controlsDisabled = false;
-#pragma warning restore CS0414
+        private Stats baseSnapshot; // snapshot of stats before this effect applied
+        private StatusVFXStack vfxStack;
 
         public void Apply(StatusEffectData data, IHealth target)
         {
@@ -37,25 +38,84 @@ namespace Havengard.Statuses
             }
 
             stats = targetMono.GetComponent<StatsComponent>();
+            remainingTime = data.duration;
+            stackCount = 1;
+
+            // Cache baseline stats once (so we can recompute cleanly)
+            if (stats != null)
+            {
+                baseSnapshot = stats.GetCurrentStatsClone();
+            }
+
+            // VFX stacking manager (optional)
             vfxStack = targetMono.GetComponent<StatusVFXStack>();
             if (vfxStack == null) vfxStack = targetMono.gameObject.AddComponent<StatusVFXStack>();
 
-            remainingTime = Mathf.Max(0.01f, data.duration);
-            stacks = 1;
-
-            // VFX (one stack on first apply)
+            // Spawn VFX for first stack
             if (data.attachVFX != null)
+            {
                 vfxStack.AddStack(data.attachVFX, data.duration);
+            }
 
+            // Apply sound once
             if (data.applySFX != null)
                 AudioSource.PlayClipAtPoint(data.applySFX, targetMono.transform.position);
 
-            ApplyModifiers();
+            RecomputeModifiers();
 
             if (Data.causesDamage)
                 tickRoutine = StartCoroutine(TickDamage());
 
             StartCoroutine(Lifetime());
+        }
+
+        public int GetStackCount() => stackCount;
+
+        /// <summary>
+        /// Try to refresh duration (used when stacks are capped or non-stackable).
+        /// </summary>
+        public bool TryRefreshDuration(float newDuration)
+        {
+            if (Data == null) return false;
+            if (!Data.refreshDurationOnReapply) return false;
+
+            remainingTime = newDuration;
+            return true;
+        }
+
+        /// <summary>
+        /// If stackable, increments stack count up to maxStacks, else refreshes duration when allowed.
+        /// </summary>
+        public void RefreshOrStack(StatusEffectData newData, int maxStacks = int.MaxValue)
+        {
+            if (Data == null)
+            {
+                Apply(newData, targetHealth);
+                return;
+            }
+
+            if (Data.stackable)
+            {
+                if (stackCount < Mathf.Max(1, maxStacks))
+                {
+                    stackCount++;
+                    remainingTime = Mathf.Max(remainingTime, newData.duration);
+
+                    // Add another VFX stack (optional)
+                    if (newData.attachVFX != null && vfxStack != null)
+                        vfxStack.AddStack(newData.attachVFX, newData.duration);
+
+                    RecomputeModifiers();
+                    return;
+                }
+
+                // At cap → refresh duration if allowed
+                TryRefreshDuration(newData.duration);
+                return;
+            }
+
+            // Non-stackable → refresh duration if allowed
+            TryRefreshDuration(newData.duration);
         }
 
         private IEnumerator Lifetime()
@@ -76,75 +136,41 @@ namespace Havengard.Statuses
             {
                 if (targetHealth == null) yield break;
 
-                // Stackable DoT = tickDamage * stacks
-                int tick = Data.tickDamage * Mathf.Max(1, stacks);
-                targetHealth.GetHealthSystem().Damage(tick);
+                // Scale DoT with stacks (tweak as desired)
+                int dmg = Data.tickDamage * Mathf.Max(1, stackCount);
+                targetHealth.GetHealthSystem().Damage(dmg);
 
-                yield return new WaitForSeconds(Mathf.Max(0.01f, Data.tickInterval));
+                yield return new WaitForSeconds(Data.tickInterval);
             }
         }
 
-        private void ApplyModifiers()
+        private void RecomputeModifiers()
         {
-            if (stats != null)
-            {
-                // NOTE: this assumes CurrentStats is a class or you have setter methods.
-                // If CurrentStats is a struct, you MUST modify a local copy and assign back.
-                var s = stats.CurrentStats;
-                s.MoveSpeed *= Data.moveSpeedMultiplier;
-                s.AttackSpeed *= Data.attackSpeedMultiplier;
-                s.Attack = Mathf.RoundToInt(s.Attack * Data.damageMultiplier);
-                s.Defense = Mathf.RoundToInt(s.Defense * Data.defenseMultiplier);
-                stats.SetCurrentStats(s);
-            }
+            if (stats == null || Data == null || baseSnapshot == null) return;
 
-            if (Data.causesStun || Data.causesRoot || Data.causesSilence)
-                controlsDisabled = true;
+            // Rebuild runtime stats from baseline snapshot, then apply stack-scaled multipliers.
+            Stats s = baseSnapshot.Clone();
+
+            float ms = Mathf.Pow(Data.moveSpeedMultiplier, stackCount);
+            float aspeed = Mathf.Pow(Data.attackSpeedMultiplier, stackCount);
+            float dmgMul = Mathf.Pow(Data.damageMultiplier, stackCount);
+            float defMul = Mathf.Pow(Data.defenseMultiplier, stackCount);
+
+            s.MoveSpeed *= ms;
+            s.AttackSpeed *= aspeed;
+            s.Attack = Mathf.RoundToInt(s.Attack * dmgMul);
+            s.Defense = Mathf.RoundToInt(s.Defense * defMul);
+
+            stats.SetCurrentStats(s);
         }
 
         private void RemoveModifiers()
         {
-            if (stats != null)
+            if (stats != null && baseSnapshot != null)
             {
-                var s = stats.CurrentStats;
-                s.MoveSpeed /= Data.moveSpeedMultiplier;
-                s.AttackSpeed /= Data.attackSpeedMultiplier;
-                s.Attack = Mathf.RoundToInt(s.Attack / Data.damageMultiplier);
-                s.Defense = Mathf.RoundToInt(s.Defense / Data.defenseMultiplier);
-                stats.SetCurrentStats(s);
-            }
-
-            controlsDisabled = false;
-        }
-
-        /// <summary>
-        /// Called when the same effect is applied again.
-        /// Stack if allowed, otherwise refresh if configured.
-        /// </summary>
-        public void RefreshOrStack(StatusEffectData newData)
-        {
-            if (newData == null || Data == null) return;
-
-            if (Data.stackable)
-            {
-                stacks++;
-
-                // Optionally refresh duration when stacking
-                if (Data.refreshDurationOnReapply)
-                    remainingTime = Mathf.Max(remainingTime, newData.duration);
-
-                // Add another VFX stack for feedback
-                if (newData.attachVFX != null && vfxStack != null)
-                    vfxStack.AddStack(newData.attachVFX, newData.duration);
-            }
-            else if (Data.refreshDurationOnReapply)
-            {
-                remainingTime = newData.duration;
+                stats.SetCurrentStats(baseSnapshot);
             }
         }
-
-        // Backwards-compatible alias if any scripts still call "Reapply"
-        public void Reapply(StatusEffectData newData) => RefreshOrStack(newData);
 
         public bool IsStunned() => Data != null && Data.causesStun;
         public bool IsRooted() => Data != null && Data.causesRoot;

@@ -20,8 +20,14 @@ MonoBehaviour:
   projectilePrefab: {fileID: 4028906330793846883, guid: 37b478765712f244cbc2377ac06a4a2c,
     type: 3}
   projectileSpeed: 3
-  baseDamage: 20
   friendlyFire: 0
-  useExplosion: 1
-  explosionRadius: 2.5
-  statusEffectOnExplosion: {fileID: 0}
+  baseDamage: 20
+  useCasterAttack: 1
+  hasSplash: 1
+  splashRadius: 2.5
+  splashDamageMultiplier: 1
+  splashDamageBonus: 0
+  statusEffectData: {fileID: 0}
+  impactHitVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
+  impactWallVFX: {fileID: 0}
+  impactSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}

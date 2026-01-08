@@ -1,46 +1,43 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Havengard.Statuses
 {
-    [CreateAssetMenu(menuName = "Havengard/Status Effects/New Status Effect")]
+    [CreateAssetMenu(menuName = "Havengard/Statuses/Status Effect")]
     public class StatusEffectData : ScriptableObject
     {
-        [Header("Basic Info")]
-        public string effectName = "Unnamed Effect";
-        public Sprite icon;
-        public Color uiColor = Color.white;
+        [Header("Identity")]
+        public string effectName = "New Status";
 
-        [Header("Core Behaviour")]
-        public StatusCategory category = StatusCategory.Debuff;
-        public DamageType damageType = DamageType.Physical;
+        [Header("Duration")]
         public float duration = 3f;
+
+        [Header("Stacking")]
         public bool stackable = false;
+
+        // ✅ NEW: max stacks limit (only used if stackable == true)
+        [Min(1)] public int maxStacks = 1;
+
+        // If false and not stackable, reapplying can still refresh the duration if enabled.
         public bool refreshDurationOnReapply = true;
 
-        [Header("Damage-Over-Time (optional)")]
+        [Header("Damage Over Time")]
         public bool causesDamage = false;
-        public int tickDamage = 0;
+        public int tickDamage = 5;
         public float tickInterval = 1f;
 
-        [Header("Crowd-Control (optional)")]
+        [Header("Crowd Control")]
         public bool causesStun = false;
-        public bool causesSilence = false;
         public bool causesRoot = false;
+        public bool causesSilence = false;
 
-        [Header("Stat Modifiers (optional)")]
-        [Range(0f, 2f)] public float moveSpeedMultiplier = 1f;
-        [Range(0f, 2f)] public float attackSpeedMultiplier = 1f;
-        [Range(0f, 2f)] public float damageMultiplier = 1f;
-        [Range(0f, 2f)] public float defenseMultiplier = 1f;
+        [Header("Stat Modifiers (multipliers)")]
+        public float moveSpeedMultiplier = 1f;
+        public float attackSpeedMultiplier = 1f;
+        public float damageMultiplier = 1f;
+        public float defenseMultiplier = 1f;
 
-        [Header("Visuals")]
+        [Header("VFX / SFX")]
         public GameObject attachVFX;
         public AudioClip applySFX;
-
-        [Header("Gameplay Tags")]
-        public bool canBeResisted = true;
     }
-
-    public enum StatusCategory { Buff, Debuff, Neutral }
-    public enum DamageType { Physical, Fire, Frost, Poison, Arcane }
 }

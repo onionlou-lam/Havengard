@@ -12,17 +12,21 @@ namespace Havengard.Abilities
         [Header("Projectile")]
         [SerializeField] private GameObject projectilePrefab;
         [SerializeField] private float projectileSpeed = 10f;
-
-        [Header("Direct Hit Damage")]
-        [SerializeField] private int baseDamage = 10;
+        [SerializeField] private int directHitDamage = 25;
         [SerializeField] private bool friendlyFire = false;
 
-        [Header("Explosion")]
-        [SerializeField] private bool useExplosion = true;
-        [SerializeField] private float explosionRadius = 2.5f;
+        [Header("Splash / AoE")]
+        [SerializeField] private bool enableSplash = true;
+        [SerializeField] private float splashRadius = 2.5f;
+        [SerializeField] private int splashDamage = 10;
 
-        [Header("Optional Status Effect (AoE)")]
-        [SerializeField] private StatusEffectData statusEffectOnExplosion; // e.g., Burn
+        [Header("Status Effect (e.g. Burn)")]
+        [SerializeField] private StatusEffectData statusEffect;
+
+        [Header("Impact VFX/SFX")]
+        [SerializeField] private GameObject hitVFX;
+        [SerializeField] private GameObject missVFX;
+        [SerializeField] private AudioClip hitSFX;
 
         public override bool CanCast(GameObject caster, GameObject target)
         {
@@ -31,54 +35,55 @@ namespace Havengard.Abilities
 
         public override void Cast(GameObject caster, GameObject target)
         {
-            if (projectilePrefab == null || caster == null) return;
+            if (projectilePrefab == null) return;
 
-            // Aim at mouse position (2D)
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = 0f;
+            mouseWorld.z = 0;
 
             Vector2 dir = (mouseWorld - caster.transform.position);
-            if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
+            if (dir.sqrMagnitude < 0.001f) dir = Vector2.right;
             dir.Normalize();
 
-            // Determine faction
-            var casterFaction = caster.GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
+            var casterHealth = caster.GetComponent<IHealth>();
+            var casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
 
-            // Damage uses stats if present
-            int dmg = baseDamage;
+            // Use stats if present, else fall back
+            int attackPower = directHitDamage;
             var stats = caster.GetComponent<StatsComponent>();
-            if (stats != null)
-            {
-                // If your Attack is intended to drive missile damage
-                dmg = Mathf.Max(1, stats.CurrentStats.Attack);
-            }
+            if (stats != null && stats.CurrentStats != null)
+                attackPower = Mathf.Max(0, stats.CurrentStats.Attack);
 
-            // Spawn projectile
-            GameObject projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
+            var projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
 
-            var proj = projGO.GetComponent<Projectile>();
-            if (proj == null)
+            var projectile = projGO.GetComponent<Projectile>();
+            if (projectile == null)
             {
                 Debug.LogError($"[MissileAbility] Projectile prefab '{projectilePrefab.name}' is missing Projectile component.");
                 Destroy(projGO);
                 return;
             }
 
-            // Init projectile movement + hit filtering + hit damage
-            proj.Init(dir, casterFaction, friendlyFire, dmg, projectileSpeed);
+            projectile.ConfigureImpactEffects(hitVFX, missVFX, hitSFX);
+            projectile.Init(dir, casterFaction, friendlyFire, attackPower, projectileSpeed);
 
-            // Optional explosion handler (called by Projectile on impact)
-            if (useExplosion)
+            if (enableSplash)
             {
-                var explosion = projGO.GetComponent<FireballExplosion>();
-                if (explosion == null) explosion = projGO.AddComponent<FireballExplosion>();
+                // Ensure SplashDamage exists
+                var splash = projGO.GetComponent<SplashDamage>();
+                if (splash == null) splash = projGO.AddComponent<SplashDamage>();
 
-                // IMPORTANT: include dmg here (this fixes your CS7036 error)
-                explosion.Setup(caster, explosionRadius, casterFaction, friendlyFire, dmg, statusEffectOnExplosion);
+                splash.Setup(splashRadius, casterFaction, friendlyFire, splashDamage, statusEffect);
 
-                // If your Projectile calls Impact(...) we can hook here.
-                // If your Projectile already calls FireballExplosion.HandleProjectileImpact, you're good.
-                proj.SetImpactListener(explosion.HandleProjectileImpact);
+                // Wire impact event
+                projectile.OnImpact += splash.HandleProjectileImpact;
+            }
+            else if (statusEffect != null)
+            {
+                // If no splash, but we still want a status: apply it to direct target on impact
+                var splash = projGO.GetComponent<SplashDamage>();
+                if (splash == null) splash = projGO.AddComponent<SplashDamage>();
+                splash.Setup(0f, casterFaction, friendlyFire, 0, statusEffect);
+                projectile.OnImpact += splash.HandleProjectileImpact;
             }
         }
     }

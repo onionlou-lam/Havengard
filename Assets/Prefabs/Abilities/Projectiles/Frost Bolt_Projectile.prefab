@@ -111,14 +111,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifetime: 5
-  wallsLayerName: Walls
-  wallsTag: Wall
-  impactHitVFX: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
-  impactWallVFX: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
+  impactEffectPrefab: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
+  impactMissEffectPrefab: {fileID: 0}
   impactSound: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}
-  impactSoundVolume: 0.8
   destroyOnImpact: 1
-  destroyDelayAfterImpact: 0
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   canPierce: 0
   maxPierces: 0
   damageFalloffPerPierce: 1

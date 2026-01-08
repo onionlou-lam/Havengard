@@ -4,59 +4,106 @@ using UnityEngine;
 namespace Havengard.Statuses
 {
     /// <summary>
-    /// Simple helper that manages stacking/refreshing VFX objects on a target.
-    /// StatusEffectInstance can call into this so VFX doesn't duplicate weirdly.
+    /// Static helper for stacking/refreshing attached status VFX on a host.
+    /// This is NOT a MonoBehaviour, and should NOT be attached to GameObjects.
     /// </summary>
-    [DisallowMultipleComponent]
-    public class StatusVFXStack : MonoBehaviour
+    public static class StatusVFXStack
     {
-        // Key = VFX prefab instance ID (or prefab reference), Value = spawned instances
-        private readonly Dictionary<GameObject, List<GameObject>> spawned = new Dictionary<GameObject, List<GameObject>>();
+        // Key: (host instance id, effect instance id)
+        private struct Key
+        {
+            public int hostId;
+            public int effectId;
+
+            public Key(int hostId, int effectId)
+            {
+                this.hostId = hostId;
+                this.effectId = effectId;
+            }
+        }
+
+        private class StackEntry
+        {
+            public readonly List<GameObject> instances = new List<GameObject>();
+        }
+
+        private static readonly Dictionary<Key, StackEntry> stacks = new Dictionary<Key, StackEntry>();
 
         /// <summary>
-        /// Spawns a new VFX instance as a child, and tracks it as a "stack".
+        /// Adds (or refreshes) a stack VFX instance, up to maxStacks.
+        /// Returns current stack count after the operation.
         /// </summary>
-        public GameObject AddStack(GameObject vfxPrefab, float lifetime)
+        public static int AddStack(MonoBehaviour host, int effectInstanceId, GameObject vfxPrefab, float duration, int maxStacks)
         {
-            if (vfxPrefab == null) return null;
+            if (host == null) return 0;
+            if (vfxPrefab == null) return GetCount(host, effectInstanceId);
 
-            if (!spawned.TryGetValue(vfxPrefab, out var list))
+            maxStacks = Mathf.Max(1, maxStacks);
+
+            var key = new Key(host.GetInstanceID(), effectInstanceId);
+
+            if (!stacks.TryGetValue(key, out var entry))
             {
-                list = new List<GameObject>();
-                spawned[vfxPrefab] = list;
+                entry = new StackEntry();
+                stacks[key] = entry;
             }
 
-            var inst = Instantiate(vfxPrefab, transform.position, Quaternion.identity, transform);
-            list.Add(inst);
+            // Clean dead refs
+            for (int i = entry.instances.Count - 1; i >= 0; i--)
+            {
+                if (entry.instances[i] == null) entry.instances.RemoveAt(i);
+            }
 
-            if (lifetime > 0f)
-                Destroy(inst, lifetime);
+            // If already at max, just refresh duration by re-destroy scheduling (spawn a new one is optional)
+            if (entry.instances.Count >= maxStacks)
+            {
+                // Optional: refresh by restarting the last one’s lifetime (simple approach: do nothing here)
+                return entry.instances.Count;
+            }
 
-            return inst;
+            var fx = Object.Instantiate(vfxPrefab, host.transform.position, Quaternion.identity, host.transform);
+
+            if (duration > 0f)
+                Object.Destroy(fx, duration);
+
+            entry.instances.Add(fx);
+            return entry.instances.Count;
+        }
+
+        public static int GetCount(MonoBehaviour host, int effectInstanceId)
+        {
+            if (host == null) return 0;
+            var key = new Key(host.GetInstanceID(), effectInstanceId);
+
+            if (!stacks.TryGetValue(key, out var entry)) return 0;
+
+            // Clean dead refs
+            for (int i = entry.instances.Count - 1; i >= 0; i--)
+            {
+                if (entry.instances[i] == null) entry.instances.RemoveAt(i);
+            }
+
+            return entry.instances.Count;
         }
 
         /// <summary>
-        /// Clears all VFX stacks for a prefab (or all if prefab is null).
+        /// Clears all VFX stacks for this host+effect.
         /// </summary>
-        public void Clear(GameObject vfxPrefab = null)
+        public static void Clear(MonoBehaviour host, int effectInstanceId)
         {
-            if (vfxPrefab == null)
+            if (host == null) return;
+
+            var key = new Key(host.GetInstanceID(), effectInstanceId);
+
+            if (!stacks.TryGetValue(key, out var entry)) return;
+
+            foreach (var fx in entry.instances)
             {
-                foreach (var kv in spawned)
-                {
-                    foreach (var go in kv.Value)
-                        if (go != null) Destroy(go);
-                }
-                spawned.Clear();
-                return;
+                if (fx != null) Object.Destroy(fx);
             }
 
-            if (!spawned.TryGetValue(vfxPrefab, out var list)) return;
-
-            foreach (var go in list)
-                if (go != null) Destroy(go);
-
-            spawned.Remove(vfxPrefab);
+            entry.instances.Clear();
+            stacks.Remove(key);
         }
     }
 }

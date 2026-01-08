@@ -164,8 +164,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.0060214996, y: 0.17763495}
-  m_Size: {x: 0.439785, y: 0.5363426}
+  m_Offset: {x: 0, y: -0.12702405}
+  m_Size: {x: 0.5, y: 0.58989394}
   m_Direction: 0
 --- !u!50 &1868050112021923664
 Rigidbody2D:
@@ -239,6 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   expValue: 20
   goldValue: 5
+  celestiumValue: 0
 --- !u!195 &7423889796915975064
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -298,6 +299,8 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 192
+  animator: {fileID: 0}
+  keepLastFacingOnIdle: 1
   projectilePrefab: {fileID: 4805287870985771033, guid: d6a3d77808ee01848a8d9b843bc0007c,
     type: 3}
   projectileSpeed: 10
@@ -332,12 +335,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6023103f6b516d942be7825e0a01f5e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageNumberPrefab: {fileID: 5311707734964029550}
-  healNumberPrefab: {fileID: 0}
-  followHealthBarIfPresent: 1
-  fallbackWorldOffset: {x: 0, y: 0.9, z: 0}
-  spawnOffset: {x: 0, y: 0.15, z: 0}
-  minimumAmountToShow: 1
+  damageNumberPrefabOverride: {fileID: 0}
+  healNumberPrefabOverride: {fileID: 0}
+  worldOffset: {x: 0, y: 0.9, z: 0}
+  followTarget: 1
+  showZeroChanges: 0
 --- !u!1001 &2314952537500789743
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -412,15 +414,3 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2314952537500789743}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5311707734964029550 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7608452357053375361, guid: 74f165e2ed56bd041a924039cf092681,
-    type: 3}
-  m_PrefabInstance: {fileID: 2314952537500789743}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38ab3cdc3b49a6e428853efe80194005, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
