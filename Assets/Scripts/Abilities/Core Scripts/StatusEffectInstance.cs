@@ -5,10 +5,6 @@ using Havengard.Character;
 
 namespace Havengard.Statuses
 {
-    /// <summary>
-    /// Runtime instance of a status effect on a unit.
-    /// Supports internal stack counting (no duplicate components).
-    /// </summary>
     [DisallowMultipleComponent]
     public class StatusEffectInstance : MonoBehaviour
     {
@@ -22,8 +18,7 @@ namespace Havengard.Statuses
 
         private int stackCount = 1;
 
-        private Stats baseSnapshot; // snapshot of stats before this effect applied
-        private StatusVFXStack vfxStack;
+        private Stats baseSnapshot;
 
         public void Apply(StatusEffectData data, IHealth target)
         {
@@ -41,23 +36,17 @@ namespace Havengard.Statuses
             remainingTime = data.duration;
             stackCount = 1;
 
-            // Cache baseline stats once (so we can recompute cleanly)
             if (stats != null)
             {
                 baseSnapshot = stats.GetCurrentStatsClone();
             }
 
-            // VFX stacking manager (optional)
-            vfxStack = targetMono.GetComponent<StatusVFXStack>();
-            if (vfxStack == null) vfxStack = targetMono.gameObject.AddComponent<StatusVFXStack>();
-
-            // Spawn VFX for first stack
+            // Add VFX stack
             if (data.attachVFX != null)
             {
-                vfxStack.AddStack(data.attachVFX, data.duration);
+                StatusVFXStack.AddStack(this, GetInstanceID(), data.attachVFX, data.duration, data.maxStacks);
             }
 
-            // Apply sound once
             if (data.applySFX != null)
                 AudioSource.PlayClipAtPoint(data.applySFX, targetMono.transform.position);
 
@@ -101,9 +90,11 @@ namespace Havengard.Statuses
                     stackCount++;
                     remainingTime = Mathf.Max(remainingTime, newData.duration);
 
-                    // Add another VFX stack (optional)
-                    if (newData.attachVFX != null && vfxStack != null)
-                        vfxStack.AddStack(newData.attachVFX, newData.duration);
+                    // Add another VFX stack using the AddStack method
+                    if (newData.attachVFX != null)
+                    {
+                        StatusVFXStack.AddStack(this, GetInstanceID(), newData.attachVFX, newData.duration, newData.maxStacks);
+                    }
 
                     RecomputeModifiers();
                     return;

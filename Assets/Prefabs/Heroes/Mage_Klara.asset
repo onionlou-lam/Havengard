@@ -19,6 +19,7 @@ MonoBehaviour:
   startingAbilities:
   - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
   - {fileID: 11400000, guid: 010b655fd6a3f5e4fb98d6d5e9722383, type: 2}
+  - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
   backstory: A mage who has practiced magic for over 20 years.
   overrideStats: 0
   overrideHP: 0

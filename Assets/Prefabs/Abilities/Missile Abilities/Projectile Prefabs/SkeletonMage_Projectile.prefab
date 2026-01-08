@@ -191,12 +191,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifetime: 5
-  wallsLayerName: Walls
-  wallsTag: Wall
-  impactHitVFX: {fileID: 0}
-  impactWallVFX: {fileID: 0}
+  impactEffectPrefab: {fileID: 0}
+  impactMissEffectPrefab: {fileID: 0}
   impactSound: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
-  impactSoundVolume: 0.8
   destroyOnImpact: 1
   canPierce: 0
   maxPierces: 0
@@ -228,6 +225,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4184216851357331356}
     m_Modifications:
+    - target: {fileID: -1422034824130477481, guid: bdaa1cc384b7183478179df9ff7fa89d,
+        type: 3}
+      propertyPath: m_Volume
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 117932, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
       propertyPath: m_Layer
       value: 9
@@ -288,9 +290,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8275230, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
+      propertyPath: m_Volume
+      value: 0.1
+      objectReference: {fileID: 0}
     - target: {fileID: 19907246, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 19941890, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
+      propertyPath: m_SortingLayer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 19941890, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 19941890, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 1147017395
       objectReference: {fileID: 0}
     - target: {fileID: 19941890, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
       propertyPath: m_Materials.Array.size

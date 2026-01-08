@@ -43,7 +43,7 @@ namespace Havengard.Player
 
         private Vector2 lastFacingDir = Vector2.down;
 
-        // Animator parameter hashes (avoid string typos)
+        // Animator parameter hashes
         private static readonly int AnimIsMoving = Animator.StringToHash("IsMoving");
         private static readonly int AnimHorizontal = Animator.StringToHash("Horizontal");
         private static readonly int AnimVertical = Animator.StringToHash("Vertical");
@@ -56,7 +56,7 @@ namespace Havengard.Player
             agent = GetComponent<NavMeshAgent>();
             if (animator == null) animator = GetComponent<Animator>();
 
-            // Rigidbody2D used for collisions; NavMeshAgent moves transform.
+            // Rigidbody2D used for collisions; NavMeshAgent moves transform
             rb.bodyType = RigidbodyType2D.Kinematic;
             rb.simulated = true;
 
@@ -81,7 +81,7 @@ namespace Havengard.Player
             HandleKeyboardAbilities();
             HandleRollInput();
 
-            // If we stopped click-moving, avoid constantly ResetPath every frame.
+            // If we stopped click-moving, avoid constantly ResetPath every frame
             if (!isClickMoving && agent.hasPath)
                 agent.ResetPath();
 
@@ -113,7 +113,7 @@ namespace Havengard.Player
         {
             bool holdPosition = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-            if (Input.GetMouseButtonDown(0)) // Left click: move uynless holding Shift to hold position
+            if (Input.GetMouseButtonDown(0)) // Left click: move unless holding Shift to hold position
             {
                 if (!holdPosition)
                 {
@@ -136,38 +136,14 @@ namespace Havengard.Player
                 if (rightClickAbility != null)
                 {
                     GameObject target = MouseTarget();
-                    if (target != null)
-                    {
-                        var health = target.GetComponent<IHealth>();
-                        if (health != null)
-                        {
-                            var faction = health.GetFaction();
-
-                            if (rightClickAbility.abilityType == AbilityType.Offensive && faction == Faction.Enemy)
-                                abilityUser.UseAbility(indexRightClick, target);
-                            else if (rightClickAbility.abilityType == AbilityType.Supportive &&
-                                     (faction == Faction.Ally || faction == Faction.Player))
-                                abilityUser.UseAbility(indexRightClick, target);
-                            else
-                                CastAbilityAtMouse(indexRightClick);
-                        }
-                        else
-                        {
-                            CastAbilityAtMouse(indexRightClick);
-                        }
-                    }
-                    else
+                    if (target == null)
                     {
                         CastAbilityAtMouse(indexRightClick);
                     }
-                }
-
-                if (!holdPosition)
-                {
-                    var world = MouseWorldOnPlane();
-                    clickMoveTarget = new Vector2(world.x, world.y);
-                    isClickMoving = true;
-                    agent.SetDestination(clickMoveTarget);
+                    else
+                    {
+                        abilityUser.UseAbility(indexRightClick, target);
+                    }
                 }
             }
         }
@@ -191,42 +167,19 @@ namespace Havengard.Player
             StartCoroutine(RollRoutine(dir));
         }
 
-        private System.Collections.IEnumerator RollRoutine(Vector2 direction)
-        {
-            isRolling = true;
-            lastRollTime = Time.time;
-
-            // Stop navmesh movement while rolling
-            isClickMoving = false;
-            if (agent.hasPath) agent.ResetPath();
-
-            float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
-            rollVelocity = direction.normalized * speed;
-
-            float t = 0f;
-            while (t < rollDuration)
-            {
-                t += Time.deltaTime;
-                yield return null;
-            }
-
-            isRolling = false;
-            rb.linearVelocity = Vector2.zero;
-        }
-
         // --- HELPERS ---
 
         private Vector3 MouseWorldOnPlane()
         {
-            Vector3 w = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            w.z = 0f;
-            return w;
+            Vector3 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            world.z = 0f;
+            return world;
         }
 
         private GameObject MouseTarget()
         {
-            Vector3 mw = MouseWorldOnPlane();
-            RaycastHit2D hit = Physics2D.Raycast(mw, Vector2.zero);
+            Vector3 mouseWorldPos = MouseWorldOnPlane();
+            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
             return hit.collider != null ? hit.collider.gameObject : null;
         }
 
@@ -258,13 +211,33 @@ namespace Havengard.Player
             return lastFacingDir.sqrMagnitude > 0.001f ? lastFacingDir : Vector2.down;
         }
 
-        // --- ANIMATOR CONTROL ---
+        private System.Collections.IEnumerator RollRoutine(Vector2 direction)
+        {
+            isRolling = true;
+            lastRollTime = Time.time;
+
+            // Stop navmesh movement while rolling
+            isClickMoving = false;
+            if (agent.hasPath) agent.ResetPath();
+
+            float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
+            rollVelocity = direction.normalized * speed;
+
+            float t = 0f;
+            while (t < rollDuration)
+            {
+                t += Time.deltaTime;
+                yield return null;
+            }
+
+            isRolling = false;
+            rb.linearVelocity = Vector2.zero;
+        }
 
         private void UpdateAnimatorFromNavMesh()
         {
-            // desiredVelocity is usually more reliable than velocity for animation
-            Vector2 v = agent != null ? (Vector2)agent.desiredVelocity : Vector2.zero;
-            UpdateAnimatorFromVelocity(v);
+            Vector2 velocity = agent != null ? (Vector2)agent.desiredVelocity : Vector2.zero;
+            UpdateAnimatorFromVelocity(velocity);
         }
 
         private void UpdateAnimatorFromVelocity(Vector2 velocity)

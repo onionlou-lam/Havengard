@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a738663c2b9d06744b0593f87ae0633c, type: 3}
+  m_Name: Blizzard
+  m_EditorClassIdentifier: 
+  abilityName: Blizzard
+  cooldown: 1
+  resourceCost: 10
+  icon: {fileID: 0}
+  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
+  maxStatusStacks: 1
+  zonePrefab: {fileID: 2830277336758088524, guid: 357956a9e578c754fb82128f118c660c,
+    type: 3}
+  maximumRange: 15
+  areaOfEffectRadius: 5
+  duration: 5
+  delayBeforeEffect: 1
+  followsCaster: 0
+  spawnVFX: {fileID: 0}
+  activeVFX: {fileID: 0}
+  spawnSFX: {fileID: 8300000, guid: acda67df77654d84d93fc2bfd887c533, type: 3}
+  loopSFX: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}

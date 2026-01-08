@@ -12,6 +12,7 @@ TagManager:
   - Friendly
   - Projectile
   - Wall
+  - Zone
   layers:
   - Default
   - TransparentFX

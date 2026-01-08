@@ -20,9 +20,6 @@ namespace Havengard.Abilities
         [SerializeField] private float splashRadius = 2.5f;
         [SerializeField] private int splashDamage = 10;
 
-        [Header("Status Effect (e.g. Burn)")]
-        [SerializeField] private StatusEffectData statusEffect;
-
         [Header("Impact VFX/SFX")]
         [SerializeField] private GameObject hitVFX;
         [SerializeField] private GameObject missVFX;
@@ -40,14 +37,11 @@ namespace Havengard.Abilities
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouseWorld.z = 0;
 
-            Vector2 dir = (mouseWorld - caster.transform.position);
-            if (dir.sqrMagnitude < 0.001f) dir = Vector2.right;
-            dir.Normalize();
+            Vector2 dir = (mouseWorld - caster.transform.position).normalized;
 
             var casterHealth = caster.GetComponent<IHealth>();
             var casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
 
-            // Use stats if present, else fall back
             int attackPower = directHitDamage;
             var stats = caster.GetComponent<StatsComponent>();
             if (stats != null && stats.CurrentStats != null)
@@ -68,22 +62,26 @@ namespace Havengard.Abilities
 
             if (enableSplash)
             {
-                // Ensure SplashDamage exists
                 var splash = projGO.GetComponent<SplashDamage>();
                 if (splash == null) splash = projGO.AddComponent<SplashDamage>();
 
-                splash.Setup(splashRadius, casterFaction, friendlyFire, splashDamage, statusEffect);
+                splash.Setup(caster, splashRadius, casterFaction, friendlyFire, splashDamage, statusEffect, maxStatusStacks, hitVFX, hitSFX);
 
-                // Wire impact event
-                projectile.OnImpact += splash.HandleProjectileImpact;
+                projectile.OnImpact += (impactPoint, collider) =>
+                {
+                    splash.HandleProjectileImpact(impactPoint, collider?.gameObject);
+                };
             }
             else if (statusEffect != null)
             {
-                // If no splash, but we still want a status: apply it to direct target on impact
                 var splash = projGO.GetComponent<SplashDamage>();
                 if (splash == null) splash = projGO.AddComponent<SplashDamage>();
-                splash.Setup(0f, casterFaction, friendlyFire, 0, statusEffect);
-                projectile.OnImpact += splash.HandleProjectileImpact;
+                splash.Setup(caster, 0f, casterFaction, friendlyFire, 0, statusEffect, maxStatusStacks, hitVFX, hitSFX);
+
+                projectile.OnImpact += (impactPoint, collider) =>
+                {
+                    splash.HandleProjectileImpact(impactPoint, collider?.gameObject);
+                };
             }
         }
     }
