@@ -27,8 +27,8 @@ namespace Havengard.HealthSystem
                 return;
 
             // Subscribe to the wrapper events (stable even if HealthSystem instance changes)
-            target.OnDamaged += UpdateBar;
-            target.OnHealed += UpdateBar;
+            target.OnDamaged += OnDamagedHandler;
+            target.OnHealed += OnHealedHandler;
             target.OnDeath += HandleDeath;
             subscribed = true;
 
@@ -64,11 +64,21 @@ namespace Havengard.HealthSystem
         {
             if (!subscribed || !target) return;
 
-            target.OnDamaged -= UpdateBar;
-            target.OnHealed -= UpdateBar;
+            target.OnDamaged -= OnDamagedHandler;
+            target.OnHealed -= OnHealedHandler;
             target.OnDeath -= HandleDeath;
 
             subscribed = false;
+        }
+
+        private void OnDamagedHandler(int amount)
+        {
+            UpdateBar();
+        }
+
+        private void OnHealedHandler(int amount)
+        {
+            UpdateBar();
         }
     }
 }

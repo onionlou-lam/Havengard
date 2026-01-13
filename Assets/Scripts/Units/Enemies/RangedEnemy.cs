@@ -41,7 +41,7 @@ namespace Havengard.Units
 
             if (projGO.TryGetComponent<Projectile>(out var proj))
             {
-                proj.Init(dir2D, GetMyFaction(), friendlyFire, projectileDamage, projectileSpeed);
+                proj.Initialize(dir2D, GetMyFaction(), friendlyFire, projectileDamage, projectileSpeed);
             }
             else
             {

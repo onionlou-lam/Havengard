@@ -13,6 +13,15 @@ namespace Havengard.Units
         [SerializeField] private float attackCooldown = 1f;
         private float lastAttackTime;
 
+        // Add this field to reference the AbilityUser component
+        private AbilityUser abilityUser;
+
+        private void Awake()
+        {
+            // Cache the AbilityUser component
+            abilityUser = GetComponent<AbilityUser>();
+        }
+
         protected override void PerformAttack(GameObject target)
         {
             if (Time.time < lastAttackTime + attackCooldown || target == null) return;

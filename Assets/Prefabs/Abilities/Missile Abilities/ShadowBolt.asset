@@ -16,18 +16,16 @@ MonoBehaviour:
   cooldown: 2
   resourceCost: 5
   icon: {fileID: 282789477, guid: dcfcc2af57791cd43bae90773e70230f, type: 3}
-  abilityType: 0
+  statusEffect: {fileID: 0}
+  maxStatusStacks: 1
   projectilePrefab: {fileID: 4028906330793846883, guid: 37b478765712f244cbc2377ac06a4a2c,
     type: 3}
   projectileSpeed: 3
+  directHitDamage: 25
   friendlyFire: 0
-  baseDamage: 20
-  useCasterAttack: 1
-  hasSplash: 1
+  enableSplash: 1
   splashRadius: 2.5
-  splashDamageMultiplier: 1
-  splashDamageBonus: 0
-  statusEffectData: {fileID: 0}
-  impactHitVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
-  impactWallVFX: {fileID: 0}
-  impactSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
+  splashDamage: 10
+  hitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
+  missVFX: {fileID: 0}
+  hitSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}

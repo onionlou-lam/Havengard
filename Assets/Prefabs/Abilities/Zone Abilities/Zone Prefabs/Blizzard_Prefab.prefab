@@ -10,9 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 584664337981164975}
   - component: {fileID: 5669357544573498768}
+  - component: {fileID: -4482842569231473332}
   m_Layer: 0
   m_Name: Blizzard_Prefab
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7274224199743728767}
@@ -69,6 +70,27 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 3
+--- !u!114 &-4482842569231473332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2830277336758088524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 630c89a92e22a1b4c81d3d2060217c64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  areaOfEffectRadius: 5
+  duration: 5
+  delayBeforeEffect: 1
+  damagePerTick: 5
+  tickInterval: 0.5
+  friendlyFire: 0
+  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
+  maxStatusStacks: 1
+  activeVFX: {fileID: 0}
 --- !u!1001 &4870524139212012129
 PrefabInstance:
   m_ObjectHideFlags: 0

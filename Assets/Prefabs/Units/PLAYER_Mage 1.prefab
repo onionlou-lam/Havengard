@@ -172,7 +172,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0440ea8cb8e55e44c948b492532c7115, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingMaxHealth: 100
+  startingMaxHealth: 500
   faction: 1
 --- !u!114 &4995737479362608597
 MonoBehaviour:
@@ -329,11 +329,11 @@ MonoBehaviour:
     MaxHP: 0
     Attack: 0
     Defense: 0
-    MaxResource: 0
     AttackSpeed: 0
     MoveSpeed: 0
     CritChance: 0
     CritMultiplier: 0
+    MaxResource: 0
 --- !u!212 &7605921635188842516
 SpriteRenderer:
   m_ObjectHideFlags: 0

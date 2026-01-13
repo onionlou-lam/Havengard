@@ -1,15 +1,10 @@
 using UnityEngine;
 using UnityEngine.AI;
-using Havengard.Abilities;
 using Havengard.HealthSystem;
 using Havengard.Combat;
 
 namespace Havengard.Units
 {
-    /// <summary>
-    /// Base class for all NavMesh-driven units (Player, Allies, Enemies, Bosses).
-    /// Handles movement, targeting, attacking, and faction logic.
-    /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Health))]
     [DisallowMultipleComponent]
@@ -19,54 +14,71 @@ namespace Havengard.Units
         [SerializeField] protected float aggroRange = 8f;
         [SerializeField] protected float attackRange = 2f;
         [SerializeField] protected float moveSpeed = 3.5f;
-        [SerializeField] protected float retargetInterval = 0.5f; // seconds between scans
+        [SerializeField] protected float retargetInterval = 0.5f;
 
         [Header("Targeting")]
-        [Tooltip("Layers this unit can target (Player, Ally, Gate, etc.). If empty, will search all layers.")]
-        [SerializeField] private LayerMask targetLayers = ~0; // default: everything
+        [Tooltip("Layers this unit can target (Player, Ally, Gate, etc.).")]
+        [SerializeField] private LayerMask targetLayers = ~0;
 
-        [Header("Animator")]
+        [Header("Animation + Facing")]
         [SerializeField] private Animator animator;
+        [SerializeField] private SpriteRenderer spriteRenderer;
+        [Tooltip("Minimum time between left/right flips (seconds). Prevents jitter when target hovers around your X line.")]
+        [SerializeField] private float flipCooldown = 0.15f;
 
-        [Tooltip("If true, idle will keep the last facing direction instead of snapping to (0,0).")]
-        [SerializeField] private bool keepLastFacingOnIdle = true;
-        private Vector2 lastFacingDir = Vector2.down;
+        private float nextFlipAllowedTime = 0f;
+        [Tooltip("Deadzone for horizontal facing updates. Prevents jitter when moving mostly up/down.")]
+        [SerializeField] private float facingDeadzone = 0.12f;
+
+        [Tooltip("Minimum time between Hit triggers to avoid spam on rapid damage ticks.")]
+        [SerializeField] private float hitAnimCooldown = 0.12f;
+
+        // Animator parameter hashes (must match Animator parameter names exactly)
+        private static readonly int AnimSpeed = Animator.StringToHash("Speed");
+        private static readonly int AnimAttack = Animator.StringToHash("Attack");
+        private static readonly int AnimHit = Animator.StringToHash("Hit");
+        private static readonly int AnimDead = Animator.StringToHash("Dead");
 
         protected NavMeshAgent agent;
         protected Health health;
-        protected AbilityUser abilityUser;
         protected GameObject currentTarget;
 
-        private float nextScanTime = 0f;
+        private float nextScanTime;
         private bool isDead;
 
-        // Animator parameter hashes (avoid string typos)
-        private static readonly int AnimIsMoving = Animator.StringToHash("IsMoving");
-        private static readonly int AnimHorizontal = Animator.StringToHash("Horizontal");
-        private static readonly int AnimVertical = Animator.StringToHash("Vertical");
-        private static readonly int AnimIdleFrame = Animator.StringToHash("IdleFrame");
-        // --------------------------------------------------------------------
-        #region Unity Lifecycle
-        // --------------------------------------------------------------------
+        // Facing: +1 = right, -1 = left (default art faces RIGHT)
+        private int facingSign = 1;
+
+        private float lastHitAnimTime;
 
         protected virtual void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
+            health = GetComponent<Health>();
+
+            if (animator == null) animator = GetComponentInChildren<Animator>();
+            if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+            // NavMeshAgent 2D settings
             agent.updateRotation = false;
             agent.updateUpAxis = false;
             agent.speed = moveSpeed;
 
-            health = GetComponent<Health>();
-            abilityUser = GetComponent<AbilityUser>();
-
             if (health != null)
+            {
+                // archive note for aniamtion changes: matches your Health.cs: event Action<int> OnDamaged
+                health.OnDamaged += OnDamaged;
                 health.OnDeath += HandleDeath;
+            }
         }
 
         protected virtual void OnDestroy()
         {
             if (health != null)
+            {
+                health.OnDamaged -= OnDamaged;
                 health.OnDeath -= HandleDeath;
+            }
         }
 
         protected virtual void Update()
@@ -75,17 +87,11 @@ namespace Havengard.Units
 
             HandleTargeting();
             HandleMovementAndAttack();
+            UpdateAnimatorAndFacing();
         }
 
-        #endregion
+        // ---------------- Targeting ----------------
 
-        // --------------------------------------------------------------------
-        #region Targeting & AI Logic
-        // --------------------------------------------------------------------
-
-        /// <summary>
-        /// Caches target scanning to run only at intervals.
-        /// </summary>
         protected virtual void HandleTargeting()
         {
             if (Time.time < nextScanTime) return;
@@ -94,17 +100,12 @@ namespace Havengard.Units
             currentTarget = FindTarget();
         }
 
-        /// <summary>
-        /// Finds the closest valid enemy using Physics2D overlap + faction filtering.
-        /// Subclasses can override this if they need custom targeting, but usually don't need to.
-        /// </summary>
         protected virtual GameObject FindTarget()
         {
             GameObject closest = null;
             float closestDist = Mathf.Infinity;
             Faction myFaction = GetMyFaction();
 
-            // 2D physics scan in a circle around this unit
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, aggroRange, targetLayers);
 
             foreach (var hit in hits)
@@ -114,7 +115,6 @@ namespace Havengard.Units
                 var healthTarget = hit.GetComponent<IHealth>();
                 if (healthTarget == null) continue;
 
-                // Skip if same faction or otherwise not a valid damage target
                 if (!FactionUtility.CanDamage(myFaction, healthTarget, false))
                     continue;
 
@@ -129,15 +129,15 @@ namespace Havengard.Units
             return closest;
         }
 
-        /// <summary>
-        /// Handles movement and attack range checking via NavMesh.
-        /// </summary>
+        // ---------------- Movement / Attack ----------------
+
         protected virtual void HandleMovementAndAttack()
         {
+            if (agent == null) return;
+
             if (currentTarget == null)
             {
-                agent.isStopped = true;
-                agent.ResetPath();
+                StopAgent();
                 return;
             }
 
@@ -145,81 +145,147 @@ namespace Havengard.Units
 
             if (dist > attackRange)
             {
-                // Move toward target
                 agent.isStopped = false;
                 agent.SetDestination(currentTarget.transform.position);
             }
             else
             {
-                // Stop and attack
                 agent.isStopped = true;
                 PerformAttack(currentTarget);
             }
         }
 
-        #endregion
-
-        // --------------------------------------------------------------------
-        #region Combat & Faction
-        // --------------------------------------------------------------------
-
-        /// <summary>
-        /// Core attack behavior. Must be implemented by subclasses.
-        /// </summary>
         protected abstract void PerformAttack(GameObject target);
 
-        /// <summary>
-        /// Returns this unit's faction from its IHealth, or Neutral if none.
-        /// </summary>
+        // ---------------- Animation + Facing ----------------
+
+        protected void TriggerAttackAnim()
+        {
+            if (animator != null)
+                animator.SetTrigger(AnimAttack);
+        }
+
+        private void TriggerHitAnim()
+        {
+            if (animator != null)
+                animator.SetTrigger(AnimHit);
+        }
+
+        private void UpdateAnimatorAndFacing()
+        {
+            if (animator == null) return;
+
+            // Use agent.velocity for animation (more reliable than desiredVelocity for “actually moving”)
+            Vector2 v = Vector2.zero;
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+                v = agent.velocity;
+
+            animator.SetFloat(AnimSpeed, v.magnitude);
+
+            if (spriteRenderer == null) return;
+
+            // Respect flip cooldown
+            if (Time.time < nextFlipAllowedTime)
+                return;
+
+            // 1) Prefer movement-based facing when moving meaningfully
+            if (Mathf.Abs(v.x) >= facingDeadzone)
+            {
+                int desired = (v.x >= 0f) ? 1 : -1;
+                ApplyFacing(desired);
+                return;
+            }
+
+            // 2) If not moving horizontally, face the target (useful for melee attacks while stopped)
+            if (currentTarget != null)
+            {
+                float dx = currentTarget.transform.position.x - transform.position.x;
+
+                if (Mathf.Abs(dx) >= facingDeadzone)
+                {
+                    int desired = (dx >= 0f) ? 1 : -1;
+                    ApplyFacing(desired);
+                }
+            }
+        }
+
+        private void ApplyFacing(int desiredFacingSign)
+        {
+            if (desiredFacingSign == facingSign) return;
+
+            facingSign = desiredFacingSign;
+            spriteRenderer.flipX = (facingSign == -1);
+
+            // start cooldown only when we actually flip
+            nextFlipAllowedTime = Time.time + flipCooldown;
+        }
+
+        protected void FaceTargetNow()
+        {
+            if (spriteRenderer == null || currentTarget == null) return;
+
+            float dx = currentTarget.transform.position.x - transform.position.x;
+            if (Mathf.Abs(dx) < facingDeadzone) return;
+
+            int desired = (dx >= 0f) ? 1 : -1;
+
+            // Force facing without waiting for cooldown (feels better for attacks)
+            if (desired != facingSign)
+            {
+                facingSign = desired;
+                spriteRenderer.flipX = (facingSign == -1);
+                nextFlipAllowedTime = Time.time + flipCooldown;
+            }
+        }
+
+        // ---------------- Damage / Death ----------------
+
+        private void OnDamaged(int amount)
+        {
+            if (isDead) return;
+
+            // Avoid spamming hit triggers on rapid ticks
+            if (Time.time < lastHitAnimTime + hitAnimCooldown) return;
+            lastHitAnimTime = Time.time;
+
+            TriggerHitAnim();
+        }
+
+        protected virtual void HandleDeath()
+        {
+            if (animator != null)
+            {
+                animator.SetFloat("Speed", 0f);
+                animator.SetBool("Dead", true);
+            }
+            if (isDead) return;
+            isDead = true;
+
+            if (animator != null)
+                animator.SetBool(AnimDead, true);
+
+            StopAgent();
+        }
+
+        private void StopAgent()
+        {
+            if (agent == null) return;
+
+            agent.isStopped = true;
+
+            // Safety: ResetPath only if agent is active/on navmesh
+            if (agent.enabled && agent.isOnNavMesh && agent.hasPath)
+                agent.ResetPath();
+        }
+
+        // ---------------- Faction ----------------
+
         protected virtual Faction GetMyFaction()
         {
             var h = GetComponent<IHealth>();
             return h != null ? h.GetFaction() : Faction.Neutral;
         }
 
-        /// <summary>
-        /// Called when health reaches 0.
-        /// </summary>
-        protected virtual void HandleDeath()
-        {
-            isDead = true;
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        #endregion
-        // --- ANIMATOR CONTROL ---
-
-        private void UpdateAnimatorFromNavMesh()
-        {
-            // desiredVelocity is usually more reliable than velocity for animation
-            Vector2 v = agent != null ? (Vector2)agent.desiredVelocity : Vector2.zero;
-            UpdateAnimatorFromVelocity(v);
-        }
-
-        private void UpdateAnimatorFromVelocity(Vector2 velocity)
-        {
-            bool moving = velocity.sqrMagnitude > 0.001f;
-            animator.SetBool(AnimIsMoving, moving);
-
-            if (moving)
-            {
-                Vector2 dir = velocity.normalized;
-                lastFacingDir = dir;
-
-                animator.SetFloat(AnimHorizontal, dir.x);
-                animator.SetFloat(AnimVertical, dir.y);
-            }
-            else
-            {
-                // keep last facing direction
-                animator.SetFloat(AnimHorizontal, lastFacingDir.x);
-                animator.SetFloat(AnimVertical, lastFacingDir.y);
-
-                // force “first frame”
-                animator.SetFloat(AnimIdleFrame, 0f);
-            }
-        }
 #if UNITY_EDITOR
         protected virtual void OnDrawGizmosSelected()
         {

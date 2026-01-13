@@ -60,7 +60,7 @@ public class HealthBarHUD : MonoBehaviour
         healthSystem = health.GetHealthSystem();
         if (healthSystem == null) return;
 
-        healthSystem.OnHealthChanged += UpdateBar;
+        healthSystem.OnHealthChanged += OnHealthChangedHandler;
         healthSystem.OnDeath += UpdateBar;
     }
 
@@ -68,9 +68,14 @@ public class HealthBarHUD : MonoBehaviour
     {
         if (healthSystem == null) return;
 
-        healthSystem.OnHealthChanged -= UpdateBar;
+        healthSystem.OnHealthChanged -= OnHealthChangedHandler;
         healthSystem.OnDeath -= UpdateBar;
         healthSystem = null;
+    }
+
+    private void OnHealthChangedHandler(int current, int max)
+    {
+        UpdateBar();
     }
 
     private void UpdateBar()

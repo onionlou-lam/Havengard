@@ -36,10 +36,10 @@ namespace Havengard.UI
         private void OnDisable()
         {
             if (health != null)
-                health.OnDamaged -= HandleHealthChanged;
+                health.OnDamaged -= OnDamagedHandler;
 
             if (health != null)
-                health.OnHealed -= HandleHealthChanged;
+                health.OnHealed -= OnHealedHandler;
         }
 
         private void TryInitAndSubscribe()
@@ -54,8 +54,18 @@ namespace Havengard.UI
             initialized = true;
 
             // Subscribe
-            health.OnDamaged += HandleHealthChanged;
-            health.OnHealed += HandleHealthChanged;
+            health.OnDamaged += OnDamagedHandler;
+            health.OnHealed += OnHealedHandler;
+        }
+
+        private void OnDamagedHandler(int amount)
+        {
+            HandleHealthChanged();
+        }
+
+        private void OnHealedHandler(int amount)
+        {
+            HandleHealthChanged();
         }
 
         private void HandleHealthChanged()

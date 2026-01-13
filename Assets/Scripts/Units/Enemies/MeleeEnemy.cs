@@ -1,30 +1,28 @@
-using Havengard.Combat;
-using Havengard.HealthSystem;
 using UnityEngine;
+using Havengard.Abilities;
 
 namespace Havengard.Units
 {
     public class MeleeEnemy : UnitBase
     {
         [Header("Melee")]
-        [SerializeField] private int meleeDamage = 10;
-        [SerializeField] private float attackCooldown = 1.1f;
+        [SerializeField] private AbilityBase attackAbility; // assign Cleave here
         private float lastAttackTime;
 
         protected override void PerformAttack(GameObject target)
         {
-            if (target == null) return;
-            if (Time.time < lastAttackTime + attackCooldown) return;
+            if (attackAbility == null) return;
 
-            var targetHP = target.GetComponent<IHealth>();
-            if (targetHP != null && FactionUtility.CanDamage(GetMyFaction(), targetHP, false))
-            {
-                targetHP.GetHealthSystem().Damage(meleeDamage);
-                Debug.Log($"[MeleeEnemy] {name} attacks {target.name}, dealing {meleeDamage} damage.");
-                lastAttackTime = Time.time;
-            }
+            // Cooldown gate
+            if (Time.time < lastAttackTime + attackAbility.Cooldown) return;
+
+            // CanCast gate
+            if (!attackAbility.CanCast(gameObject, target)) return;
+
+            TriggerAttackAnim();
+            attackAbility.Cast(gameObject, target);
+
+            lastAttackTime = Time.time;
         }
-
-        // No FindTarget override – we use the base UnitBase.FindTarget (Physics2D.OverlapCircleAll)
     }
 }

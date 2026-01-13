@@ -15,7 +15,7 @@ namespace Havengard.Combat
     public class ProjectileShooterUtility : MonoBehaviour
     {
         [Header("General Settings")]
-        [SerializeField] private GameObject projectilePrefab;
+        [SerializeField] private GameObject projectilePrefab; // Prefab should have Projectile component with VFX/SFX configured
         [SerializeField] private float projectileSpeed = 10f;
         [SerializeField] private int projectileDamage = 15;
         [SerializeField] private float spawnOffset = 0.5f;
@@ -23,11 +23,8 @@ namespace Havengard.Combat
         [SerializeField] private LayerMask wallMask;
         [SerializeField] private LayerMask friendlyMask;
 
-        [Header("Optional Effects")]
-        [SerializeField] private GameObject hitVFX;
-        [SerializeField] private GameObject missVFX;
+        [Header("Audio (Fire Sound)")]
         [SerializeField] private AudioClip fireSFX;
-        [SerializeField] private AudioClip hitSFX;
 
         [Header("NavMesh Repositioning")]
         [SerializeField] private bool allowReposition = true;
@@ -98,15 +95,15 @@ namespace Havengard.Combat
             var proj = projGO.GetComponent<Projectile>();
             if (proj != null)
             {
-                proj.Init(dir, faction, friendlyFire, projectileDamage, projectileSpeed);
-                proj.ConfigureImpactEffects(hitVFX, missVFX, hitSFX);
+                // VFX/SFX are configured on the projectile prefab
+                proj.Initialize(dir, faction, friendlyFire, projectileDamage, projectileSpeed);
             }
 
             return true;
         }
 
         /// <summary>
-        /// Optional repositioning logic to regain line-of-sight.
+        /// Optional repositioning logic to regain line-of-sight. 
         /// </summary>
         private void TryReposition(GameObject target)
         {

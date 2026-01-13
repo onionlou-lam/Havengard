@@ -12,7 +12,7 @@ namespace Havengard.Combat
             var atkStats = attacker.GetComponent<StatsComponent>()?.CurrentStats;
             var defStats = defender.GetComponent<StatsComponent>()?.CurrentStats;
 
-            int attackValue = atkStats?.Attack ?? 10;
+            int attackValue = atkStats?.Attack ?? 1; //CHANGE THIS AFTER TESTING
             int defenseValue = defStats?.Defense ?? 0;
 
             // Crit stats

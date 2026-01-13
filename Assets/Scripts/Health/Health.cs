@@ -17,19 +17,30 @@ namespace Havengard.HealthSystem
         private HealthSystem healthSystem;
         private bool hooked;
 
-        public event Action OnDamaged;
-        public event Action OnHealed;
+        // IHealth events
+        public event Action<int> OnDamaged;
+        public event Action<int> OnHealed;
+        public event Action<int, int> OnHealthChanged;
         public event Action OnDeath;
+
+        public int CurrentHealth => EnsureAndGet().CurrentHealth;
+        public int MaxHealth => EnsureAndGet().MaxHealth;
+        public bool IsDead => EnsureAndGet().IsDead;
 
         private void Awake()
         {
-            // Don’t rely on script execution order. Create system if needed.
             EnsureInitialized();
         }
 
         private void OnDestroy()
         {
             Unhook();
+        }
+
+        private HealthSystem EnsureAndGet()
+        {
+            EnsureInitialized();
+            return healthSystem;
         }
 
         private void EnsureInitialized()
@@ -52,30 +63,31 @@ namespace Havengard.HealthSystem
         private void Hook()
         {
             if (hooked || healthSystem == null) return;
+
+            healthSystem.OnDamaged += HandleDamaged;
+            healthSystem.OnHealed += HandleHealed;
             healthSystem.OnHealthChanged += HandleHealthChanged;
             healthSystem.OnDeath += HandleDeath;
+
             hooked = true;
         }
 
         private void Unhook()
         {
             if (!hooked || healthSystem == null) return;
+
+            healthSystem.OnDamaged -= HandleDamaged;
+            healthSystem.OnHealed -= HandleHealed;
             healthSystem.OnHealthChanged -= HandleHealthChanged;
             healthSystem.OnDeath -= HandleDeath;
+
             hooked = false;
         }
 
-        private void HandleHealthChanged()
-        {
-            // For UI this is fine. You can split damaged/healed later.
-            OnDamaged?.Invoke();
-            OnHealed?.Invoke();
-        }
-
-        private void HandleDeath()
-        {
-            OnDeath?.Invoke();
-        }
+        private void HandleDamaged(int amount) => OnDamaged?.Invoke(amount);
+        private void HandleHealed(int amount) => OnHealed?.Invoke(amount);
+        private void HandleHealthChanged(int current, int max) => OnHealthChanged?.Invoke(current, max);
+        private void HandleDeath() => OnDeath?.Invoke();
 
         // -------- IHealth --------
         public HealthSystem GetHealthSystem()
@@ -84,7 +96,18 @@ namespace Havengard.HealthSystem
             return healthSystem;
         }
 
+        public bool TryGetHealthSystem(out HealthSystem system)
+        {
+            EnsureInitialized();
+            system = healthSystem;
+            return system != null;
+        }
+
         public Faction GetFaction() => faction;
+
+        // -------- Convenience API --------
+        public int Damage(int amount) => EnsureAndGet().Damage(amount);
+        public int Heal(int amount) => EnsureAndGet().Heal(amount);
 
         // -------- helpers --------
         public void SetFaction(Faction newFaction) => faction = newFaction;

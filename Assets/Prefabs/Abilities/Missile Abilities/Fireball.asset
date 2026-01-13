@@ -21,11 +21,8 @@ MonoBehaviour:
   projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
     type: 3}
   projectileSpeed: 3
-  directHitDamage: 25
+  directHitDamage: 50
   friendlyFire: 0
   enableSplash: 1
   splashRadius: 2.5
   splashDamage: 10
-  hitVFX: {fileID: 123764, guid: 3b27aad227ac92c4f9dd4ff950b4a74d, type: 3}
-  missVFX: {fileID: 0}
-  hitSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}

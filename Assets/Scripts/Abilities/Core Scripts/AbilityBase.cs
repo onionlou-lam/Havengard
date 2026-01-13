@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Havengard.Abilities
 {
     /// <summary>
-    /// Base ScriptableObject class for all abilities.
+    /// Base ScriptableObject class for all abilities. 
     /// Implements IAbility and adds shared ability behavior.
     /// </summary>
     public abstract class AbilityBase : ScriptableObject, IAbility
@@ -16,15 +16,13 @@ namespace Havengard.Abilities
         [SerializeField] private Sprite icon;
 
         [Header("Buff/Debuff Config (Optional)")]
-        [SerializeField] protected StatusEffectData statusEffect; // Optional status effect on impact
+        [SerializeField] protected StatusEffectData statusEffect;
         [SerializeField] protected int maxStatusStacks = 1;
 
         public string AbilityName => abilityName;
         public float Cooldown => cooldown;
         public int ResourceCost => resourceCost;
-
-        // Dynamic tagging mechanism (optional, if classification is needed)
-        public virtual string AbilityTag => "Generic";
+        public Sprite Icon => icon;
 
         // Provide default handling of buff/debuff logic
         protected void ApplyBuffDebuff(GameObject target)

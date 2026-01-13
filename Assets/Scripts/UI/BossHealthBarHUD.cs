@@ -62,7 +62,7 @@ public class BossHealthBarHUD : MonoBehaviour
         if (healthSystem == null) return;
 
         healthSystem.OnHealthChanged += OnBossHealthChanged;
-        healthSystem.OnDeath += OnBossHealthChanged;
+        healthSystem.OnDeath += OnBossDeathHandler;
 
         ForceSnap();
     }
@@ -72,11 +72,16 @@ public class BossHealthBarHUD : MonoBehaviour
         if (healthSystem == null) return;
 
         healthSystem.OnHealthChanged -= OnBossHealthChanged;
-        healthSystem.OnDeath -= OnBossHealthChanged;
+        healthSystem.OnDeath -= OnBossDeathHandler;
         healthSystem = null;
     }
 
-    private void OnBossHealthChanged()
+    private void OnBossHealthChanged(int current, int max)
+    {
+        UpdateText();
+    }
+
+    private void OnBossDeathHandler()
     {
         UpdateText();
     }

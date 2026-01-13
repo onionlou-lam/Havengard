@@ -2,7 +2,6 @@ using UnityEngine;
 using Havengard.Units;
 using Havengard.HealthSystem;
 using Havengard.Character;
-using Havengard.Statuses;
 
 namespace Havengard.Abilities
 {
@@ -10,7 +9,7 @@ namespace Havengard.Abilities
     public class MissileAbility : AbilityBase
     {
         [Header("Projectile")]
-        [SerializeField] private GameObject projectilePrefab;
+        [SerializeField] private GameObject projectilePrefab; // Prefab contains Projectile component with VFX/SFX
         [SerializeField] private float projectileSpeed = 10f;
         [SerializeField] private int directHitDamage = 25;
         [SerializeField] private bool friendlyFire = false;
@@ -19,11 +18,6 @@ namespace Havengard.Abilities
         [SerializeField] private bool enableSplash = true;
         [SerializeField] private float splashRadius = 2.5f;
         [SerializeField] private int splashDamage = 10;
-
-        [Header("Impact VFX/SFX")]
-        [SerializeField] private GameObject hitVFX;
-        [SerializeField] private GameObject missVFX;
-        [SerializeField] private AudioClip hitSFX;
 
         public override bool CanCast(GameObject caster, GameObject target)
         {
@@ -42,11 +36,13 @@ namespace Havengard.Abilities
             var casterHealth = caster.GetComponent<IHealth>();
             var casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
 
+            // Use stats if present, else fall back to base damage
             int attackPower = directHitDamage;
             var stats = caster.GetComponent<StatsComponent>();
             if (stats != null && stats.CurrentStats != null)
                 attackPower = Mathf.Max(0, stats.CurrentStats.Attack);
 
+            // Spawn projectile
             var projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
 
             var projectile = projGO.GetComponent<Projectile>();
@@ -57,27 +53,26 @@ namespace Havengard.Abilities
                 return;
             }
 
-            projectile.ConfigureImpactEffects(hitVFX, missVFX, hitSFX);
-            projectile.Init(dir, casterFaction, friendlyFire, attackPower, projectileSpeed);
+            // Initialize projectile
+            projectile.Initialize(dir, casterFaction, friendlyFire, attackPower, projectileSpeed);
 
-            if (enableSplash)
+            // Setup splash damage if enabled
+            if (enableSplash || statusEffect != null)
             {
                 var splash = projGO.GetComponent<SplashDamage>();
                 if (splash == null) splash = projGO.AddComponent<SplashDamage>();
 
-                splash.Setup(caster, splashRadius, casterFaction, friendlyFire, splashDamage, statusEffect, maxStatusStacks, hitVFX, hitSFX);
+                splash.Initialize(
+                    caster,
+                    enableSplash ? splashRadius : 0f,
+                    casterFaction,
+                    friendlyFire,
+                    enableSplash ? splashDamage : 0,
+                    statusEffect,
+                    maxStatusStacks
+                );
 
-                projectile.OnImpact += (impactPoint, collider) =>
-                {
-                    splash.HandleProjectileImpact(impactPoint, collider?.gameObject);
-                };
-            }
-            else if (statusEffect != null)
-            {
-                var splash = projGO.GetComponent<SplashDamage>();
-                if (splash == null) splash = projGO.AddComponent<SplashDamage>();
-                splash.Setup(caster, 0f, casterFaction, friendlyFire, 0, statusEffect, maxStatusStacks, hitVFX, hitSFX);
-
+                // Wire up impact event
                 projectile.OnImpact += (impactPoint, collider) =>
                 {
                     splash.HandleProjectileImpact(impactPoint, collider?.gameObject);

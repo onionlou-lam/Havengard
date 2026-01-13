@@ -4,24 +4,30 @@ using Havengard.HealthSystem;
 [DisallowMultipleComponent]
 public class DeathCleanup : MonoBehaviour
 {
-    [SerializeField] private float destroyDelay = 0.35f; // tweak later to match death anim length
+    [Header("FX")]
     [SerializeField] private GameObject deathVFX;
     [SerializeField] private AudioClip deathSFX;
     [SerializeField, Range(0f, 1f)] private float sfxVolume = 0.8f;
+
+    [Header("Cleanup")]
     [SerializeField] private bool disableCollidersImmediately = true;
     [SerializeField] private bool disableAllBehavioursOnDeath = true;
+    [SerializeField] private float fallbackDestroyDelay = 2f; // only used if no animation event
 
     private bool cleaned;
+    private bool destroyScheduled;
+
+    private Health health;
 
     private void Awake()
     {
-        var h = GetComponent<Health>();
-        if (h != null) h.OnDeath += HandleDeath;
+        health = GetComponent<Health>();
+        if (health != null) health.OnDeath += HandleDeath;
     }
+
     private void OnDestroy()
     {
-        var h = GetComponent<Health>();
-        if (h != null) h.OnDeath -= HandleDeath;
+        if (health != null) health.OnDeath -= HandleDeath;
     }
 
     private void HandleDeath()
@@ -34,15 +40,34 @@ public class DeathCleanup : MonoBehaviour
             foreach (var c in GetComponentsInChildren<Collider2D>(true)) c.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = false;
         }
+
         if (disableAllBehavioursOnDeath)
         {
             foreach (var b in GetComponentsInChildren<Behaviour>(true))
-                if (b != this) b.enabled = false; // keep this running to schedule Destroy
+            {
+                if (b == this) continue;
+                if (b is Animator) continue; // keep death anim playing
+                b.enabled = false;
+            }
         }
 
         if (deathVFX) Destroy(Instantiate(deathVFX, transform.position, Quaternion.identity), 2f);
         if (deathSFX) AudioSource.PlayClipAtPoint(deathSFX, transform.position, sfxVolume);
 
-        Destroy(gameObject, destroyDelay); // swap to Animator trigger + longer delay later
+        // Safety fallback in case the animation event is missing
+        if (!destroyScheduled)
+        {
+            destroyScheduled = true;
+            Destroy(gameObject, fallbackDestroyDelay);
+        }
+
+    }
+
+    // Call this from an Animation Event at the end of the Death animation clip.
+    public void OnDeathAnimationFinished()
+    {
+        // If you use pooling later, replace Destroy with ReturnToPool().
+        if (gameObject != null)
+            Destroy(gameObject);
     }
 }
