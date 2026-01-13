@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using Havengard.HealthSystem;
 using Havengard.Combat;
+using System.Collections;
 
 namespace Havengard.Units
 {
@@ -33,6 +34,11 @@ namespace Havengard.Units
         [Tooltip("Minimum time between Hit triggers to avoid spam on rapid damage ticks.")]
         [SerializeField] private float hitAnimCooldown = 0.12f;
 
+        [Header("Damage Flash Effect")]
+        [SerializeField] private Color damageFlashColor = new Color(1f, 0.2f, 0.2f, 1f);
+        [SerializeField] private float flashDuration = 0.2f;
+        [SerializeField] private int flashCount = 2;
+
         // Animator parameter hashes (must match Animator parameter names exactly)
         private static readonly int AnimSpeed = Animator.StringToHash("Speed");
         private static readonly int AnimAttack = Animator.StringToHash("Attack");
@@ -51,6 +57,10 @@ namespace Havengard.Units
 
         private float lastHitAnimTime;
 
+        // Flash effect
+        private Color originalSpriteColor;
+        private Coroutine currentFlashCoroutine;
+
         protected virtual void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
@@ -58,6 +68,9 @@ namespace Havengard.Units
 
             if (animator == null) animator = GetComponentInChildren<Animator>();
             if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+            if (spriteRenderer != null)
+                originalSpriteColor = spriteRenderer.color;
 
             // NavMeshAgent 2D settings
             agent.updateRotation = false;
@@ -79,6 +92,10 @@ namespace Havengard.Units
                 health.OnDamaged -= OnDamaged;
                 health.OnDeath -= HandleDeath;
             }
+
+            // Restore original color on cleanup
+            if (spriteRenderer != null)
+                spriteRenderer.color = originalSpriteColor;
         }
 
         protected virtual void Update()
@@ -175,7 +192,7 @@ namespace Havengard.Units
         {
             if (animator == null) return;
 
-            // Use agent.velocity for animation (more reliable than desiredVelocity for “actually moving”)
+            // Use agent.velocity for animation (more reliable than desiredVelocity for "actually moving")
             Vector2 v = Vector2.zero;
             if (agent != null && agent.enabled && agent.isOnNavMesh)
                 v = agent.velocity;
@@ -249,6 +266,37 @@ namespace Havengard.Units
             lastHitAnimTime = Time.time;
 
             TriggerHitAnim();
+            PlayDamageFlash();
+        }
+
+        private void PlayDamageFlash()
+        {
+            if (spriteRenderer == null) return;
+
+            if (currentFlashCoroutine != null)
+                StopCoroutine(currentFlashCoroutine);
+
+            currentFlashCoroutine = StartCoroutine(FlashCoroutine());
+        }
+
+        private IEnumerator FlashCoroutine()
+        {
+            float flashInterval = flashDuration / (flashCount * 2);
+
+            for (int i = 0; i < flashCount; i++)
+            {
+                // Flash to damage color
+                spriteRenderer.color = damageFlashColor;
+                yield return new WaitForSeconds(flashInterval);
+
+                // Return to original
+                spriteRenderer.color = originalSpriteColor;
+                yield return new WaitForSeconds(flashInterval);
+            }
+
+            // Ensure we end on original color
+            spriteRenderer.color = originalSpriteColor;
+            currentFlashCoroutine = null;
         }
 
         protected virtual void HandleDeath()
@@ -265,6 +313,17 @@ namespace Havengard.Units
                 animator.SetBool(AnimDead, true);
 
             StopAgent();
+
+            // Stop any ongoing flash effect on death
+            if (currentFlashCoroutine != null)
+            {
+                StopCoroutine(currentFlashCoroutine);
+                currentFlashCoroutine = null;
+            }
+
+            // Restore original color
+            if (spriteRenderer != null)
+                spriteRenderer.color = originalSpriteColor;
         }
 
         private void StopAgent()

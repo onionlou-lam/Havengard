@@ -1,6 +1,7 @@
 // Assets/Scripts/Abilities/Core Scripts/AbilityUser.cs
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace Havengard.Abilities
 {
@@ -25,6 +26,10 @@ namespace Havengard.Abilities
 
         private float[] nextReadyTimes;
         private float globalCooldownEndTime;
+
+        // Events for UI feedback
+        public event Action<int, AbilityBase> OnAbilityUsed;  // (index, ability)
+        public event Action<int, float> OnAbilityCooldownStarted; // (index, cooldown duration)
 
         private void Awake()
         {
@@ -79,6 +84,7 @@ namespace Havengard.Abilities
             if (index < 0 || index >= abilities.Count) return null;
             return abilities[index];
         }
+
         public void AddAbility(AbilityBase ability)
         {
             if (ability == null) return;
@@ -88,6 +94,27 @@ namespace Havengard.Abilities
 
             abilities.Add(ability);
             RebuildCooldownArray(); // ensure cooldown array matches new list size
+        }
+
+        /// <summary>
+        /// Gets the remaining cooldown time for an ability.
+        /// Returns 0 if ability is ready.
+        /// </summary>
+        public float GetRemainingCooldown(int index)
+        {
+            if (nextReadyTimes == null || index < 0 || index >= nextReadyTimes.Length)
+                return 0f;
+
+            float remaining = nextReadyTimes[index] - Time.time;
+            return Mathf.Max(0f, remaining);
+        }
+
+        /// <summary>
+        /// Checks if an ability is currently on cooldown.
+        /// </summary>
+        public bool IsOnCooldown(int index)
+        {
+            return GetRemainingCooldown(index) > 0f;
         }
 
         // ------------------------------
@@ -135,12 +162,19 @@ namespace Havengard.Abilities
             // Actually cast
             ability.Cast(gameObject, target);
 
+            // Fire event for UI
+            OnAbilityUsed?.Invoke(index, ability);
+
             // Apply cooldown
             if (nextReadyTimes != null &&
                 index >= 0 &&
                 index < nextReadyTimes.Length)
             {
                 nextReadyTimes[index] = now + ability.Cooldown;
+                
+                // Fire cooldown event for UI
+                if (ability.Cooldown > 0f)
+                    OnAbilityCooldownStarted?.Invoke(index, ability.Cooldown);
             }
 
             // Global cooldown
