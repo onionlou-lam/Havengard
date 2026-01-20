@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a738663c2b9d06744b0593f87ae0633c, type: 3}
+  m_Name: Firestorm
+  m_EditorClassIdentifier: 
+  abilityName: Firestorm
+  cooldown: 1
+  resourceCost: 10
+  icon: {fileID: 21300000, guid: df12bf7b7e18a214190327af4d3c0821, type: 3}
+  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
+  maxStatusStacks: 1
+  zonePrefab: {fileID: 2830277336758088524, guid: 357956a9e578c754fb82128f118c660c,
+    type: 3}
+  maximumRange: 15
+  followsCaster: 0
