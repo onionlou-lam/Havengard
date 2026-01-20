@@ -14876,13 +14876,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifetime: 5
-  impactEffectPrefab: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
-  impactMissEffectPrefab: {fileID: 0}
-  impactSound: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
-  destroyOnImpact: 1
-  collisionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  canPierce: 0
-  maxPierces: 0
-  damageFalloffPerPierce: 1
+  hitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
+  wallHitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
+  impactDestroyDelay: 0.05
+  hitSFX: {fileID: 8300000, guid: 678e1ed4b5863b34aaa4bbcd4614706b, type: 3}
+  wallHitSFX: {fileID: 8300000, guid: 678e1ed4b5863b34aaa4bbcd4614706b, type: 3}
+  trail: {fileID: 9670996}
+  trailParticles: {fileID: 19816562}

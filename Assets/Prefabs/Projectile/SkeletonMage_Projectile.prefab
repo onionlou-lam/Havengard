@@ -79,9 +79,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 47421343
-  m_SortingLayer: 5
-  m_SortingOrder: 100
+  m_SortingLayerID: 1147017395
+  m_SortingLayer: 7
+  m_SortingOrder: 5
   m_Sprite: {fileID: -1709175380, guid: 043bb196fc0a3314481aa09704da1b13, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -150,7 +150,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.1
+  m_Radius: 0.15
 --- !u!50 &1775605206517351562
 Rigidbody2D:
   serializedVersion: 5
@@ -191,13 +191,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifetime: 5
-  impactEffectPrefab: {fileID: 0}
-  impactMissEffectPrefab: {fileID: 0}
-  impactSound: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
-  destroyOnImpact: 1
-  canPierce: 0
-  maxPierces: 0
-  damageFalloffPerPierce: 1
+  hitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
+  wallHitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
+  impactDestroyDelay: 0.05
+  hitSFX: {fileID: 8300000, guid: b4b0832d141b91e4289c3ef385cabab9, type: 3}
+  wallHitSFX: {fileID: 8300000, guid: b4b0832d141b91e4289c3ef385cabab9, type: 3}
+  trail: {fileID: 5532458401095853437}
+  trailParticles: {fileID: 5532458401068242011}
+  enableHoming: 0
+  homingStrength: 5
+  homingDelay: 0
 --- !u!114 &1911459217758430143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,8 +324,47 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 192738, guid: bdaa1cc384b7183478179df9ff7fa89d,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5879022769879343605}
   m_SourcePrefab: {fileID: 100100000, guid: bdaa1cc384b7183478179df9ff7fa89d, type: 3}
+--- !u!198 &5532458401068242011 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 19816562, guid: bdaa1cc384b7183478179df9ff7fa89d,
+    type: 3}
+  m_PrefabInstance: {fileID: 5532458401086452777}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5532458401086358731 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 192738, guid: bdaa1cc384b7183478179df9ff7fa89d,
+    type: 3}
+  m_PrefabInstance: {fileID: 5532458401086452777}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5879022769879343605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5532458401086358731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 3
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
 --- !u!1 &5532458401086555737 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 127600, guid: bdaa1cc384b7183478179df9ff7fa89d,
@@ -338,6 +380,12 @@ GameObject:
 --- !u!4 &5532458401086597011 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 414650, guid: bdaa1cc384b7183478179df9ff7fa89d,
+    type: 3}
+  m_PrefabInstance: {fileID: 5532458401086452777}
+  m_PrefabAsset: {fileID: 0}
+--- !u!96 &5532458401095853437 stripped
+TrailRenderer:
+  m_CorrespondingSourceObject: {fileID: 9670996, guid: bdaa1cc384b7183478179df9ff7fa89d,
     type: 3}
   m_PrefabInstance: {fileID: 5532458401086452777}
   m_PrefabAsset: {fileID: 0}

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Havengard.HealthSystem;
 using Havengard.Heroes;
+using Havengard.Items;
 
 namespace Havengard.Units.Enemies
 {
@@ -9,11 +10,15 @@ namespace Havengard.Units.Enemies
     {
         private Health health;
         private EnemyRewards rewards;
+        private ItemDropper itemDropper;
 
         private void Awake()
         {
             health = GetComponent<Health>();
             rewards = GetComponent<EnemyRewards>();
+            itemDropper = GetComponent<ItemDropper>();
+
+            InitializeItemDropper();
         }
 
         private void OnEnable()
@@ -47,6 +52,26 @@ namespace Havengard.Units.Enemies
             int exp = rewards.ExpValue;
             Debug.Log($"[EnemyDeathRewards] {name} died. Granting {exp} EXP to {player.name}.");
             player.GrantEXP(exp);
+
+            HandleItemDrop();
+        }
+
+        private void InitializeItemDropper()
+        {
+            // Initialize item dropper if needed
+            if (itemDropper != null)
+            {
+                // Add any initialization logic here
+            }
+        }
+
+        private void HandleItemDrop()
+        {
+            // Handle item drops if dropper exists
+            if (itemDropper != null)
+            {
+                itemDropper.TryDropItem(transform.position);
+            }
         }
 
         private HeroInstance FindPlayerHero()

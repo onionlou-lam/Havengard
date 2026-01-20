@@ -9,10 +9,19 @@ namespace Havengard.Abilities
     public class MissileAbility : AbilityBase
     {
         [Header("Projectile")]
-        [SerializeField] private GameObject projectilePrefab; // Prefab contains Projectile component with VFX/SFX
+        [SerializeField] private GameObject projectilePrefab;
         [SerializeField] private float projectileSpeed = 10f;
         [SerializeField] private int directHitDamage = 25;
         [SerializeField] private bool friendlyFire = false;
+
+        [Header("Homing")]
+        [SerializeField] private bool enableHoming = false;
+        [Tooltip("How aggressively the projectile turns toward target (higher = sharper turns)")]
+        [SerializeField] private float homingStrength = 5f;
+        [Tooltip("Delay in seconds before homing activates (0 = immediate)")]
+        [SerializeField] private float homingDelay = 0f;
+        [Tooltip("If true, will automatically find nearest valid target")]
+        [SerializeField] private bool autoTarget = true;
 
         [Header("Splash / AoE")]
         [SerializeField] private bool enableSplash = true;
@@ -55,6 +64,13 @@ namespace Havengard.Abilities
 
             // Initialize projectile
             projectile.Initialize(dir, casterFaction, friendlyFire, attackPower, projectileSpeed);
+
+            // Enable homing if configured
+            if (enableHoming)
+            {
+                GameObject homingTarget = autoTarget ? null : target;
+                projectile.EnableHoming(homingStrength, homingDelay, homingTarget);
+            }
 
             // Setup splash damage if enabled
             if (enableSplash || statusEffect != null)

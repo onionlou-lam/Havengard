@@ -14,6 +14,11 @@ namespace Havengard.Units
         [SerializeField] protected float attackCooldown = 1.25f;
         [SerializeField] protected bool friendlyFire = false;
 
+        [Header("Homing (Optional)")]
+        [SerializeField] protected bool enableHoming = false;
+        [SerializeField] protected float homingStrength = 3f;
+        [SerializeField] protected float homingDelay = 0.1f;
+
         protected float lastAttackTime;
 
         protected override void PerformAttack(GameObject target)
@@ -33,7 +38,7 @@ namespace Havengard.Units
 
             Vector2 dir2D = (target.transform.position - transform.position).normalized;
 
-            // 2D-friendly rotation so projectile faces direction (optional, but nice)
+            // 2D-friendly rotation
             float angle = Mathf.Atan2(dir2D.y, dir2D.x) * Mathf.Rad2Deg;
             Quaternion rot = Quaternion.AngleAxis(angle, Vector3.forward);
 
@@ -42,6 +47,12 @@ namespace Havengard.Units
             if (projGO.TryGetComponent<Projectile>(out var proj))
             {
                 proj.Initialize(dir2D, GetMyFaction(), friendlyFire, projectileDamage, projectileSpeed);
+                
+                // Enable homing if configured
+                if (enableHoming)
+                {
+                    proj.EnableHoming(homingStrength, homingDelay, target);
+                }
             }
             else
             {
@@ -50,9 +61,5 @@ namespace Havengard.Units
 
             lastAttackTime = Time.time;
         }
-
-        // IMPORTANT:
-        // Do NOT override FindTarget right now.
-        // We want UnitBase.FindTarget() (Physics2D.OverlapCircleAll) so aggro works consistently.
     }
 }

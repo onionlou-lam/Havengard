@@ -1,8 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Havengard.Items;
 
-namespace Havengard.Heroes
+namespace Havengard.Items
 {
     [CreateAssetMenu(menuName = "Havengard/Item Database")]
     public class ItemDatabase : ScriptableObject
