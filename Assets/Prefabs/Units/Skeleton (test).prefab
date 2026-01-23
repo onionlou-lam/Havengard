@@ -386,12 +386,13 @@ GameObject:
   - component: {fileID: 7052045999794808110}
   - component: {fileID: 693981025038822441}
   - component: {fileID: 3471215073628060169}
-  - component: {fileID: 6886114122969441840}
   - component: {fileID: 6324325774132078731}
   - component: {fileID: 8544405498439921155}
   - component: {fileID: 2627519306720501718}
   - component: {fileID: 966504854624552787}
   - component: {fileID: 8639417876056563981}
+  - component: {fileID: 5130655393531320101}
+  - component: {fileID: -2577876824732970336}
   m_Layer: 8
   m_Name: Skeleton (test)
   m_TagString: Enemy
@@ -511,21 +512,6 @@ MonoBehaviour:
   resourceComponent: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
---- !u!114 &6886114122969441840
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5755621701607031728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c38903e3702c34b4f890347660001c7e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  expValue: 20
-  goldValue: 5
-  celestiumValue: 0
 --- !u!195 &6324325774132078731
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -569,7 +555,12 @@ MonoBehaviour:
     m_Bits: 192
   animator: {fileID: 249797178550644851}
   spriteRenderer: {fileID: 4642445770223818330}
-  minFlipDistance: 1
+  flipCooldown: 0.15
+  facingDeadzone: 0.12
+  hitAnimCooldown: 0.12
+  damageFlashColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  flashDuration: 0.2
+  flashCount: 2
   attackAbility: {fileID: 11400000, guid: c7bed211421c4f54faad8b41a657e596, type: 2}
 --- !u!114 &2627519306720501718
 MonoBehaviour:
@@ -583,12 +574,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3bce717d88fd4a46a4a1d8b652d20a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  destroyDelay: 0.35
   deathVFX: {fileID: 0}
   deathSFX: {fileID: 0}
   sfxVolume: 0.8
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1
+  fallbackDestroyDelay: 2
 --- !u!114 &966504854624552787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -619,9 +610,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damageNumberPrefabOverride: {fileID: 0}
   healNumberPrefabOverride: {fileID: 0}
-  worldOffset: {x: 0, y: 0.8, z: 0}
+  worldOffset: {x: 0, y: 0.6, z: 0}
   followTarget: 1
   showZeroChanges: 0
+--- !u!114 &5130655393531320101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5755621701607031728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5f6e6d945bc0eb4f884486eefedfb6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropTable: {fileID: 11400000, guid: 2898b06912ce31542967b37007b3460a, type: 2}
+  itemPickupPrefab: {fileID: 8937873907132777637, guid: 73d9bbd0084c9174094c87f7ec87242b,
+    type: 3}
+  dropRadius: 1
+  dropOnDeath: 1
+  guaranteedDrops: []
+--- !u!114 &-2577876824732970336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5755621701607031728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e8efa7479128d14db6be6690870dbed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7243079471799800822
 GameObject:
   m_ObjectHideFlags: 0

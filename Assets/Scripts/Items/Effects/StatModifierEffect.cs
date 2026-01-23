@@ -1,112 +1,172 @@
 using UnityEngine;
-using Havengard.Heroes;
-using Havengard.Character; // Correct namespace for StatsComponent
+using Havengard.Character;
 
 namespace Havengard.Items
 {
-    public enum StatType
-    {
-        MaxHealth,
-        Attack,
-        Defense,
-        AttackSpeed,
-        MoveSpeed,
-        CritChance,
-        CritMultiplier,
-        MaxResource,
-        ResourceRegen,
-        CooldownReduction,
-        LifeSteal,
-        DodgeChance
-    }
-
     [CreateAssetMenu(menuName = "Havengard/Items/Effects/Stat Modifier")]
     public class StatModifierEffect : ItemEffect
     {
-        [Header("Stat Modifier")]
+        public enum StatType
+        {
+            MaxHP,
+            Attack,
+            Defense,
+            MaxResource,
+            AttackSpeed,
+            MoveSpeed,
+            CritChance,
+            CritMultiplier
+        }
+
+        [Header("Stat Modification")]
         public StatType statType;
-        [Tooltip("Is this a percentage modifier (e.g., +10% instead of +10)?")]
-        public bool isPercentage = false;
+        public float baseValue = 10f;
+        public float perLevelValue = 5f;
 
-        public override void Apply(GameObject character, int level)
+        public override void Apply(GameObject target, int level)
         {
-            var stats = character.GetComponent<StatsComponent>();
-            if (stats == null) return;
+            if (target == null)
+            {
+                Debug.LogWarning("[StatModifierEffect] Target is null");
+                return;
+            }
 
-            float value = GetValue(level);
-            var current = stats.CurrentStats;
+            StatsComponent stats = target.GetComponent<StatsComponent>();
+            if (stats == null || stats.CurrentStats == null)
+            {
+                Debug.LogWarning($"[StatModifierEffect] {target.name} has no StatsComponent or CurrentStats");
+                return;
+            }
+
+            float totalValue = baseValue + (perLevelValue * (level - 1));
+            
+            Debug.Log($"[StatModifierEffect] Applying {statType} +{totalValue} to {target.name} (Level {level})");
 
             switch (statType)
             {
-                case StatType.MaxHealth:
-                    current.MaxHP += isPercentage ? (int)(current.MaxHP * value / 100f) : (int)value;
+                case StatType.MaxHP:
+                    stats.CurrentStats.MaxHP += Mathf.RoundToInt(totalValue);
+                    // Update health system
+                    var health = target.GetComponent<Havengard.HealthSystem.Health>();
+                    if (health != null)
+                    {
+                        health.SetMaxHealthFromStats(refill: false);
+                    }
                     break;
+                    
                 case StatType.Attack:
-                    current.Attack += isPercentage ? (int)(current.Attack * value / 100f) : (int)value;
+                    stats.CurrentStats.Attack += Mathf.RoundToInt(totalValue);
                     break;
+                    
                 case StatType.Defense:
-                    current.Defense += isPercentage ? (int)(current.Defense * value / 100f) : (int)value;
+                    stats.CurrentStats.Defense += Mathf.RoundToInt(totalValue);
                     break;
-                case StatType.AttackSpeed:
-                    current.AttackSpeed += isPercentage ? current.AttackSpeed * value / 100f : value;
-                    break;
-                case StatType.MoveSpeed:
-                    current.MoveSpeed += isPercentage ? current.MoveSpeed * value / 100f : value;
-                    break;
-                case StatType.CritChance:
-                    current.CritChance += value / 100f;
-                    break;
-                case StatType.CritMultiplier:
-                    current.CritMultiplier += value;
-                    break;
+                    
                 case StatType.MaxResource:
-                    current.MaxResource += isPercentage ? (int)(current.MaxResource * value / 100f) : (int)value;
+                    stats.CurrentStats.MaxResource += Mathf.RoundToInt(totalValue);
+                    break;
+                    
+                case StatType.AttackSpeed:
+                    stats.CurrentStats.AttackSpeed += totalValue;
+                    break;
+                    
+                case StatType.MoveSpeed:
+                    stats.CurrentStats.MoveSpeed += totalValue;
+                    break;
+                    
+                case StatType.CritChance:
+                    stats.CurrentStats.CritChance += totalValue;
+                    break;
+                    
+                case StatType.CritMultiplier:
+                    stats.CurrentStats.CritMultiplier += totalValue;
+                    break;
+            }
+
+            Debug.Log($"[StatModifierEffect] New {statType}: {GetCurrentStatValue(stats, statType)}");
+        }
+
+        public override void Remove(GameObject target, int level)
+        {
+            if (target == null) return;
+
+            StatsComponent stats = target.GetComponent<StatsComponent>();
+            if (stats == null || stats.CurrentStats == null) return;
+
+            float totalValue = baseValue + (perLevelValue * (level - 1));
+            
+            Debug.Log($"[StatModifierEffect] Removing {statType} -{totalValue} from {target.name}");
+
+            switch (statType)
+            {
+                case StatType.MaxHP:
+                    stats.CurrentStats.MaxHP -= Mathf.RoundToInt(totalValue);
+                    stats.CurrentStats.MaxHP = Mathf.Max(1, stats.CurrentStats.MaxHP);
+                    var health = target.GetComponent<Havengard.HealthSystem.Health>();
+                    if (health != null)
+                    {
+                        health.SetMaxHealthFromStats(refill: false);
+                    }
+                    break;
+                    
+                case StatType.Attack:
+                    stats.CurrentStats.Attack -= Mathf.RoundToInt(totalValue);
+                    stats.CurrentStats.Attack = Mathf.Max(0, stats.CurrentStats.Attack);
+                    break;
+                    
+                case StatType.Defense:
+                    stats.CurrentStats.Defense -= Mathf.RoundToInt(totalValue);
+                    stats.CurrentStats.Defense = Mathf.Max(0, stats.CurrentStats.Defense);
+                    break;
+                    
+                case StatType.MaxResource:
+                    stats.CurrentStats.MaxResource -= Mathf.RoundToInt(totalValue);
+                    stats.CurrentStats.MaxResource = Mathf.Max(1, stats.CurrentStats.MaxResource);
+                    break;
+                    
+                case StatType.AttackSpeed:
+                    stats.CurrentStats.AttackSpeed -= totalValue;
+                    break;
+                    
+                case StatType.MoveSpeed:
+                    stats.CurrentStats.MoveSpeed -= totalValue;
+                    break;
+                    
+                case StatType.CritChance:
+                    stats.CurrentStats.CritChance -= totalValue;
+                    break;
+                    
+                case StatType.CritMultiplier:
+                    stats.CurrentStats.CritMultiplier -= totalValue;
                     break;
             }
         }
 
-        public override void Remove(GameObject character, int level)
+        public override float GetValue(int level)
         {
-            var stats = character.GetComponent<StatsComponent>();
-            if (stats == null) return;
-
-            float value = GetValue(level);
-            var current = stats.CurrentStats;
-
-            switch (statType)
-            {
-                case StatType.MaxHealth:
-                    current.MaxHP -= isPercentage ? (int)(current.MaxHP * value / 100f) : (int)value;
-                    break;
-                case StatType.Attack:
-                    current.Attack -= isPercentage ? (int)(current.Attack * value / 100f) : (int)value;
-                    break;
-                case StatType.Defense:
-                    current.Defense -= isPercentage ? (int)(current.Defense * value / 100f) : (int)value;
-                    break;
-                case StatType.AttackSpeed:
-                    current.AttackSpeed -= isPercentage ? current.AttackSpeed * value / 100f : value;
-                    break;
-                case StatType.MoveSpeed:
-                    current.MoveSpeed -= isPercentage ? current.MoveSpeed * value / 100f : value;
-                    break;
-                case StatType.CritChance:
-                    current.CritChance -= value / 100f;
-                    break;
-                case StatType.CritMultiplier:
-                    current.CritMultiplier -= value;
-                    break;
-                case StatType.MaxResource:
-                    current.MaxResource -= isPercentage ? (int)(current.MaxResource * value / 100f) : (int)value;
-                    break;
-            }
+            return baseValue + (perLevelValue * (level - 1));
         }
 
-        public override string FormatDescription(string desc, int level)
+        public override string FormatDescription(string description, int level)
         {
             float value = GetValue(level);
-            string formatted = isPercentage ? $"{value:F1}%" : $"{value:F0}";
-            return desc.Replace($"{{{statType}}}", formatted);
+            return description.Replace("{value}", value.ToString("F1"));
+        }
+
+        private float GetCurrentStatValue(StatsComponent stats, StatType type)
+        {
+            return type switch
+            {
+                StatType.MaxHP => stats.CurrentStats.MaxHP,
+                StatType.Attack => stats.CurrentStats.Attack,
+                StatType.Defense => stats.CurrentStats.Defense,
+                StatType.MaxResource => stats.CurrentStats.MaxResource,
+                StatType.AttackSpeed => stats.CurrentStats.AttackSpeed,
+                StatType.MoveSpeed => stats.CurrentStats.MoveSpeed,
+                StatType.CritChance => stats.CurrentStats.CritChance,
+                StatType.CritMultiplier => stats.CurrentStats.CritMultiplier,
+                _ => 0
+            };
         }
     }
 }

@@ -28,10 +28,12 @@ namespace Havengard.Items
         private float spawnTime;
         private Transform playerTransform;
         private bool isBeingCollected = false;
+        private int itemLevel = 1; // Store the level
 
-        public void Initialize(ItemData data)
+        public void Initialize(ItemData data, int level = 1)
         {
             _itemData = data;
+            itemLevel = level;
             
             if (spriteRenderer != null && data != null && data.icon != null)
             {
@@ -134,33 +136,51 @@ namespace Havengard.Items
 
             isBeingCollected = true;
 
-            // Try to add to inventory
+            // Create ItemInstance with level
+            ItemInstance newItem = new ItemInstance(this._itemData, itemLevel);
+
+            // Try to add to player's inventory first
             var inventory = player.GetComponent<ItemInventory>();
+            bool addedToInventory = false;
+            
             if (inventory != null)
             {
-                bool success = inventory.AddItem(this._itemData);
-                if (success)
+                addedToInventory = inventory.TryAddItem(newItem);
+            }
+
+            // If couldn't add to inventory, add to cache
+            if (!addedToInventory)
+            {
+                if (ItemCache.Instance != null)
                 {
-                    // Play pickup effects
-                    if (this._itemData.pickupVFX != null)
-                    {
-                        Instantiate(this._itemData.pickupVFX, transform.position, Quaternion.identity);
-                    }
-
-                    if (this._itemData.pickupSFX != null)
-                    {
-                        AudioSource.PlayClipAtPoint(this._itemData.pickupSFX, transform.position);
-                    }
-
-                    Debug.Log($"[ItemPickup] Player collected: {this._itemData.itemName}");
-                    Destroy(gameObject);
+                    ItemCache.Instance.AddItem(newItem);
+                    Debug.Log($"[ItemPickup] Item sent to cache: {this._itemData.itemName}");
                 }
                 else
                 {
-                    isBeingCollected = false;
-                    Debug.Log($"[ItemPickup] Inventory full or item rejected");
+                    Debug.LogWarning("[ItemPickup] ItemCache.Instance is null! Item will be lost.");
                 }
             }
+
+            // Play pickup effects
+            if (this._itemData.pickupVFX != null)
+            {
+                Instantiate(this._itemData.pickupVFX, transform.position, Quaternion.identity);
+            }
+
+            if (this._itemData.pickupSFX != null)
+            {
+                AudioSource.PlayClipAtPoint(this._itemData.pickupSFX, transform.position);
+            }
+
+            // Notify ItemManager
+            if (ItemManager.Instance != null)
+            {
+                ItemManager.Instance.OnItemCollected(newItem);
+            }
+
+            Debug.Log($"[ItemPickup] Player collected: {this._itemData.itemName} (AddedToInventory: {addedToInventory})");
+            Destroy(gameObject);
         }
 
         private void OnDrawGizmosSelected()

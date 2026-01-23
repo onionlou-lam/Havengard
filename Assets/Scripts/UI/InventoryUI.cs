@@ -28,7 +28,32 @@ namespace Havengard.UI
             if (closeButton != null)
                 closeButton.onClick.AddListener(Hide);
 
+            // Find player inventory and subscribe to changes
+            var playerInventory = FindFirstObjectByType<ItemInventory>();
+            if (playerInventory != null)
+            {
+                playerInventory.OnInventoryChanged += OnInventoryChanged;
+                targetInventory = playerInventory;
+                Debug.Log("[InventoryUI] Subscribed to player inventory changes");
+            }
+
             Hide();
+        }
+
+        private void OnDestroy()
+        {
+            if (targetInventory != null)
+            {
+                targetInventory.OnInventoryChanged -= OnInventoryChanged;
+            }
+        }
+
+        private void OnInventoryChanged()
+        {
+            if (panel.activeSelf)
+            {
+                RefreshDisplay();
+            }
         }
 
         public void Show(ItemInventory inventory)
@@ -51,7 +76,6 @@ namespace Havengard.UI
         public void Hide()
         {
             panel.SetActive(false);
-            targetInventory = null;
         }
 
         private void RefreshDisplay()
@@ -62,6 +86,8 @@ namespace Havengard.UI
 
             // Get all items from inventory
             var items = targetInventory.GetAllItems();
+            
+            Debug.Log($"[InventoryUI] Refreshing display with {items.Count} items");
             
             foreach (var item in items)
             {
@@ -94,6 +120,11 @@ namespace Havengard.UI
             {
                 slot.SetItem(item);
                 itemSlots.Add(slot);
+                Debug.Log($"[InventoryUI] Created slot for {item.itemData.itemName} with icon: {item.itemData.icon != null}");
+            }
+            else
+            {
+                Debug.LogError("[InventoryUI] ItemSlotUI component not found on instantiated prefab!");
             }
         }
 

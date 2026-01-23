@@ -64,19 +64,53 @@ namespace Havengard.UI
             if (isEmpty || currentItem == null)
             {
                 // Empty slot
-                if (iconImage != null) iconImage.enabled = false;
-                if (levelText != null) levelText.enabled = false;
-                if (rarityBorder != null) rarityBorder.color = emptyColor;
-                if (backgroundImage != null) backgroundImage.color = emptyColor;
-                if (emptyIndicator != null) emptyIndicator.SetActive(true);
+                if (iconImage != null)
+                {
+                    iconImage.enabled = false;
+                    iconImage.sprite = null;
+                }
+                
+                if (levelText != null)
+                {
+                    levelText.enabled = false;
+                    levelText.text = "";
+                }
+                
+                if (rarityBorder != null)
+                {
+                    rarityBorder.color = emptyColor;
+                }
+                
+                if (backgroundImage != null)
+                {
+                    backgroundImage.color = emptyColor;
+                }
+                
+                if (emptyIndicator != null)
+                {
+                    emptyIndicator.SetActive(true);
+                }
             }
             else
             {
                 // Filled slot
                 if (iconImage != null)
                 {
-                    iconImage.enabled = true;
-                    iconImage.sprite = currentItem.itemData.icon;
+                    if (currentItem.itemData.icon != null)
+                    {
+                        iconImage.sprite = currentItem.itemData.icon;
+                        iconImage.enabled = true;
+                        
+                        // Ensure the image color is visible
+                        Color imageColor = iconImage.color;
+                        imageColor.a = 1f;
+                        iconImage.color = imageColor;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[ItemSlotUI] Item {currentItem.itemData.itemName} has no icon assigned!");
+                        iconImage.enabled = false;
+                    }
                 }
 
                 if (levelText != null)
@@ -99,6 +133,8 @@ namespace Havengard.UI
                 {
                     emptyIndicator.SetActive(false);
                 }
+                
+                Debug.Log($"[ItemSlotUI] Updated visuals for {currentItem.itemData.itemName} - Icon: {currentItem.itemData.icon != null}");
             }
         }
 

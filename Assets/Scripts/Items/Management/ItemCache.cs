@@ -64,6 +64,7 @@ namespace Havengard.Items
             cachedItems.Add(item);
             OnItemAddedToCache?.Invoke(item);
             Debug.Log($"[ItemCache] Added {item} to cache. Total: {cachedItems.Count}");
+            Debug.Log($"[ItemCache] Item icon exists: {item.itemData.icon != null}");
         }
 
         /// <summary>

@@ -5,20 +5,25 @@ using Havengard.Items;
 
 namespace Havengard.Units.Enemies
 {
+    /// <summary>
+    /// Handles all enemy death rewards including EXP, currency, and items.
+    /// Consolidates EnemyRewards functionality.
+    /// </summary>
     [RequireComponent(typeof(Health))]
     public class EnemyDeathRewards : MonoBehaviour
     {
+        [Header("Rewards")]
+        [SerializeField] private int expValue = 20;
+        [SerializeField] private int goldValue = 5;
+        [SerializeField] private int celestiumValue = 0;
+        
         private Health health;
-        private EnemyRewards rewards;
         private ItemDropper itemDropper;
 
         private void Awake()
         {
             health = GetComponent<Health>();
-            rewards = GetComponent<EnemyRewards>();
             itemDropper = GetComponent<ItemDropper>();
-
-            InitializeItemDropper();
         }
 
         private void OnEnable()
@@ -35,39 +40,38 @@ namespace Havengard.Units.Enemies
 
         private void HandleDeath()
         {
-            if (rewards == null)
-            {
-                Debug.LogWarning($"[EnemyDeathRewards] {name} has no EnemyRewards component. No EXP granted.");
-                return;
-            }
-
-            // Find the player hero instance (tagged Player)
+            // Grant EXP to player
             HeroInstance player = FindPlayerHero();
-            if (player == null)
+            if (player != null)
+            {
+                Debug.Log($"[EnemyDeathRewards] {name} died. Granting {expValue} EXP to {player.name}.");
+                player.GrantEXP(expValue);
+            }
+            else
             {
                 Debug.LogWarning("[EnemyDeathRewards] No player HeroInstance found (is the player tagged 'Player'?).");
-                return;
             }
 
-            int exp = rewards.ExpValue;
-            Debug.Log($"[EnemyDeathRewards] {name} died. Granting {exp} EXP to {player.name}.");
-            player.GrantEXP(exp);
-
-            HandleItemDrop();
-        }
-
-        private void InitializeItemDropper()
-        {
-            // Initialize item dropper if needed
-            if (itemDropper != null)
+            // Grant Gold
+            if (goldValue > 0 && Havengard.Resources.GoldSystem.Instance != null)
             {
-                // Add any initialization logic here
+                Havengard.Resources.GoldSystem.Instance.AddGold(goldValue);
             }
+
+            // Grant Celestium
+            if (celestiumValue > 0 && Havengard.Resources.CelestiumSystem.Instance != null)
+            {
+                Havengard.Resources.CelestiumSystem.Instance.AddCelestium(celestiumValue);
+            }
+
+            Debug.Log($"[EnemyDeathRewards] {name} rewards: EXP={expValue}, Gold={goldValue}, Celestium={celestiumValue}");
+
+            // Handle item drops
+            HandleItemDrop();
         }
 
         private void HandleItemDrop()
         {
-            // Handle item drops if dropper exists
             if (itemDropper != null)
             {
                 itemDropper.TryDropItem(transform.position);
@@ -76,7 +80,6 @@ namespace Havengard.Units.Enemies
 
         private HeroInstance FindPlayerHero()
         {
-            // Simple and reliable for now
             foreach (var hero in Object.FindObjectsByType<HeroInstance>(FindObjectsSortMode.None))
             {
                 if (hero != null && hero.CompareTag("Player"))
@@ -84,5 +87,10 @@ namespace Havengard.Units.Enemies
             }
             return null;
         }
+
+        // Public properties for inspector visibility
+        public int ExpValue => expValue;
+        public int GoldValue => goldValue;
+        public int CelestiumValue => celestiumValue;
     }
 }

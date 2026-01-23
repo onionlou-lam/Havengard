@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using Havengard.UI;
 
 namespace Havengard.Items
 {
@@ -56,6 +57,9 @@ namespace Havengard.Items
                 return false;
             }
 
+            Debug.Log($"[ItemInventory] TryAddItem called: {itemInstance.itemData.itemName} to {gameObject.name}");
+            Debug.Log($"[ItemInventory] Current item count BEFORE add: {items.Count}/{maxItems}");
+
             // Check if item already exists
             ItemSlot existingSlot = FindItemSlot(itemInstance.itemData);
             
@@ -78,6 +82,7 @@ namespace Havengard.Items
                     OnInventoryChanged?.Invoke();
                     
                     Debug.Log($"[ItemInventory] {itemInstance.itemData.itemName} upgraded to level {existingSlot.currentLevel}");
+                    Debug.Log($"[ItemInventory] Current item count AFTER upgrade: {items.Count}/{maxItems}");
                     return true;
                 }
                 else
@@ -98,13 +103,19 @@ namespace Havengard.Items
                 ItemSlot newSlot = new ItemSlot(itemInstance.itemData, itemInstance.level);
                 items.Add(newSlot);
                 
+                Debug.Log($"[ItemInventory] Item ADDED to list. New count: {items.Count}/{maxItems}");
+                
                 // Apply effects
                 ApplyItemEffects(itemInstance.itemData, itemInstance.level);
                 
+                // Fire events
+                Debug.Log($"[ItemInventory] Firing OnItemAdded event. Subscribers: {OnItemAdded?.GetInvocationList().Length ?? 0}");
                 OnItemAdded?.Invoke(itemInstance.itemData, itemInstance.level);
+                
+                Debug.Log($"[ItemInventory] Firing OnInventoryChanged event. Subscribers: {OnInventoryChanged?.GetInvocationList().Length ?? 0}");
                 OnInventoryChanged?.Invoke();
                 
-                Debug.Log($"[ItemInventory] Added new item: {itemInstance.itemData.itemName}");
+                Debug.Log($"[ItemInventory] Added new item: {itemInstance.itemData.itemName}. Final count: {items.Count}");
                 return true;
             }
         }
@@ -236,6 +247,84 @@ namespace Havengard.Items
             }
             items.Clear();
             OnInventoryChanged?.Invoke();
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                // Toggle the CACHE UI (stash)
+                ItemCacheUI cacheUI = FindFirstObjectByType<ItemCacheUI>();
+                cacheUI?.Toggle();
+            }
+
+            // for testing
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                Debug.Log("=== TESTING ITEM SYSTEM ===");
+                Debug.Log($"This Inventory ({gameObject.name}): {items.Count}/{maxItems}");
+                
+                if (items.Count > 0)
+                {
+                    Debug.Log("Items in THIS inventory:");
+                    foreach (var slot in items)
+                    {
+                        Debug.Log($"  - {slot.itemData.itemName} Lv.{slot.currentLevel} Icon={(slot.itemData.icon != null ? slot.itemData.icon.name : "NULL")}");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("  >>> NO ITEMS IN THIS INVENTORY! <<<");
+                }
+
+                // Find ALL inventories
+                var allInventories = FindObjectsByType<ItemInventory>(FindObjectsSortMode.None);
+                Debug.Log($"Found {allInventories.Length} ItemInventory components in scene");
+                foreach (var inv in allInventories)
+                {
+                    Debug.Log($"  Inventory on: {inv.gameObject.name}, Items: {inv.items.Count}");
+                    if (inv.items.Count > 0)
+                    {
+                        foreach (var slot in inv.items)
+                        {
+                            Debug.Log($"    > {slot.itemData.itemName}");
+                        }
+                    }
+                }
+
+                // Find and log ItemSlotUI states
+                var slots = FindObjectsByType<ItemSlotUI>(FindObjectsSortMode.None);
+                Debug.Log($"Found {slots.Length} ItemSlotUI components");
+                foreach (var slot in slots)
+                {
+                    string itemName = slot.CurrentItem?.itemData.itemName ?? "null";
+                    string iconName = slot.CurrentItem?.itemData.icon != null ? slot.CurrentItem.itemData.icon.name : "null";
+                    string parent = slot.transform.parent != null ? slot.transform.parent.name : "NO PARENT";
+                    Debug.Log($"  Slot ({slot.gameObject.name}) in [{parent}]: Empty={slot.IsEmpty}, Item={itemName}, Icon={iconName}");
+                }
+                
+                // Check InventoryUI
+                var invUI = FindFirstObjectByType<InventoryUI>();
+                if (invUI != null)
+                {
+                    Debug.Log($"[InventoryUI] Panel Active: {invUI.gameObject.activeSelf}");
+                }
+                else
+                {
+                    Debug.LogWarning("NO InventoryUI FOUND!");
+                }
+            }
+            
+            // Press 'U' to show the InventoryUI
+            if (Input.GetKeyDown(KeyCode.U))
+            {
+                var invUI = FindFirstObjectByType<InventoryUI>();
+                if (invUI != null)
+                {
+                    invUI.Show(this);
+                    Debug.Log("[ItemInventory] Opened InventoryUI");
+                }
+            }
         }
     }
 }

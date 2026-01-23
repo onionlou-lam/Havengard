@@ -17,14 +17,45 @@ namespace Havengard.Items
         [Header("Guaranteed Drops")]
         [SerializeField] private List<ItemData> guaranteedDrops = new List<ItemData>();
 
+        private void Start()
+        {
+            // Validate configuration
+            if (dropTable == null)
+            {
+                Debug.LogWarning($"[ItemDropper] {gameObject.name} has no drop table assigned!");
+            }
+            
+            if (itemPickupPrefab == null)
+            {
+                Debug.LogWarning($"[ItemDropper] {gameObject.name} has no item pickup prefab assigned!");
+            }
+            else
+            {
+                // Verify the prefab has ItemPickup component
+                var pickup = itemPickupPrefab.GetComponent<ItemPickup>();
+                if (pickup == null)
+                {
+                    Debug.LogError($"[ItemDropper] Item pickup prefab on {gameObject.name} is missing ItemPickup component!");
+                }
+            }
+        }
+
         /// <summary>
         /// Try to drop an item at the specified position
         /// </summary>
         public void TryDropItem(Vector3 position)
         {
+            Debug.Log($"[ItemDropper] TryDropItem called on {gameObject.name} at position {position}");
+            
             if (dropTable == null)
             {
                 Debug.LogWarning($"[ItemDropper] {name} has no drop table assigned");
+                return;
+            }
+
+            if (itemPickupPrefab == null)
+            {
+                Debug.LogWarning($"[ItemDropper] {name} has no item pickup prefab assigned");
                 return;
             }
 
@@ -33,6 +64,7 @@ namespace Havengard.Items
             {
                 if (guaranteedItem != null)
                 {
+                    Debug.Log($"[ItemDropper] Dropping guaranteed item: {guaranteedItem.itemName}");
                     SpawnItemPickup(guaranteedItem, position);
                 }
             }
@@ -41,12 +73,17 @@ namespace Havengard.Items
             ItemData droppedItem = dropTable.RollForItem();
             if (droppedItem != null)
             {
+                Debug.Log($"[ItemDropper] Rolled item from table: {droppedItem.itemName}");
                 SpawnItemPickup(droppedItem, position);
+            }
+            else
+            {
+                Debug.Log($"[ItemDropper] No item dropped from table (drop chance roll failed or no valid items)");
             }
         }
 
         private void SpawnItemPickup(ItemData itemData, Vector3 position)
-        { if (itemPickupPrefab != null)
+        {
             if (itemPickupPrefab == null)
             {
                 Debug.LogWarning("[ItemDropper] No item pickup prefab assigned");
@@ -64,11 +101,11 @@ namespace Havengard.Items
             if (pickup != null)
             {
                 pickup.Initialize(itemData);
-                Debug.Log($"[ItemDropper] Dropped {itemData.itemName} at {spawnPosition}");
+                Debug.Log($"[ItemDropper] Successfully spawned {itemData.itemName} at {spawnPosition}");
             }
             else
             {
-                Debug.LogWarning("[ItemDropper] Item pickup prefab missing ItemPickup component");
+                Debug.LogError("[ItemDropper] Item pickup prefab missing ItemPickup component!");
                 Destroy(pickupObj);
             }
         }
