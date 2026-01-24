@@ -23,6 +23,10 @@ namespace Havengard.Items
         public float baseValue = 10f;
         public float perLevelValue = 5f;
 
+        [Header("Display")]
+        [Tooltip("Short name for floating text (e.g., 'Max HP', 'Dmg', 'Def'). Leave empty to use default.")]
+        public string shortDisplayName;
+
         public override void Apply(GameObject target, int level)
         {
             if (target == null)
@@ -46,7 +50,6 @@ namespace Havengard.Items
             {
                 case StatType.MaxHP:
                     stats.CurrentStats.MaxHP += Mathf.RoundToInt(totalValue);
-                    // Update health system
                     var health = target.GetComponent<Havengard.HealthSystem.Health>();
                     if (health != null)
                     {
@@ -151,6 +154,54 @@ namespace Havengard.Items
         {
             float value = GetValue(level);
             return description.Replace("{value}", value.ToString("F1"));
+        }
+
+        /// <summary>
+        /// Get the display name for floating text
+        /// </summary>
+        public string GetShortDisplayName()
+        {
+            if (!string.IsNullOrEmpty(shortDisplayName))
+            {
+                return shortDisplayName;
+            }
+
+            // Default short names
+            return statType switch
+            {
+                StatType.MaxHP => "Max HP",
+                StatType.Attack => "Dmg",
+                StatType.Defense => "Def",
+                StatType.MaxResource => "Max MP",
+                StatType.AttackSpeed => "Atk Spd",
+                StatType.MoveSpeed => "Move Spd",
+                StatType.CritChance => "Crit%",
+                StatType.CritMultiplier => "Crit Multi",
+                _ => statType.ToString()
+            };
+        }
+
+        /// <summary>
+        /// Get formatted stat bonus text for floating display
+        /// </summary>
+        public string GetStatBonusText(int level)
+        {
+            float value = GetValue(level);
+            string displayName = GetShortDisplayName();
+
+            // Format based on stat type
+            if (statType == StatType.CritChance)
+            {
+                return $"+{value:F1}% {displayName}";
+            }
+            else if (statType == StatType.CritMultiplier || statType == StatType.AttackSpeed || statType == StatType.MoveSpeed)
+            {
+                return $"+{value:F1} {displayName}";
+            }
+            else
+            {
+                return $"+{Mathf.RoundToInt(value)} {displayName}";
+            }
         }
 
         private float GetCurrentStatValue(StatsComponent stats, StatType type)

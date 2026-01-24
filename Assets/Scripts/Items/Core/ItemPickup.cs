@@ -1,5 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
+using Havengard.UI; // Add this
 
 namespace Havengard.Items
 {
@@ -28,7 +29,7 @@ namespace Havengard.Items
         private float spawnTime;
         private Transform playerTransform;
         private bool isBeingCollected = false;
-        private int itemLevel = 1; // Store the level
+        private int itemLevel = 1;
 
         public void Initialize(ItemData data, int level = 1)
         {
@@ -41,7 +42,6 @@ namespace Havengard.Items
                 spriteRenderer.color = data.rarityColor;
             }
             
-            // Play spawn VFX
             if (data != null && data.pickupVFX != null)
             {
                 Instantiate(data.pickupVFX, transform.position, Quaternion.identity);
@@ -53,24 +53,19 @@ namespace Havengard.Items
             startPosition = transform.position;
             spawnTime = Time.time;
             
-            // Setup collider
             var col = GetComponent<Collider2D>();
             col.isTrigger = true;
             
-            // Auto-destroy after lifetime
             Destroy(gameObject, lifetime);
         }
 
         private void Update()
         {
-            // Bobbing animation
             float newY = startPosition.y + Mathf.Sin(Time.time * _bobSpeed) * _bobHeight;
             transform.position = new Vector3(transform.position.x, newY, transform.position.z);
             
-            // Rotation
             transform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime);
             
-            // Fade near end of lifetime
             float age = Time.time - spawnTime;
             if (age > fadeStartTime && spriteRenderer != null)
             {
@@ -80,7 +75,6 @@ namespace Havengard.Items
                 spriteRenderer.color = color;
             }
             
-            // Magnet towards player
             if (!isBeingCollected && playerTransform == null)
             {
                 FindNearbyPlayer();
@@ -91,7 +85,6 @@ namespace Havengard.Items
                 float distance = Vector3.Distance(transform.position, playerTransform.position);
                 if (distance <= pickupRadius)
                 {
-                    // Move towards player
                     transform.position = Vector3.MoveTowards(
                         transform.position, 
                         playerTransform.position, 
@@ -100,14 +93,13 @@ namespace Havengard.Items
                 }
                 else
                 {
-                    playerTransform = null; // Lost player
+                    playerTransform = null;
                 }
             }
         }
 
         private void FindNearbyPlayer()
         {
-            // Find player within pickup radius
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, pickupRadius, playerLayer);
             foreach (var hit in hits)
             {
@@ -123,7 +115,6 @@ namespace Havengard.Items
         {
             if (isBeingCollected) return;
             
-            // Check if it's the player
             if (other.CompareTag("Player"))
             {
                 CollectItem(other.gameObject);
@@ -136,10 +127,8 @@ namespace Havengard.Items
 
             isBeingCollected = true;
 
-            // Create ItemInstance with level
             ItemInstance newItem = new ItemInstance(this._itemData, itemLevel);
 
-            // Try to add to player's inventory first
             var inventory = player.GetComponent<ItemInventory>();
             bool addedToInventory = false;
             
@@ -148,7 +137,6 @@ namespace Havengard.Items
                 addedToInventory = inventory.TryAddItem(newItem);
             }
 
-            // If couldn't add to inventory, add to cache
             if (!addedToInventory)
             {
                 if (ItemCache.Instance != null)
@@ -162,7 +150,17 @@ namespace Havengard.Items
                 }
             }
 
-            // Play pickup effects
+            // Spawn floating pickup text
+            Debug.Log($"[ItemPickup] Attempting to spawn pickup number. Spawner exists: {ItemPickupNumberSpawner.Instance != null}");
+            if (ItemPickupNumberSpawner.Instance != null)
+            {
+                ItemPickupNumberSpawner.Instance.SpawnPickupNumber(this._itemData, transform.position, itemLevel);
+            }
+            else
+            {
+                Debug.LogWarning("[ItemPickup] ItemPickupNumberSpawner.Instance is null!");
+            }
+
             if (this._itemData.pickupVFX != null)
             {
                 Instantiate(this._itemData.pickupVFX, transform.position, Quaternion.identity);
@@ -173,7 +171,6 @@ namespace Havengard.Items
                 AudioSource.PlayClipAtPoint(this._itemData.pickupSFX, transform.position);
             }
 
-            // Notify ItemManager
             if (ItemManager.Instance != null)
             {
                 ItemManager.Instance.OnItemCollected(newItem);

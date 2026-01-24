@@ -3,64 +3,136 @@ using Havengard.Abilities;
 
 namespace Havengard.Items
 {
-    public enum AbilityModType
-    {
-        AdditionalProjectiles,
-        IncreasedAOE,
-        IncreasedDuration,
-        IncreasedDamage,
-        ReducedCooldown,
-        IncreasedRange,
-        AdditionalTargets,
-        ChainEffect
-    }
-
     [CreateAssetMenu(menuName = "Havengard/Items/Effects/Ability Modifier")]
     public class AbilityModifierEffect : ItemEffect
     {
-        [Header("Ability Modifier")]
-        public AbilityModType modType;
-        [Tooltip("Which ability to modify (leave empty for all)")]
+        [Header("Ability Modification")]
+        [Tooltip("Leave empty to affect all abilities")]
         public AbilityBase targetAbility;
-
-        private const string MODIFIER_KEY_PREFIX = "ItemMod_";
-
-        public override void Apply(GameObject character, int level)
+        
+        public enum ModifierType
         {
-            var abilityUser = character.GetComponent<AbilityUser>();
-            if (abilityUser == null) return;
+            CooldownReduction,
+            DamageIncrease,
+            RangeIncrease,
+            CostReduction
+        }
+        
+        public ModifierType modifierType;
+        public float baseValue = 0.1f; // 10% by default
+        public float perLevelValue = 0.05f; // +5% per level
 
-            string modifierKey = GetModifierKey();
-            float value = GetValue(level);
+        [Header("Display")]
+        [Tooltip("Short name for floating text (e.g., 'CDR', 'Dmg+', 'Range+'). Leave empty to use default.")]
+        public string shortDisplayName;
 
-            // Store modifier in AbilityUser (you'll need to add this functionality)
-            // For now, we'll use PlayerPrefs as a temporary solution
-            float currentValue = PlayerPrefs.GetFloat(modifierKey, 0f);
-            PlayerPrefs.SetFloat(modifierKey, currentValue + value);
+        public override void Apply(GameObject target, int level)
+        {
+            if (target == null) return;
+
+            var abilityUser = target.GetComponent<AbilityUser>();
+            if (abilityUser == null)
+            {
+                Debug.LogWarning($"[AbilityModifierEffect] {target.name} has no AbilityUser component");
+                return;
+            }
+
+            float totalValue = baseValue + (perLevelValue * (level - 1));
+
+            // Apply to specific ability or all abilities
+            if (targetAbility != null)
+            {
+                ApplyToAbility(abilityUser, targetAbility, totalValue, level);
+            }
+            else
+            {
+                // Apply to all abilities
+                for (int i = 0; ; i++)
+                {
+                    var ability = abilityUser.GetAbility(i);
+                    if (ability == null)
+                        break;
+                    ApplyToAbility(abilityUser, ability, totalValue, level);
+                }
+            }
+
+            Debug.Log($"[AbilityModifierEffect] Applied {modifierType} +{totalValue} to {target.name}");
         }
 
-        public override void Remove(GameObject character, int level)
+        private void ApplyToAbility(AbilityUser abilityUser, AbilityBase ability, float value, int level)
         {
-            var abilityUser = character.GetComponent<AbilityUser>();
-            if (abilityUser == null) return;
+            if (ability == null) return;
 
-            string modifierKey = GetModifierKey();
-            float value = GetValue(level);
-
-            float currentValue = PlayerPrefs.GetFloat(modifierKey, 0f);
-            PlayerPrefs.SetFloat(modifierKey, Mathf.Max(0, currentValue - value));
+            switch (modifierType)
+            {
+                case ModifierType.CooldownReduction:
+                    // Implement cooldown reduction (you'll need to add this to AbilityBase)
+                    // ability.baseCooldown *= (1f - value);
+                    break;
+                    
+                case ModifierType.DamageIncrease:
+                    // Implement damage increase
+                    break;
+                    
+                case ModifierType.RangeIncrease:
+                    // Implement range increase
+                    break;
+                    
+                case ModifierType.CostReduction:
+                    // Implement cost reduction
+                    break;
+            }
         }
 
-        private string GetModifierKey()
+        public override void Remove(GameObject target, int level)
         {
-            string abilityName = targetAbility != null ? targetAbility.name : "All";
-            return $"{MODIFIER_KEY_PREFIX}{abilityName}_{modType}";
+            // Implement removal logic (reverse of Apply)
         }
 
-        public override string FormatDescription(string desc, int level)
+        public override float GetValue(int level)
         {
-            float value = GetValue(level);
-            return desc.Replace($"{{{modType}}}", $"{value:F0}");
+            return baseValue + (perLevelValue * (level - 1));
+        }
+
+        public override string FormatDescription(string description, int level)
+        {
+            float value = GetValue(level) * 100f; // Convert to percentage
+            return description.Replace("{value}", value.ToString("F0") + "%");
+        }
+
+        /// <summary>
+        /// Get the display name for floating text
+        /// </summary>
+        public string GetShortDisplayName()
+        {
+            if (!string.IsNullOrEmpty(shortDisplayName))
+            {
+                return shortDisplayName;
+            }
+
+            // Default short names
+            return modifierType switch
+            {
+                ModifierType.CooldownReduction => "CDR",
+                ModifierType.DamageIncrease => "Ability Dmg",
+                ModifierType.RangeIncrease => "Range",
+                ModifierType.CostReduction => "Cost Red",
+                _ => modifierType.ToString()
+            };
+        }
+
+        /// <summary>
+        /// Get formatted ability bonus text for floating display
+        /// </summary>
+        public string GetAbilityBonusText(int level)
+        {
+            float value = GetValue(level) * 100f; // Convert to percentage
+            string displayName = GetShortDisplayName();
+
+            // Use the public property AbilityName instead of the private field abilityName
+            string abilityName = targetAbility != null ? targetAbility.AbilityName : "All Abilities";
+
+            return $"+{value:F0}% {displayName}";
         }
     }
 }
