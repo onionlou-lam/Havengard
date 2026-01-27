@@ -561,6 +561,7 @@ MonoBehaviour:
   damageFlashColor: {r: 1, g: 0.2, b: 0.2, a: 1}
   flashDuration: 0.2
   flashCount: 2
+  agent: {fileID: 0}
   attackAbility: {fileID: 11400000, guid: c7bed211421c4f54faad8b41a657e596, type: 2}
 --- !u!114 &2627519306720501718
 MonoBehaviour:
@@ -575,7 +576,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathVFX: {fileID: 0}
-  deathSFX: {fileID: 0}
+  deathSFX: {fileID: 8300000, guid: 5d3d6aa0a6e31c840a87c556e265d69c, type: 3}
   sfxVolume: 0.8
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1

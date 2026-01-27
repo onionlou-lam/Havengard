@@ -298,7 +298,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathVFX: {fileID: 107242, guid: 4f01e09274ab093448d46ac4916288cf, type: 3}
-  deathSFX: {fileID: 0}
+  deathSFX: {fileID: 8300000, guid: 5b955140b2e4b8d4aaa05e915796f5b6, type: 3}
   sfxVolume: 0.8
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1
@@ -322,7 +322,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 192
-  animator: {fileID: 0}
+  animator: {fileID: 2480912608808912186}
   spriteRenderer: {fileID: 5019712902273299591}
   flipCooldown: 0.15
   facingDeadzone: 0.12
@@ -330,6 +330,7 @@ MonoBehaviour:
   damageFlashColor: {r: 1, g: 0.2, b: 0.2, a: 1}
   flashDuration: 0.2
   flashCount: 2
+  agent: {fileID: 0}
   projectilePrefab: {fileID: 4805287870985771033, guid: d6a3d77808ee01848a8d9b843bc0007c,
     type: 3}
   projectileSpeed: 10

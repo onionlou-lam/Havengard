@@ -5,7 +5,12 @@ using Havengard.Combat;
 
 namespace Havengard.Abilities
 {
-    [CreateAssetMenu(menuName = "Havengard/Abilities/Cleave")]
+    /// <summary>
+    /// DEPRECATED: Use MeleeAbility with Circle hit shape instead.
+    /// This script is kept for backward compatibility with existing ScriptableObject assets.
+    /// To migrate: Create a new MeleeAbility asset with hitShape = Circle and radius = 1.5f
+    /// </summary>
+    [CreateAssetMenu(menuName = "Havengard/Abilities/Cleave (Legacy)")]
     public class Cleave : AbilityBase
     {
         [SerializeField] private float radius = 1.5f;
