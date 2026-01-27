@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4360714388509780850}
   - component: {fileID: 5019712902273299591}
+  - component: {fileID: 2480912608808912186}
   m_Layer: 12
   m_Name: S_SkeletonMage
   m_TagString: Untagged
@@ -87,6 +88,28 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!95 &2480912608808912186
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4522950130022282622}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 719f08c53cde4bd4bbd6190a59da234e, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4627157592179431975
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,12 +297,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3bce717d88fd4a46a4a1d8b652d20a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  destroyDelay: 0.35
-  deathVFX: {fileID: 0}
+  deathVFX: {fileID: 107242, guid: 4f01e09274ab093448d46ac4916288cf, type: 3}
   deathSFX: {fileID: 0}
   sfxVolume: 0.8
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1
+  fallbackDestroyDelay: 2
 --- !u!114 &3939497062379929881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,13 +323,22 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 192
   animator: {fileID: 0}
-  keepLastFacingOnIdle: 1
+  spriteRenderer: {fileID: 5019712902273299591}
+  flipCooldown: 0.15
+  facingDeadzone: 0.12
+  hitAnimCooldown: 0.12
+  damageFlashColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  flashDuration: 0.2
+  flashCount: 2
   projectilePrefab: {fileID: 4805287870985771033, guid: d6a3d77808ee01848a8d9b843bc0007c,
     type: 3}
   projectileSpeed: 10
   projectileDamage: 8
   attackCooldown: 1.25
   friendlyFire: 0
+  enableHoming: 0
+  homingStrength: 3
+  homingDelay: 0.1
 --- !u!114 &-6487053401893932263
 MonoBehaviour:
   m_ObjectHideFlags: 0

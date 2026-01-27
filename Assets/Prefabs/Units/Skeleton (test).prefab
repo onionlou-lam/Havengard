@@ -275,7 +275,7 @@ GameObject:
   - component: {fileID: 4642445770223818330}
   - component: {fileID: 249797178550644851}
   m_Layer: 0
-  m_Name: Skeleton
+  m_Name: S_Skeleton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -643,6 +643,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e8efa7479128d14db6be6690870dbed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  expValue: 20
+  goldValue: 5
+  celestiumValue: 0
 --- !u!1 &7243079471799800822
 GameObject:
   m_ObjectHideFlags: 0

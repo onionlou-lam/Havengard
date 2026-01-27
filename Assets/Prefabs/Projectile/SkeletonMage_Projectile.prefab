@@ -194,8 +194,8 @@ MonoBehaviour:
   hitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
   wallHitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
   impactDestroyDelay: 0.05
-  hitSFX: {fileID: 8300000, guid: b4b0832d141b91e4289c3ef385cabab9, type: 3}
-  wallHitSFX: {fileID: 8300000, guid: b4b0832d141b91e4289c3ef385cabab9, type: 3}
+  hitSFX: {fileID: 8300000, guid: e0cd8d02ee159ee4ab2be506b7a17c39, type: 3}
+  wallHitSFX: {fileID: 8300000, guid: e0cd8d02ee159ee4ab2be506b7a17c39, type: 3}
   trail: {fileID: 5532458401095853437}
   trailParticles: {fileID: 5532458401068242011}
   enableHoming: 0

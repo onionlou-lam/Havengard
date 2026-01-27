@@ -36,6 +36,9 @@ namespace Havengard.Units
             if (targetHP == null) return;
             if (!FactionUtility.CanDamage(GetMyFaction(), targetHP, friendlyFire)) return;
 
+            // Trigger attack animation
+            TriggerAttackAnim();
+
             Vector2 dir2D = (target.transform.position - transform.position).normalized;
 
             // 2D-friendly rotation

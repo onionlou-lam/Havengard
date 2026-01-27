@@ -45,7 +45,7 @@ namespace Havengard.Units
         private static readonly int AnimHit = Animator.StringToHash("Hit");
         private static readonly int AnimDead = Animator.StringToHash("Dead");
 
-        protected NavMeshAgent agent;
+        public NavMeshAgent agent; //public for behaviors to access directly as it is a component reference, similar to RigidBody etc.
         protected Health health;
         protected GameObject currentTarget;
 
