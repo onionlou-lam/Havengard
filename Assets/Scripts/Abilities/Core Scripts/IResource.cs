@@ -9,13 +9,11 @@ namespace Havengard.Abilities
     /// </summary>
     public interface IResource
     {
-        float Current { get; }
-        float Max { get; }
-
-        bool TryConsume(float amount); // Consume resources
-        void Regenerate(float amount); // Regenerate resources
-        void SetToMax(); // Set to Max resources
-        void SetMax(float newMax, bool refill = true); // Set the amount
-        void Set(float value);
+        int CurrentResource { get; }
+        int MaxResource { get; }
+        
+        bool TryConsume(int amount);
+        void AddResource(int amount);
+        void SetMaxResource(int newMax);
     }
 }

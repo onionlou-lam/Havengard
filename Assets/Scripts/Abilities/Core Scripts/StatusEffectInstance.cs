@@ -44,7 +44,7 @@ namespace Havengard.Statuses
             // Add VFX stack
             if (data.attachVFX != null)
             {
-                StatusVFXStack.AddStack(this, GetInstanceID(), data.attachVFX, data.duration, data.maxStacks);
+                StatusVFXStack.AddStack(this, GetInstanceID(), data.attachVFX, data.duration, data.maxStacks, forceRefresh: false);
             }
 
             if (data.applySFX != null)
@@ -90,23 +90,33 @@ namespace Havengard.Statuses
                     stackCount++;
                     remainingTime = Mathf.Max(remainingTime, newData.duration);
 
-                    // Add another VFX stack using the AddStack method
+                    // Add another VFX stack using the AddStack method (not forced)
                     if (newData.attachVFX != null)
                     {
-                        StatusVFXStack.AddStack(this, GetInstanceID(), newData.attachVFX, newData.duration, newData.maxStacks);
+                        StatusVFXStack.AddStack(this, GetInstanceID(), newData.attachVFX, newData.duration, newData.maxStacks, forceRefresh: false);
                     }
 
                     RecomputeModifiers();
                     return;
                 }
 
-                // At cap → refresh duration if allowed
-                TryRefreshDuration(newData.duration);
+                // At cap → refresh duration if allowed AND force spawn VFX for visual feedback
+                bool refreshed = TryRefreshDuration(newData.duration);
+                
+                if (refreshed && newData.attachVFX != null)
+                {
+                    StatusVFXStack.AddStack(this, GetInstanceID(), newData.attachVFX, newData.duration, newData.maxStacks, forceRefresh: true);
+                }
                 return;
             }
 
-            // Non-stackable → refresh duration if allowed
-            TryRefreshDuration(newData.duration);
+            // Non-stackable → refresh duration if allowed AND force spawn VFX for visual feedback
+            bool durationRefreshed = TryRefreshDuration(newData.duration);
+            
+            if (durationRefreshed && newData.attachVFX != null)
+            {
+                StatusVFXStack.AddStack(this, GetInstanceID(), newData.attachVFX, newData.duration, newData.maxStacks, forceRefresh: true);
+            }
         }
 
         private IEnumerator Lifetime()
@@ -166,5 +176,13 @@ namespace Havengard.Statuses
         public bool IsStunned() => Data != null && Data.causesStun;
         public bool IsRooted() => Data != null && Data.causesRoot;
         public bool IsSilenced() => Data != null && Data.causesSilence;
+
+        // Add this method to StatusEffectInstance class:
+        public float GetLifestealPercent()
+        {
+            if (Data == null) return 0f;
+            // Scale lifesteal with stacks (additive)
+            return Data.lifestealPercent * Mathf.Max(1, stackCount);
+        }
     }
 }

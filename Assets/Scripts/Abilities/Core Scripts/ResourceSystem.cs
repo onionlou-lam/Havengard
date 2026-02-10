@@ -1,5 +1,5 @@
 // Assets/Scripts/Character/ResourceSystem.cs
-using System;                      // <-- added for Action
+using System;
 using UnityEngine;
 using Havengard.Abilities;
 
@@ -7,13 +7,12 @@ namespace Havengard.Character
 {
     /// <summary>
     /// Resource system (mana, stamina, rage, etc.).
-    /// Float-based to align with IResource.
+    /// Implements IResource interface with int-based API for consistency.
     /// </summary>
     public class ResourceSystem : MonoBehaviour, IResource
     {
-        [SerializeField] private float maxResource = 100f;
-        public float Current { get; private set; }
-        public float Max => maxResource;
+        [SerializeField] private int maxResource = 100;
+        [SerializeField] private int currentResource;
 
         /// <summary>
         /// Fired whenever Current or Max changes.
@@ -21,9 +20,13 @@ namespace Havengard.Character
         /// </summary>
         public event Action OnResourceChanged;
 
+        // IResource implementation
+        public int CurrentResource => currentResource;
+        public int MaxResource => maxResource;
+
         private void Awake()
         {
-            Current = maxResource;
+            currentResource = maxResource;
             RaiseChanged();
         }
 
@@ -32,57 +35,68 @@ namespace Havengard.Character
         /// <summary>
         /// Try to consume resource. Returns false if not enough.
         /// </summary>
-        public bool TryConsume(float amount)
+        public bool TryConsume(int amount)
         {
-            if (amount <= 0f) return true;
+            if (amount <= 0) return true;
 
-            if (Current < amount) return false;
+            if (currentResource < amount) return false;
 
-            Current -= amount;
+            currentResource -= amount;
             RaiseChanged();
             return true;
         }
 
         /// <summary>
-        /// Regenerate resource (clamped to Max).
+        /// Add resource (clamped to Max). Used for resource generation.
         /// </summary>
-        public void Regenerate(float amount)
+        public void AddResource(int amount)
         {
-            if (amount <= 0f) return;
+            if (amount <= 0) return;
 
-            Current = Mathf.Min(Current + amount, maxResource);
+            currentResource = Mathf.Min(currentResource + amount, maxResource);
             RaiseChanged();
         }
+
+        /// <summary>
+        /// Set maximum resource. Optionally refill or preserve percentage.
+        /// </summary>
+        public void SetMaxResource(int newMax)
+        {
+            float percent = maxResource > 0 ? (float)currentResource / maxResource : 1f;
+            maxResource = Mathf.Max(1, newMax);
+
+            currentResource = Mathf.RoundToInt(maxResource * percent);
+            currentResource = Mathf.Clamp(currentResource, 0, maxResource);
+            RaiseChanged();
+        }
+
+        // ------------- Additional utility methods -------------
 
         /// <summary>
         /// Restore to full.
         /// </summary>
         public void SetToMax()
         {
-            Current = maxResource;
-            RaiseChanged();
-        }
-
-        /// <summary>
-        /// Adjust max resource. Optionally refill or preserve percentage.
-        /// </summary>
-        public void SetMax(float newMax, bool refill = true)
-        {
-            float percent = maxResource > 0 ? Current / maxResource : 1f;
-            maxResource = Mathf.Max(1f, newMax);
-
-            Current = refill ? maxResource : maxResource * percent;
-            Current = Mathf.Clamp(Current, 0, maxResource);
+            currentResource = maxResource;
             RaiseChanged();
         }
 
         /// <summary>
         /// Set resource directly (clamped).
         /// </summary>
-        public void Set(float value)
+        public void SetResource(int value)
         {
-            Current = Mathf.Clamp(value, 0, maxResource);
+            currentResource = Mathf.Clamp(value, 0, maxResource);
             RaiseChanged();
+        }
+
+        /// <summary>
+        /// Get normalized resource (0-1 range).
+        /// </summary>
+        public float GetResourceNormalized()
+        {
+            if (maxResource <= 0) return 0f;
+            return Mathf.Clamp01((float)currentResource / maxResource);
         }
 
         // ------------- Helpers -------------

@@ -50,7 +50,7 @@ namespace Havengard.Units
         protected GameObject currentTarget;
 
         private float nextScanTime;
-        private bool isDead;
+        protected bool isDead;
 
         // Facing: +1 = right, -1 = left (default art faces RIGHT)
         private int facingSign = 1;
@@ -188,7 +188,7 @@ namespace Havengard.Units
                 animator.SetTrigger(AnimHit);
         }
 
-        private void UpdateAnimatorAndFacing()
+        protected void UpdateAnimatorAndFacing()
         {
             if (animator == null) return;
 

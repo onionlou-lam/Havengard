@@ -31,9 +31,10 @@ namespace Havengard.Statuses
 
         /// <summary>
         /// Adds (or refreshes) a stack VFX instance, up to maxStacks.
+        /// When forceRefresh is true, will spawn VFX even at max stacks (for duration refresh feedback).
         /// Returns current stack count after the operation.
         /// </summary>
-        public static int AddStack(MonoBehaviour host, int effectInstanceId, GameObject vfxPrefab, float duration, int maxStacks)
+        public static int AddStack(MonoBehaviour host, int effectInstanceId, GameObject vfxPrefab, float duration, int maxStacks, bool forceRefresh = false)
         {
             if (host == null) return 0;
             if (vfxPrefab == null) return GetCount(host, effectInstanceId);
@@ -54,19 +55,17 @@ namespace Havengard.Statuses
                 if (entry.instances[i] == null) entry.instances.RemoveAt(i);
             }
 
-            // If already at max, just refresh duration by re-destroy scheduling (spawn a new one is optional)
-            if (entry.instances.Count >= maxStacks)
+            // Spawn new VFX if under the stack limit OR if force refresh is enabled
+            if (entry.instances.Count < maxStacks || forceRefresh)
             {
-                // Optional: refresh by restarting the last one’s lifetime (simple approach: do nothing here)
-                return entry.instances.Count;
+                var fx = Object.Instantiate(vfxPrefab, host.transform.position, Quaternion.identity, host.transform);
+
+                if (duration > 0f)
+                    Object.Destroy(fx, duration);
+
+                entry.instances.Add(fx);
             }
 
-            var fx = Object.Instantiate(vfxPrefab, host.transform.position, Quaternion.identity, host.transform);
-
-            if (duration > 0f)
-                Object.Destroy(fx, duration);
-
-            entry.instances.Add(fx);
             return entry.instances.Count;
         }
 

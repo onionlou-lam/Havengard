@@ -1,6 +1,7 @@
 ﻿using Havengard.Combat;
 using Havengard.HealthSystem;
 using Havengard.Units;
+using Havengard.Abilities; // ADD THIS - for LifestealHandler
 using System;
 using UnityEngine;
 
@@ -42,6 +43,7 @@ namespace Havengard.Abilities
         private SpriteRenderer sr;
         private float speed;
         private Vector2 direction;
+        private GameObject casterGameObject; // ADD THIS LINE
         
         // Homing variables
         private GameObject homingTarget;
@@ -55,7 +57,7 @@ namespace Havengard.Abilities
             rb.gravityScale = 0f;
         }
 
-        public void Initialize(Vector2 direction, Faction faction, bool friendlyFire, int damage, float speed)
+        public void Initialize(Vector2 direction, Faction faction, bool friendlyFire, int damage, float speed, GameObject caster = null)
         {
             this.damage = damage;
             this.sourceFaction = faction;
@@ -63,6 +65,7 @@ namespace Havengard.Abilities
             this.speed = speed;
             this.direction = direction.normalized;
             this.launchTime = Time.time;
+            this.casterGameObject = caster; // ADD THIS LINE
 
             rb.linearVelocity = this.direction * speed;
 
@@ -157,6 +160,15 @@ namespace Havengard.Abilities
             if (health != null && FactionUtility.CanDamage(sourceFaction, health, allowFriendlyFire))
             {
                 health.GetHealthSystem().Damage(damage);
+                
+                // Apply lifesteal - need to find the caster
+                // Projectiles need to store reference to caster GameObject
+                if (casterGameObject != null)
+                {
+                    // You'll need to add this method to projectile or call LifestealHandler
+                    LifestealHandler.ApplyLifesteal(casterGameObject, damage);
+                }
+                
                 HandleImpact(true, collision, collision.transform.position);
                 return;
             }

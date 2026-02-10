@@ -16,8 +16,8 @@ namespace Havengard.Abilities
         [SerializeField] private MeleeHitShape hitShape = MeleeHitShape.Circle;
         [SerializeField] private float hitRadius = 1.5f;
         [SerializeField] private Vector2 hitBoxSize = new Vector2(2f, 1.5f);
-        [SerializeField] private float hitArcAngle = 120f; // For arc shape
-        [SerializeField] private float hitRange = 2f; // For line/thrust shape
+        [SerializeField] private float hitArcAngle = 120f;
+        [SerializeField] private float hitRange = 2f;
         [Tooltip("Offset from caster position (useful for positioning hitbox)")]
         [SerializeField] private Vector2 hitOffset = Vector2.zero;
         
@@ -72,6 +72,9 @@ namespace Havengard.Abilities
         {
             if (caster == null) return;
 
+            // Generate resource on cast
+            GenerateResourceOnCast(caster);
+
             // Get attack direction (toward mouse or target)
             Vector2 attackDirection = GetAttackDirection(caster, target);
 
@@ -82,7 +85,6 @@ namespace Havengard.Abilities
             // Spawn caster VFX
             if (casterVFXPrefab != null)
             {
-                // Calculate spawn position
                 Vector3 spawnPosition = caster.transform.position;
                 if (spawnCasterVFXAtHitPosition)
                 {
@@ -92,14 +94,22 @@ namespace Havengard.Abilities
 
                 GameObject vfx = Instantiate(casterVFXPrefab, spawnPosition, Quaternion.identity);
                 
-                // Optionally parent to caster (useful if you want VFX to follow movement)
-                // vfx.transform.SetParent(caster.transform);
-                
-                // Rotate VFX to face attack direction
                 if (rotateVFXToDirection)
                 {
                     float angle = Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg;
                     vfx.transform.rotation = Quaternion.Euler(0, 0, angle + vfxRotationOffset);
+                }
+
+                // Auto-destroy VFX after completion
+                var ps = vfx.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
+                }
+                else
+                {
+                    // Fallback if no ParticleSystem found - destroy after 2 seconds
+                    Destroy(vfx, 2f);
                 }
             }
 
@@ -119,7 +129,6 @@ namespace Havengard.Abilities
             }
             else
             {
-                // Use mouse position
                 Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 mouseWorld.z = 0;
                 return (mouseWorld - caster.transform.position).normalized;
@@ -130,16 +139,13 @@ namespace Havengard.Abilities
         {
             hitTargets.Clear();
 
-            // Perform lunge if enabled
             if (enableLunge)
             {
                 yield return coroutineHost.StartCoroutine(PerformLunge(caster, attackDirection));
             }
 
-            // Wait for hit delay
             yield return new WaitForSeconds(hitDelay);
 
-            // Perform hit detection
             float elapsedHitTime = 0f;
             do
             {
@@ -147,7 +153,7 @@ namespace Havengard.Abilities
                 
                 if (activeHitDuration > 0)
                 {
-                    yield return new WaitForSeconds(0.1f); // Check every 0.1s during active window
+                    yield return new WaitForSeconds(0.1f);
                     elapsedHitTime += 0.1f;
                 }
             }
@@ -173,7 +179,6 @@ namespace Havengard.Abilities
             }
             else
             {
-                // Fallback: instant position change
                 caster.transform.position += (Vector3)direction * lungeDistance;
             }
         }
@@ -183,11 +188,9 @@ namespace Havengard.Abilities
             var casterHealth = caster.GetComponent<IHealth>();
             Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
 
-            // Calculate hit position with offset
             Vector2 rotatedOffset = Quaternion.Euler(0, 0, Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg) * hitOffset;
             Vector2 hitPosition = (Vector2)caster.transform.position + rotatedOffset;
 
-            // Get hits based on shape
             Collider2D[] hits = GetHitsForShape(hitPosition, attackDirection);
 
             bool anyHit = false;
@@ -196,7 +199,6 @@ namespace Havengard.Abilities
             {
                 if (hit == null || hit.gameObject == caster) continue;
 
-                // Check if already hit
                 if (preventMultiHit && hitTargets.Contains(hit.gameObject))
                     continue;
 
@@ -205,46 +207,66 @@ namespace Havengard.Abilities
                 {
                     anyHit = true;
 
-                    // Calculate damage
                     int finalDamage = CalculateDamage(caster);
-                    health.GetHealthSystem().Damage(finalDamage);
+                    
+                    // Subscribe to death event to generate resource on kill
+                    var healthSystem = health.GetHealthSystem();
+                    bool targetWasAlive = healthSystem.IsAlive;
+                    
+                    healthSystem.Damage(finalDamage);
 
-                    // Apply status effect
+                    // Generate resource per hit
+                    GenerateResourceOnHit(caster);
+
+                    // Apply lifesteal healing to the caster
+                    ApplyLifesteal(caster, finalDamage);
+
+                    // Check if this damage killed the target
+                    if (targetWasAlive && !healthSystem.IsAlive)
+                    {
+                        GenerateResourceOnKill(caster);
+                    }
+
                     ApplyBuffDebuff(hit.gameObject);
 
-                    // Apply knockback
                     if (enableKnockback)
                     {
                         ApplyKnockback(hit.gameObject, caster.transform.position);
                     }
 
-                    // Spawn hit VFX
                     if (hitVFXPrefab != null && spawnVFXOnEachHit)
                     {
                         GameObject hitVFX = Instantiate(hitVFXPrefab, hit.transform.position, Quaternion.identity);
                         
-                        // Rotate hit VFX based on direction from caster to target
                         if (rotateVFXToDirection)
                         {
                             Vector2 hitDirection = (hit.transform.position - caster.transform.position).normalized;
                             float hitAngle = Mathf.Atan2(hitDirection.y, hitDirection.x) * Mathf.Rad2Deg;
                             hitVFX.transform.rotation = Quaternion.Euler(0, 0, hitAngle + vfxRotationOffset);
                         }
+
+                        // Auto-destroy VFX after completion
+                        var ps = hitVFX.GetComponent<ParticleSystem>();
+                        if (ps != null)
+                        {
+                            Destroy(hitVFX, ps.main.duration + ps.main.startLifetime.constantMax);
+                        }
+                        else
+                        {
+                            Destroy(hitVFX, 2f);
+                        }
                     }
 
-                    // Mark as hit
                     if (preventMultiHit)
                         hitTargets.Add(hit.gameObject);
                 }
             }
 
-            // Play hit SFX if anything was hit
             if (anyHit && hitSFX != null)
             {
                 AudioSource.PlayClipAtPoint(hitSFX, hitPosition);
             }
 
-            // Spawn single hit VFX at hit position if not spawning per target
             if (!spawnVFXOnEachHit && hitVFXPrefab != null && anyHit)
             {
                 GameObject hitVFX = Instantiate(hitVFXPrefab, hitPosition, Quaternion.identity);
@@ -253,6 +275,17 @@ namespace Havengard.Abilities
                 {
                     float angle = Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg;
                     hitVFX.transform.rotation = Quaternion.Euler(0, 0, angle + vfxRotationOffset);
+                }
+
+                // Auto-destroy VFX after completion
+                var ps = hitVFX.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    Destroy(hitVFX, ps.main.duration + ps.main.startLifetime.constantMax);
+                }
+                else
+                {
+                    Destroy(hitVFX, 2f);
                 }
             }
         }
@@ -330,7 +363,6 @@ namespace Havengard.Abilities
             {
                 Vector2 knockbackDirection = (target.transform.position - sourcePosition).normalized;
                 
-                // Use a coroutine handler to apply knockback over time
                 var knockbackHandler = target.GetComponent<MeleeKnockbackHandler>();
                 if (knockbackHandler == null)
                     knockbackHandler = target.AddComponent<MeleeKnockbackHandler>();
@@ -339,7 +371,6 @@ namespace Havengard.Abilities
             }
         }
 
-        // Optional: Draw gizmos in editor for visualization
         public void DrawGizmos(Vector3 position, Vector2 direction)
         {
             Vector2 rotatedOffset = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg) * hitOffset;
@@ -357,7 +388,6 @@ namespace Havengard.Abilities
                     break;
                 case MeleeHitShape.Arc:
                     Gizmos.DrawWireSphere(hitPosition, hitRadius);
-                    // Draw arc lines
                     float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                     Vector2 left = Quaternion.Euler(0, 0, angle - hitArcAngle / 2f) * Vector2.right * hitRadius;
                     Vector2 right = Quaternion.Euler(0, 0, angle + hitArcAngle / 2f) * Vector2.right * hitRadius;
@@ -373,9 +403,9 @@ namespace Havengard.Abilities
 
     public enum MeleeHitShape
     {
-        Circle,    // Radial attack around caster
-        Box,       // Rectangular hitbox
-        Arc,       // Cone/arc in front of caster
-        Line       // Thrust/lunge attack
+        Circle,
+        Box,
+        Arc,
+        Line
     }
 }

@@ -63,7 +63,7 @@ namespace Havengard.Abilities
             }
 
             // Initialize projectile
-            projectile.Initialize(dir, casterFaction, friendlyFire, attackPower, projectileSpeed);
+            projectile.Initialize(dir, casterFaction, friendlyFire, attackPower, projectileSpeed, caster); // Add caster parameter
 
             // Enable homing if configured
             if (enableHoming)

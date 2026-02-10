@@ -128,7 +128,8 @@ namespace Havengard.Heroes
             health.SetMaxHealthFromStats(refill: true);
 
             // ResourceSystem naming: your version uses SetMax(...)
-            resourceSystem.SetMax(stats.CurrentStats.MaxResource, refill: true);
+            resourceSystem.SetMaxResource(stats.CurrentStats.MaxResource);
+            resourceSystem.SetToMax();
 
             // ----- 3) Abilities -----
             var unlockedAbilities = new List<AbilityBase>();
@@ -165,8 +166,7 @@ namespace Havengard.Heroes
 
             health.SetStartingMaxHealth(stats.CurrentStats.MaxHP);
             health.SetMaxHealthFromStats(refill: false);
-            resourceSystem.SetMax(stats.CurrentStats.MaxResource, refill: false);
-
+            resourceSystem.SetMaxResource(stats.CurrentStats.MaxResource);
             Debug.Log($"[HeroInstance] {(Data != null ? Data.heroName : name)} reached level {newLevel}.");
         }
 

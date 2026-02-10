@@ -36,8 +36,8 @@ public class ManaBarHUD : MonoBehaviour
         if (resourceSystem == null || manaBarFill == null)
             return;
 
-        float max = Mathf.Max(1f, resourceSystem.Max);
-        float targetFill = Mathf.Clamp01(resourceSystem.Current / max);
+        float max = Mathf.Max(1f, resourceSystem.MaxResource);
+        float targetFill = Mathf.Clamp01(resourceSystem.CurrentResource / max);
 
         displayedFill = Mathf.Lerp(displayedFill, targetFill, Time.deltaTime * fillLerpSpeed);
         manaBarFill.fillAmount = displayedFill;
@@ -49,8 +49,8 @@ public class ManaBarHUD : MonoBehaviour
     {
         if (resourceSystem == null || manaBarFill == null) return;
 
-        float max = Mathf.Max(1f, resourceSystem.Max);
-        displayedFill = Mathf.Clamp01(resourceSystem.Current / max);
+        float max = Mathf.Max(1f, resourceSystem.MaxResource);
+        displayedFill = Mathf.Clamp01(resourceSystem.CurrentResource / max);
         manaBarFill.fillAmount = displayedFill;
         UpdateManaText();
     }
@@ -59,8 +59,8 @@ public class ManaBarHUD : MonoBehaviour
     {
         if (manaText == null || resourceSystem == null) return;
 
-        int current = Mathf.RoundToInt(resourceSystem.Current);
-        int max = Mathf.RoundToInt(resourceSystem.Max);
+        int current = Mathf.RoundToInt(resourceSystem.CurrentResource);
+        int max = Mathf.RoundToInt(resourceSystem.MaxResource);
         manaText.text = $"{current} / {max}";
     }
 }

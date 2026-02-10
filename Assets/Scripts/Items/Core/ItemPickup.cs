@@ -44,7 +44,18 @@ namespace Havengard.Items
             
             if (data != null && data.pickupVFX != null)
             {
-                Instantiate(data.pickupVFX, transform.position, Quaternion.identity);
+                GameObject vfx = Instantiate(data.pickupVFX, transform.position, Quaternion.identity);
+                
+                // Auto-destroy VFX after particle system completes
+                var ps = vfx.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
+                }
+                else
+                {
+                    Destroy(vfx, 2f);
+                }
             }
         }
 
@@ -163,7 +174,19 @@ namespace Havengard.Items
 
             if (this._itemData.pickupVFX != null)
             {
-                Instantiate(this._itemData.pickupVFX, transform.position, Quaternion.identity);
+                GameObject vfx = Instantiate(this._itemData.pickupVFX, transform.position, Quaternion.identity);
+                
+                // Auto-destroy VFX after particle system completes
+                var ps = vfx.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
+                }
+                else
+                {
+                    // Fallback if no ParticleSystem component found
+                    Destroy(vfx, 2f);
+                }
             }
 
             if (this._itemData.pickupSFX != null)

@@ -49,13 +49,13 @@ public class ResourceBarHUD : MonoBehaviour
     {
         if (resource == null || fillImage == null) return;
 
-        float normalized = resource.Max > 0f ? resource.Current / resource.Max : 0f;
+        float normalized = resource.MaxResource > 0f ? (float)resource.CurrentResource / resource.MaxResource : 0f;
         fillImage.fillAmount = normalized;
 
         if (valueText != null)
         {
-            int cur = Mathf.FloorToInt(resource.Current);
-            int max = Mathf.FloorToInt(resource.Max);
+            int cur = Mathf.FloorToInt(resource.CurrentResource);
+            int max = Mathf.FloorToInt(resource.MaxResource);
             valueText.text = $"{cur}/{max}";
         }
     }

@@ -13,24 +13,21 @@ MonoBehaviour:
   m_Name: Burn
   m_EditorClassIdentifier: 
   effectName: Burn
-  icon: {fileID: 1417854463, guid: df5d64f59dbad444e942aad2fe5ff7b8, type: 3}
-  uiColor: {r: 1, g: 1, b: 1, a: 1}
-  category: 1
-  damageType: 1
   duration: 3
-  stackable: 0
+  stackable: 1
+  maxStacks: 3
   refreshDurationOnReapply: 1
   causesDamage: 1
   tickDamage: 5
   tickInterval: 1
   causesStun: 0
-  causesSilence: 0
   causesRoot: 0
+  causesSilence: 0
   moveSpeedMultiplier: 1
   attackSpeedMultiplier: 1
   damageMultiplier: 1
   defenseMultiplier: 1
+  lifestealPercent: 0
   attachVFX: {fileID: 6518375280535118874, guid: 43ca557071126934bbbfacec49e85b5b,
     type: 3}
-  applySFX: {fileID: 0}
-  canBeResisted: 1
+  applySFX: {fileID: 8300000, guid: 3f776ba755ba71341bb3f527c8369c60, type: 3}

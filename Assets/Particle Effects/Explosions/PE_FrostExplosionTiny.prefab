@@ -4930,7 +4930,7 @@ ParticleSystem:
         m_RotationOrder: 0
     startSpeed:
       serializedVersion: 2
-      minMaxState: 3
+      minMaxState: 0
       scalar: 26
       minScalar: 7.0000005
       maxCurve:

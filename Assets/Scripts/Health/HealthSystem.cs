@@ -28,6 +28,7 @@ namespace Havengard.HealthSystem
         public int CurrentHealth => currentHealth;
         public int MaxHealth => maxHealth;
         public bool IsDead => currentHealth <= 0;
+        public bool IsAlive => currentHealth > 0; // NEW: Added for MeleeAbility compatibility
 
         // Backwards compat helpers (if older code calls these)
         public int GetHealth() => currentHealth;
