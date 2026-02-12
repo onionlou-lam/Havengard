@@ -315,9 +315,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56502c5864fb75742b921aa2a6b5354a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aggroRange: 5
-  attackRange: 4
-  moveSpeed: 2
+  aggroRange: 4
+  attackRange: 3
+  moveSpeed: 1.5
   retargetInterval: 0.5
   targetLayers:
     serializedVersion: 2

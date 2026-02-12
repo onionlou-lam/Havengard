@@ -45,6 +45,9 @@ namespace Havengard.Units
         private static readonly int AnimHit = Animator.StringToHash("Hit");
         private static readonly int AnimDead = Animator.StringToHash("Dead");
 
+        // Add this field near the top with other Animator hashes
+        private static readonly int AnimAttackIndex = Animator.StringToHash("AttackIndex");
+
         public NavMeshAgent agent; //public for behaviors to access directly as it is a component reference, similar to RigidBody etc.
         protected Health health;
         protected GameObject currentTarget;
@@ -179,7 +182,12 @@ namespace Havengard.Units
         protected void TriggerAttackAnim()
         {
             if (animator != null)
+            {
+                // Randomly select attack animation (0 or 1)
+                int attackIndex = Random.Range(0, 2);
+                animator.SetInteger(AnimAttackIndex, attackIndex);
                 animator.SetTrigger(AnimAttack);
+            }
         }
 
         private void TriggerHitAnim()

@@ -16,8 +16,12 @@ MonoBehaviour:
   cooldown: 1
   resourceCost: 0
   icon: {fileID: 21300000, guid: 41d1523219b2ada4680229e3c23cba86, type: 3}
+  resourceGeneratedOnCast: 0
+  resourceGeneratedPerHit: 0
+  resourceGeneratedOnKill: 0
   statusEffect: {fileID: 0}
   maxStatusStacks: 1
+  lifestealPercent: 0
   hitShape: 2
   hitRadius: 1.5
   hitBoxSize: {x: 2, y: 1.5}
@@ -43,5 +47,5 @@ MonoBehaviour:
   rotateVFXToDirection: 1
   vfxRotationOffset: -90
   spawnCasterVFXAtHitPosition: 1
-  swingSFX: {fileID: 0}
+  swingSFX: {fileID: 8300000, guid: 004cd40c96cd53c43add5d5f141b38fa, type: 3}
   hitSFX: {fileID: 8300000, guid: 8747e361c4c78984abbd90e50b5f6596, type: 3}
