@@ -255,8 +255,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.4, y: 0.5}
+  m_Offset: {x: 0, y: 0.06}
+  m_Size: {x: 0.425, y: 0.40385568}
   m_Direction: 0
 --- !u!50 &425110104285042994
 Rigidbody2D:
@@ -312,7 +312,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   abilities:
-  - {fileID: 11400000, guid: 2e460e5a109f6e242bcabda75918ac3e, type: 2}
+  - {fileID: 11400000, guid: 185ebe7fd33b25546820fe352001c8d6, type: 2}
   resourceComponent: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
@@ -351,8 +351,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aggroRange: 2
-  attackRange: 0.55
-  moveSpeed: 1
+  attackRange: 0.56
+  moveSpeed: 1.5
   retargetInterval: 0.5
   targetLayers:
     serializedVersion: 2
@@ -366,7 +366,7 @@ MonoBehaviour:
   flashDuration: 0.2
   flashCount: 2
   agent: {fileID: 3722351281779082859}
-  attackAbility: {fileID: 11400000, guid: 2e460e5a109f6e242bcabda75918ac3e, type: 2}
+  attackAbility: {fileID: 11400000, guid: 185ebe7fd33b25546820fe352001c8d6, type: 2}
 --- !u!114 &5408102868472053043
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -380,7 +380,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathVFX: {fileID: 0}
-  deathSFX: {fileID: 8300000, guid: 5d3d6aa0a6e31c840a87c556e265d69c, type: 3}
+  deathSFX: {fileID: 8300000, guid: 189fdc9c26b180c4eb6ef9a2161ceeb8, type: 3}
   sfxVolume: 1
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1
@@ -1139,7 +1139,7 @@ Transform:
   m_GameObject: {fileID: 8256599852086068741}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.213, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

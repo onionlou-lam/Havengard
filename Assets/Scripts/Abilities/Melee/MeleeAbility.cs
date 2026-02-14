@@ -60,6 +60,14 @@ namespace Havengard.Abilities
         [Header("SFX")]
         [SerializeField] private AudioClip swingSFX;
         [SerializeField] private AudioClip hitSFX;
+        [Tooltip("Enable random pitch variation for swing SFX")]
+        [SerializeField] private bool randomizeSwingPitch = false;
+        [Tooltip("Enable random pitch variation for hit SFX")]
+        [SerializeField] private bool randomizeHitPitch = false;
+        [Tooltip("Minimum pitch multiplier for randomized audio")]
+        [SerializeField] private float minPitch = 0.85f;
+        [Tooltip("Maximum pitch multiplier for randomized audio")]
+        [SerializeField] private float maxPitch = 1.15f;
 
         private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
@@ -78,9 +86,11 @@ namespace Havengard.Abilities
             // Get attack direction (toward mouse or target)
             Vector2 attackDirection = GetAttackDirection(caster, target);
 
-            // Play swing SFX
+            // Play swing SFX with optional pitch variation
             if (swingSFX != null)
-                AudioSource.PlayClipAtPoint(swingSFX, caster.transform.position);
+            {
+                PlayAudioWithPitch(swingSFX, caster.transform.position, randomizeSwingPitch);
+            }
 
             // Spawn caster VFX
             if (casterVFXPrefab != null)
@@ -264,7 +274,7 @@ namespace Havengard.Abilities
 
             if (anyHit && hitSFX != null)
             {
-                AudioSource.PlayClipAtPoint(hitSFX, hitPosition);
+                PlayAudioWithPitch(hitSFX, hitPosition, randomizeHitPitch);
             }
 
             if (!spawnVFXOnEachHit && hitVFXPrefab != null && anyHit)
@@ -397,6 +407,35 @@ namespace Havengard.Abilities
                 case MeleeHitShape.Line:
                     Gizmos.DrawLine(position, (Vector2)position + direction * hitRange);
                     break;
+            }
+        }
+
+        /// <summary>
+        /// Plays an audio clip at a position with optional random pitch variation
+        /// </summary>
+        private void PlayAudioWithPitch(AudioClip clip, Vector3 position, bool randomizePitch)
+        {
+            if (clip == null) return;
+
+            if (randomizePitch)
+            {
+                // Create temporary GameObject with AudioSource for pitch control
+                GameObject audioGO = new GameObject("TempAudio");
+                audioGO.transform.position = position;
+                AudioSource audioSource = audioGO.AddComponent<AudioSource>();
+                
+                audioSource.clip = clip;
+                audioSource.pitch = Random.Range(minPitch, maxPitch);
+                audioSource.spatialBlend = 0f; // 2D sound
+                audioSource.Play();
+                
+                // Destroy after clip finishes
+                Destroy(audioGO, clip.length);
+            }
+            else
+            {
+                // Use standard PlayClipAtPoint (no pitch variation)
+                AudioSource.PlayClipAtPoint(clip, position);
             }
         }
     }

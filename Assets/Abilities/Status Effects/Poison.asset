@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e944952b95ab3d4999ad1714a0924fd, type: 3}
+  m_Name: Poison
+  m_EditorClassIdentifier: 
+  effectName: Poison
+  duration: 3
+  stackable: 0
+  maxStacks: 1
+  refreshDurationOnReapply: 1
+  causesDamage: 1
+  tickDamage: 2
+  tickInterval: 5
+  causesStun: 0
+  causesRoot: 0
+  causesSilence: 0
+  moveSpeedMultiplier: 0.8
+  attackSpeedMultiplier: 1
+  damageMultiplier: 1
+  defenseMultiplier: 1
+  lifestealPercent: 0
+  attachVFX: {fileID: 2762418064557710559, guid: 1d3ebb8121660c046830424b27580feb,
+    type: 3}
+  applySFX: {fileID: 0}

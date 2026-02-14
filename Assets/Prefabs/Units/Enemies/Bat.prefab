@@ -1083,7 +1083,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   abilities:
-  - {fileID: 11400000, guid: 2e460e5a109f6e242bcabda75918ac3e, type: 2}
+  - {fileID: 11400000, guid: 9a229a8bbb58fb64ca63e9b0ddd3b1e9, type: 2}
   resourceComponent: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
@@ -1137,7 +1137,7 @@ MonoBehaviour:
   flashDuration: 0.2
   flashCount: 2
   agent: {fileID: 2577063915157003378}
-  attackAbility: {fileID: 11400000, guid: 2e460e5a109f6e242bcabda75918ac3e, type: 2}
+  attackAbility: {fileID: 11400000, guid: 9a229a8bbb58fb64ca63e9b0ddd3b1e9, type: 2}
 --- !u!114 &4322206182218632734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1151,11 +1151,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathVFX: {fileID: 0}
-  deathSFX: {fileID: 8300000, guid: 567438f4ceff5304fa2b615fd3bdb268, type: 3}
+  deathSFX: {fileID: 8300000, guid: 189fdc9c26b180c4eb6ef9a2161ceeb8, type: 3}
   sfxVolume: 1
   disableCollidersImmediately: 1
   disableAllBehavioursOnDeath: 1
-  fallbackDestroyDelay: 1.7
+  fallbackDestroyDelay: 1.5
 --- !u!114 &7465993270368248510
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1186,7 +1186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damageNumberPrefabOverride: {fileID: 7603617580021723302}
   healNumberPrefabOverride: {fileID: 0}
-  worldOffset: {x: 0, y: 0.6, z: 0}
+  worldOffset: {x: 0, y: 0.1, z: 0}
   followTarget: 1
   showZeroChanges: 0
 --- !u!114 &3950406882349038103

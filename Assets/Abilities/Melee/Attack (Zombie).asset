@@ -10,21 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fff87aca672d4184484f1302a011e1de, type: 3}
-  m_Name: MeleeAttack
+  m_Name: Attack (Zombie)
   m_EditorClassIdentifier: 
-  abilityName: Melee Attack
-  cooldown: 1
+  abilityName: Zombie Attack
+  cooldown: 2
   resourceCost: 0
-  icon: {fileID: 21300000, guid: bcf8bc2bebc947546b5fbc45775ac400, type: 3}
-  statusEffect: {fileID: 0}
+  icon: {fileID: 21300000, guid: 429efd621086cec4fa7e6cf0e2b3c48e, type: 3}
+  resourceGeneratedOnCast: 0
+  resourceGeneratedPerHit: 0
+  resourceGeneratedOnKill: 0
+  statusEffect: {fileID: 11400000, guid: 36e52d2490ebee3488db718b2e38e07f, type: 2}
   maxStatusStacks: 1
-  hitShape: 2
-  hitRadius: 1.5
-  hitBoxSize: {x: 1.5, y: 1}
+  lifestealPercent: 0.5
+  hitShape: 1
+  hitRadius: 1
+  hitBoxSize: {x: 1, y: 1}
   hitArcAngle: 90
-  hitRange: 2
+  hitRange: 1.5
   hitOffset: {x: 0, y: 0}
-  hitDelay: 0.2
+  hitDelay: 0.3
   activeHitDuration: 0
   damageMultiplier: 1
   baseDamage: 5
@@ -36,13 +40,16 @@ MonoBehaviour:
   enableLunge: 0
   lungeDistance: 2
   lungeDuration: 0.15
-  hitVFXPrefab: {fileID: 5641636321807965521, guid: a636c7d54886f1e478c4fb41d3827289,
+  hitVFXPrefab: {fileID: 5641636321807965521, guid: a0c141a37e9157d4f974263027767774,
     type: 3}
-  casterVFXPrefab: {fileID: 5641636321807965521, guid: a636c7d54886f1e478c4fb41d3827289,
-    type: 3}
+  casterVFXPrefab: {fileID: 0}
   spawnVFXOnEachHit: 1
   rotateVFXToDirection: 1
   vfxRotationOffset: 0
   spawnCasterVFXAtHitPosition: 0
   swingSFX: {fileID: 0}
-  hitSFX: {fileID: 0}
+  hitSFX: {fileID: 8300000, guid: a5fac6a2fb093ba4fae49715cba90adb, type: 3}
+  randomizeSwingPitch: 0
+  randomizeHitPitch: 1
+  minPitch: 0.85
+  maxPitch: 1.15

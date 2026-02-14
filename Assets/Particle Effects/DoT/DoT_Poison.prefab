@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 2762418064557710559}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -24.43, y: -4.9993496, z: -0.0071106316}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -106,43 +106,63 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 19926288, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayer
-      value: 7
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 19926288, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 19926288, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayerID
-      value: 1147017395
+      value: 47421343
       objectReference: {fileID: 0}
     - target: {fileID: 19931952, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayer
-      value: 7
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 19931952, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 19931952, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayerID
-      value: 1147017395
+      value: 47421343
       objectReference: {fileID: 0}
     - target: {fileID: 19942858, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayer
-      value: 7
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 19942858, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 19942858, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayerID
-      value: 1147017395
+      value: 47421343
       objectReference: {fileID: 0}
     - target: {fileID: 19970824, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayer
-      value: 7
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 19970824, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 19970824, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayerID
-      value: 1147017395
+      value: 47421343
       objectReference: {fileID: 0}
     - target: {fileID: 19997756, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayer
-      value: 7
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 19997756, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 19997756, guid: 41bdb11fe6d778b4c82f45b5787c050e, type: 3}
       propertyPath: m_SortingLayerID
-      value: 1147017395
+      value: 47421343
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
