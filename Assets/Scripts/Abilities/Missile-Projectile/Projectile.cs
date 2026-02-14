@@ -1,7 +1,7 @@
 ﻿using Havengard.Combat;
 using Havengard.HealthSystem;
 using Havengard.Units;
-using Havengard.Abilities; // ADD THIS - for LifestealHandler
+using Havengard.Abilities;
 using System;
 using UnityEngine;
 
@@ -14,6 +14,12 @@ namespace Havengard.Abilities
         [Header("Projectile Settings")]
         [SerializeField] private float lifetime = 5f;
 
+        [Header("Launch Effects")]
+        [Tooltip("Audio clip played when projectile is spawned/cast")]
+        [SerializeField] private AudioClip launchSFX;
+        [Tooltip("VFX spawned at launch position when projectile is created")]
+        [SerializeField] private GameObject launchVFX;
+
         [Header("Impact VFX")]
         [SerializeField] private GameObject hitVFX;
         [SerializeField] private GameObject wallHitVFX;
@@ -23,6 +29,14 @@ namespace Havengard.Abilities
         [SerializeField] private AudioClip hitSFX;
         [SerializeField] private AudioClip wallHitSFX;
 
+        [Header("Impact Animation")]
+        [Tooltip("Animator on this projectile (or child) that will trigger impact animation")]
+        [SerializeField] private Animator impactAnimator;
+        [Tooltip("Name of the trigger parameter in Animator to play on impact")]
+        [SerializeField] private string impactAnimTrigger = "Impact";
+        [Tooltip("If true, projectile sprite will remain visible during impact animation")]
+        [SerializeField] private bool keepSpriteOnImpact = false;
+
         [Header("Trail VFX (Optional)")]
         [SerializeField] private TrailRenderer trail;
         [SerializeField] private ParticleSystem trailParticles;
@@ -30,7 +44,7 @@ namespace Havengard.Abilities
         [Header("Homing Settings")]
         [SerializeField] private bool enableHoming = false;
         [SerializeField] private float homingStrength = 5f;
-        [SerializeField] private float homingDelay = 0f; // Delay before homing starts
+        [SerializeField] private float homingDelay = 0f;
 
         public event Action<Vector3, Collider2D> OnImpact;
 
@@ -43,11 +57,14 @@ namespace Havengard.Abilities
         private SpriteRenderer sr;
         private float speed;
         private Vector2 direction;
-        private GameObject casterGameObject; // ADD THIS LINE
+        private GameObject casterGameObject;
         
         // Homing variables
         private GameObject homingTarget;
         private float launchTime;
+
+        // Animation hash
+        private int impactAnimHash;
 
         private void Awake()
         {
@@ -55,6 +72,12 @@ namespace Havengard.Abilities
             col = GetComponent<Collider2D>();
             sr = GetComponentInChildren<SpriteRenderer>();
             rb.gravityScale = 0f;
+
+            // Cache animator trigger hash if animator is assigned
+            if (impactAnimator != null && !string.IsNullOrEmpty(impactAnimTrigger))
+            {
+                impactAnimHash = Animator.StringToHash(impactAnimTrigger);
+            }
         }
 
         public void Initialize(Vector2 direction, Faction faction, bool friendlyFire, int damage, float speed, GameObject caster = null)
@@ -65,7 +88,7 @@ namespace Havengard.Abilities
             this.speed = speed;
             this.direction = direction.normalized;
             this.launchTime = Time.time;
-            this.casterGameObject = caster; // ADD THIS LINE
+            this.casterGameObject = caster;
 
             rb.linearVelocity = this.direction * speed;
 
@@ -73,7 +96,39 @@ namespace Havengard.Abilities
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             transform.rotation = Quaternion.Euler(0, 0, angle);
 
+            // Play launch effects
+            PlayLaunchEffects();
+
             Destroy(gameObject, lifetime);
+        }
+
+        /// <summary>
+        /// Plays audio and visual effects when the projectile is launched
+        /// </summary>
+        private void PlayLaunchEffects()
+        {
+            // Play launch SFX
+            if (launchSFX != null)
+            {
+                AudioSource.PlayClipAtPoint(launchSFX, transform.position);
+            }
+
+            // Spawn launch VFX
+            if (launchVFX != null)
+            {
+                GameObject vfx = Instantiate(launchVFX, transform.position, transform.rotation);
+                
+                // Auto-destroy launch VFX
+                var ps = vfx.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
+                }
+                else
+                {
+                    Destroy(vfx, 2f);
+                }
+            }
         }
 
         /// <summary>
@@ -161,11 +216,9 @@ namespace Havengard.Abilities
             {
                 health.GetHealthSystem().Damage(damage);
                 
-                // Apply lifesteal - need to find the caster
-                // Projectiles need to store reference to caster GameObject
+                // Apply lifesteal
                 if (casterGameObject != null)
                 {
-                    // You'll need to add this method to projectile or call LifestealHandler
                     LifestealHandler.ApplyLifesteal(casterGameObject, damage);
                 }
                 
@@ -196,8 +249,17 @@ namespace Havengard.Abilities
             // Disable collider so we don't re-trigger
             if (col != null) col.enabled = false;
 
-            // Hide sprite immediately
-            if (sr != null) sr.enabled = false;
+            // Trigger impact animation if available
+            if (impactAnimator != null && impactAnimHash != 0)
+            {
+                impactAnimator.SetTrigger(impactAnimHash);
+            }
+
+            // Hide sprite immediately unless we want to keep it for animation
+            if (sr != null && !keepSpriteOnImpact)
+            {
+                sr.enabled = false;
+            }
 
             // Detach trail so it can fade naturally
             if (trail != null)
@@ -220,8 +282,19 @@ namespace Havengard.Abilities
             // Notify listeners (for splash damage, etc.)
             OnImpact?.Invoke(transform.position, collider);
 
-            // Destroy after a tiny delay
-            Destroy(gameObject, impactDestroyDelay);
+            // Destroy after a delay (longer if we have an animation)
+            float destroyDelay = impactDestroyDelay;
+            if (impactAnimator != null && keepSpriteOnImpact)
+            {
+                // Give animation time to play
+                var currentClip = impactAnimator.GetCurrentAnimatorClipInfo(0);
+                if (currentClip.Length > 0)
+                {
+                    destroyDelay = Mathf.Max(destroyDelay, currentClip[0].clip.length);
+                }
+            }
+
+            Destroy(gameObject, destroyDelay);
         }
 
         private void PlayImpactEffects(bool hitTarget, Vector3 position)
@@ -231,7 +304,17 @@ namespace Havengard.Abilities
             if (vfx != null)
             {
                 GameObject fxInstance = Instantiate(vfx, position, Quaternion.identity);
-                Destroy(fxInstance, 2f);
+                
+                // Auto-destroy impact VFX
+                var ps = fxInstance.GetComponent<ParticleSystem>();
+                if (ps != null)
+                {
+                    Destroy(fxInstance, ps.main.duration + ps.main.startLifetime.constantMax);
+                }
+                else
+                {
+                    Destroy(fxInstance, 2f);
+                }
             }
 
             // Play SFX

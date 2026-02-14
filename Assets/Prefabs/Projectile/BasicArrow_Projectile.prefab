@@ -26,14 +26,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 940045505681914368}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6830466383291154931}
   m_Father: {fileID: 8842486697207175641}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
 --- !u!212 &6043241132153870539
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -75,9 +75,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1147017395
-  m_SortingLayer: 7
-  m_SortingOrder: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 3
   m_Sprite: {fileID: -1145515263, guid: ca579e2ed01847a4181225c8f045b809, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -4927,9 +4927,9 @@ TrailRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1147017395
-  m_SortingLayer: 7
-  m_SortingOrder: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 3
   m_Time: 0.2
   m_PreviewTimeScale: 1
   m_Parameters:
@@ -5122,17 +5122,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifetime: 5
-  wallsLayerName: Walls
-  damageableLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  impactHitVFX: {fileID: 0}
-  impactWallVFX: {fileID: 0}
-  impactSound: {fileID: 0}
-  impactSoundVolume: 0.8
-  destroyOnImpact: 1
-  destroyDelayAfterImpact: 0
-  canPierce: 0
-  maxPierces: 0
-  damageFalloffPerPierce: 1
-  debugHits: 0
+  launchSFX: {fileID: 8300000, guid: 5f873dde0c912f34d8ca8104b742b9e6, type: 3}
+  launchVFX: {fileID: 0}
+  hitVFX: {fileID: 0}
+  wallHitVFX: {fileID: 0}
+  impactDestroyDelay: 0.5
+  hitSFX: {fileID: 8300000, guid: 2ac1cc6d78e6ac34a80c492ce42d1fbc, type: 3}
+  wallHitSFX: {fileID: 8300000, guid: 47cc942bad3532341ae8833e0360b34a, type: 3}
+  impactAnimator: {fileID: 0}
+  impactAnimTrigger: Impact
+  keepSpriteOnImpact: 0
+  trail: {fileID: 8366800903788809706}
+  trailParticles: {fileID: 1763368115434722675}
+  enableHoming: 0
+  homingStrength: 5
+  homingDelay: 0

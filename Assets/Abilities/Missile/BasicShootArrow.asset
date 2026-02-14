@@ -14,20 +14,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilityName: Shoot
   cooldown: 1.5
-  resourceCost: 5
+  resourceCost: 0
   icon: {fileID: -1787343739, guid: ca579e2ed01847a4181225c8f045b809, type: 3}
-  abilityType: 0
+  resourceGeneratedOnCast: 0
+  resourceGeneratedPerHit: 0
+  resourceGeneratedOnKill: 0
+  statusEffect: {fileID: 0}
+  maxStatusStacks: 1
+  lifestealPercent: 0
   projectilePrefab: {fileID: 8653230985722798040, guid: 2073284f14caeb541bd2b64120f52058,
     type: 3}
   projectileSpeed: 5
-  baseDamage: 10
-  useCasterAttack: 1
-  hasExplosion: 1
-  explosionRadius: 0
-  aoeDamageMultiplier: 0
-  aoeDamageBonus: 0
-  statusEffect: {fileID: 0}
-  impactHitVFX: {fileID: 0}
-  impactWallVFX: {fileID: 0}
-  impactSFX: {fileID: 8300000, guid: af5c6f469e41e8548ae94900222b05d3, type: 3}
+  directHitDamage: 25
   friendlyFire: 0
+  enableHoming: 0
+  homingStrength: 5
+  homingDelay: 0
+  autoTarget: 1
+  enableSplash: 1
+  splashRadius: 2.5
+  splashDamage: 10
