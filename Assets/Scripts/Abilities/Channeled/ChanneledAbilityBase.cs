@@ -1,7 +1,7 @@
 using Havengard.Abilities;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Abilities/Channeled Ability", fileName = "NewChanneledAbility")]
+[CreateAssetMenu(menuName = "Havengard/Abilities/Channeled Ability")]
 public abstract class ChanneledAbilityBase : AbilityBase
 {
     [Header("Channel Settings")]

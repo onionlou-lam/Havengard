@@ -1,5 +1,5 @@
-csharp Assets\Scripts\Abilities\Core Scripts\ChannelController.cs
 using UnityEngine;
+using Havengard.Abilities;
 
 // Attach to a caster GameObject. This controller demonstrates a channeled usage of a ChanneledAbilityBase.
 // For demo/input hooking it uses left mouse; replace with your input system as needed.
@@ -145,7 +145,9 @@ public class ChannelController : MonoBehaviour
         }
 
         // Generate resource on cast (before effect) - keep consistent with AbilityBase
-        ability.GenerateResourceOnCast(gameObject);
+        (ability as AbilityBase)?.GetType()
+            .GetMethod("GenerateResourceOnCast", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            ?.Invoke(ability, new object[] { gameObject });
 
         // Call the ability release implementation
         ability.OnRelease(gameObject, null, percent);

@@ -84,7 +84,7 @@ SpriteRenderer:
   m_Size: {x: 1.6, y: 1.6}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &6277567805243431862
@@ -109,7 +109,7 @@ GameObject:
   - component: {fileID: 7605921635188842516}
   - component: {fileID: 3003622248329811292}
   m_Layer: 6
-  m_Name: PLAYER_Mage 1
+  m_Name: PLAYER_Mage
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -188,7 +188,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilities:
   - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+  - {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
   - {fileID: 11400000, guid: 010b655fd6a3f5e4fb98d6d5e9722383, type: 2}
+  - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
   resourceComponent: {fileID: 1865082179602180432}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
@@ -313,6 +315,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxResource: 100
+  currentResource: 0
 --- !u!114 &750057627197447055
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -605,6 +608,6 @@ SpriteRenderer:
   m_Size: {x: 1.6, y: 1.6}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0

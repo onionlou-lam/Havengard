@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4001027606611568082}
@@ -111,11 +111,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifetime: 5
+  launchSFX: {fileID: 0}
+  launchVFX: {fileID: 0}
   hitVFX: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
   wallHitVFX: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
   impactDestroyDelay: 0.05
   hitSFX: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}
   wallHitSFX: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}
+  impactAnimator: {fileID: 0}
+  impactAnimTrigger: Impact
+  keepSpriteOnImpact: 0
   trail: {fileID: 4001027606601912778}
   trailParticles: {fileID: 4001027606629892928}
   enableHoming: 0

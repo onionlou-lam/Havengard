@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8543387032684821566
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2322932691680468119}
+  - component: {fileID: 3715294799996370988}
+  - component: {fileID: -3551821599338400753}
+  m_Layer: 0
+  m_Name: FrostBeam
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2322932691680468119
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8543387032684821566}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3715294799996370988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8543387032684821566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ede43347e5e422d4692b421d77e89d7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beamLineRendererPrefab:
+  - {fileID: 8543387032684821566}
+  beamStartPrefab:
+  - {fileID: 8543387032684821566}
+  beamEndPrefab:
+  - {fileID: 8543387032684821566}
+  beamEndOffset: 2
+  textureScrollSpeed: 8
+  textureLengthScale: 3
+  minBeamWidth: 0.05
+  maxBeamWidth: 0.4
+  minStartScale: 0.2
+  maxStartScale: 1
+  endOffSetSlider: {fileID: 0}
+  scrollSpeedSlider: {fileID: 0}
+  textBeamName: {fileID: 0}
+  externalControl: 0
+--- !u!114 &-3551821599338400753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8543387032684821566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab65db61b0cbd7f4bb2afcba7e37d8ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beamLineRendererPrefab: {fileID: 168570, guid: 842502c039b9fa448a8d2db389c39bd9,
+    type: 3}
+  beamStartPrefab: {fileID: 134198, guid: 3a857b88ce25ff54085d07fee4812e63, type: 3}
+  beamEndPrefab: {fileID: 113256, guid: 24ecca43a211bd946ac75392ca90747f, type: 3}
+  beamCollides: 1
+  beamLength: 100
+  beamEndOffset: 0
+  textureScrollSpeed: 0
+  textureLengthScale: 1
+  widthMultiplier: 1.5
+  pulseSpeed: 1
