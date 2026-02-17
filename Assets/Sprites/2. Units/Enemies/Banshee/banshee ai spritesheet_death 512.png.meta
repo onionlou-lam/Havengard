@@ -1,0 +1,293 @@
+fileFormatVersion: 2
+guid: f7899bae989c7d4468fa3416119a3f65
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_0
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 249
+        width: 105
+        height: 147
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47ea4da4889ffaf459f36958c2e6889c
+      internalID: 2021121913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_1
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 249
+        width: 104
+        height: 144
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0cf1fbc8b99ee7f4fa823eaf591e8677
+      internalID: -686198939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_2
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 252
+        width: 116
+        height: 142
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe18d3c4593b85149b3445ddb743243a
+      internalID: 1843540640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_4
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 306
+        width: 4
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aaceb52ed9562864fb8cfb96db6beecf
+      internalID: 1380031265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_7
+      rect:
+        serializedVersion: 2
+        x: 55
+        y: 64
+        width: 115
+        height: 130
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b82ed3991c69c94ebc0eee3f924420b
+      internalID: -948077584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_8
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 72
+        width: 137
+        height: 82
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d44de8bbc64775b47925f4d1365facc4
+      internalID: 1878165565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: banshee ai spritesheet_death 512_16
+      rect:
+        serializedVersion: 2
+        x: 399
+        y: 69
+        width: 54
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ac82692935a27f4cbb1e25ac564d9f3
+      internalID: -1136555388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: e4449939331d13941a67a3308a86340d
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      banshee ai spritesheet_death 512_0: 2021121913
+      banshee ai spritesheet_death 512_1: -686198939
+      banshee ai spritesheet_death 512_10: 933582213
+      banshee ai spritesheet_death 512_11: 476228377
+      banshee ai spritesheet_death 512_12: 3061285
+      banshee ai spritesheet_death 512_13: -1271386044
+      banshee ai spritesheet_death 512_14: -1783648423
+      banshee ai spritesheet_death 512_15: 1051118451
+      banshee ai spritesheet_death 512_16: -1136555388
+      banshee ai spritesheet_death 512_17: 1260276170
+      banshee ai spritesheet_death 512_18: 316008664
+      banshee ai spritesheet_death 512_19: 1419009349
+      banshee ai spritesheet_death 512_2: 1843540640
+      banshee ai spritesheet_death 512_20: 826133407
+      banshee ai spritesheet_death 512_21: 1834119222
+      banshee ai spritesheet_death 512_3: 1749887513
+      banshee ai spritesheet_death 512_4: 1380031265
+      banshee ai spritesheet_death 512_5: 2050750717
+      banshee ai spritesheet_death 512_6: -1495309268
+      banshee ai spritesheet_death 512_7: -948077584
+      banshee ai spritesheet_death 512_8: 1878165565
+      banshee ai spritesheet_death 512_9: -1139652268
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
