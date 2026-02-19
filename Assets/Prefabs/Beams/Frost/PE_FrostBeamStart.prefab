@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 478980}
   - component: {fileID: 19818632}
   - component: {fileID: 19949800}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Rings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4721,7 +4721,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: b9e879cde921eb241bbc716410ae2b8e, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4785,7 +4784,7 @@ GameObject:
   - component: {fileID: 444608}
   - component: {fileID: 10895960}
   - component: {fileID: 11407748}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Point light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4900,7 +4899,7 @@ GameObject:
   - component: {fileID: 419500}
   - component: {fileID: 19846988}
   - component: {fileID: 19979936}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: PE_FrostBeamStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4917,7 +4916,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 478980}
@@ -5478,7 +5477,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    gravitySource: 0
+    gravitySource: 1
     maxNumParticles: 500
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
@@ -9731,7 +9730,7 @@ GameObject:
   - component: {fileID: 468264}
   - component: {fileID: 19815042}
   - component: {fileID: 19953154}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Offshoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14387,7 +14386,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 3ac3454bbbf774c4e9d0b52ec87cdfdf, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14451,7 +14449,7 @@ GameObject:
   - component: {fileID: 457880}
   - component: {fileID: 19884518}
   - component: {fileID: 19902758}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Particles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14885,7 +14883,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startRotationX:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 0
       maxCurve:
@@ -14938,7 +14936,7 @@ ParticleSystem:
         m_RotationOrder: 4
     startRotationY:
       serializedVersion: 2
-      minMaxState: 0
+      minMaxState: 3
       scalar: 1
       minScalar: 0
       maxCurve:
@@ -19152,7 +19150,6 @@ ParticleSystemRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 8c100d07a45d5e547991d31b6ae2cd37, type: 2}
-  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

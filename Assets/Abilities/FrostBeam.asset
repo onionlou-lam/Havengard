@@ -30,18 +30,23 @@ MonoBehaviour:
     type: 3}
   baseDamagePerSecond: 10
   damageScaling: 2
-  damageTickRate: 0.5
+  damageTickRate: 0.1
   friendlyFire: 0
   beamMaxRange: 25
   hitLayers:
     serializedVersion: 2
-    m_Bits: 1281
+    m_Bits: 1280
   enableFullChargeEffect: 0
   fullChargeEffectType: 1
   fullChargeRadius: 3
-  fullChargeVFXPrefab: {fileID: 0}
+  fullChargeVFXPrefab: {fileID: 139782, guid: 98e6e1aeb945c85498e9140e679e60d1, type: 3}
   applyContinuousStatusEffects: 1
   beamLoopSFX: {fileID: 8300000, guid: 472e3c06bedeb03448ab2fd27074ef84, type: 3}
   fullChargeReleaseSFX: {fileID: 8300000, guid: 756d00bb5c6367b47ba9f64ecc01a9e2,
     type: 3}
   beamLoopVolume: 0.5
+  use2DMode: 1
+  maxBeamDistance: 100
+  beamBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 0

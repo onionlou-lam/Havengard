@@ -25,6 +25,9 @@ namespace Havengard.Abilities
         [SerializeField] private float beamMaxRange = 25f;
         [SerializeField] private LayerMask hitLayers = -1;
 
+        // PUBLIC PROPERTY for external access
+        public float BeamMaxRange => beamMaxRange;
+
         [Header("Full Charge Release Effect")]
         [Tooltip("Enable special effect when released at full charge")]
         [SerializeField] private bool enableFullChargeEffect = false;
@@ -44,6 +47,14 @@ namespace Havengard.Abilities
         [Tooltip("Volume for beam loop sound (0-1)")]
         [Range(0f, 1f)]
         [SerializeField] private float beamLoopVolume = 0.5f;
+
+        [Header("2D Support")]
+        [Tooltip("Enable for 2D games - uses screen to world point instead of raycasting")]
+        public bool use2DMode = true;
+        [Tooltip("Maximum beam distance in world units")]
+        public float maxBeamDistance = 100f;
+        [Tooltip("Layers that block the beam visually (leave as Nothing for infinite beam)")]
+        public LayerMask beamBlockingLayers = 0; // ADD THIS - default to "Nothing"
 
         private float lastDamageTick;
         private AudioSource beamAudioSource;
@@ -73,8 +84,13 @@ namespace Havengard.Abilities
             // Apply continuous damage while channeling
             if (Time.time - lastDamageTick >= damageTickRate)
             {
+                Debug.Log($"Applying beam damage at {Time.time}, last tick was at {lastDamageTick}"); // ADD THIS
                 ApplyBeamDamage(caster, chargePercent);
                 lastDamageTick = Time.time;
+            }
+            else
+            {
+                Debug.Log($"Skipping damage tick - Time.time: {Time.time}, lastDamageTick: {lastDamageTick}, difference: {Time.time - lastDamageTick}, required: {damageTickRate}"); // ADD THIS
             }
         }
 
@@ -82,6 +98,9 @@ namespace Havengard.Abilities
         {
             // Stop beam sound
             StopBeamAudio();
+
+            // IMPORTANT: Reset lastDamageTick for next cast
+            lastDamageTick = 0f;
 
             // Apply full charge effect if enabled and fully charged
             if (enableFullChargeEffect && chargePercent >= 0.99f)
@@ -101,7 +120,7 @@ namespace Havengard.Abilities
         public override void OnChannelCancel(GameObject caster)
         {
             base.OnChannelCancel(caster);
-            lastDamageTick = 0f;
+            lastDamageTick = 0f; // Reset for next cast
             StopBeamAudio();
             Debug.Log("Beam channeling cancelled");
         }
@@ -115,6 +134,9 @@ namespace Havengard.Abilities
             Vector2 beamDirection = (mouseWorld - caster.transform.position).normalized;
             Vector2 startPos = caster.transform.position;
 
+            // VISUAL DEBUG - Draw the raycast in Scene view
+            Debug.DrawRay(startPos, beamDirection * beamMaxRange, Color.red, 0.1f);
+
             // Raycast along beam path
             RaycastHit2D[] hits = Physics2D.RaycastAll(
                 startPos,
@@ -123,15 +145,47 @@ namespace Havengard.Abilities
                 hitLayers
             );
 
+            Debug.Log($"Beam damage raycast: start={startPos}, dir={beamDirection}, range={beamMaxRange}, hits={hits.Length}, hitLayers={hitLayers.value}");
+
             var casterHealth = caster.GetComponent<IHealth>();
             Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
 
             foreach (var hit in hits)
             {
-                if (hit.collider == null || hit.collider.gameObject == caster)
+                if (hit.collider == null)
                     continue;
 
-                var health = hit.collider.GetComponent<IHealth>();
+                GameObject hitObject = hit.collider.gameObject;
+
+                // Skip the caster
+                if (hitObject == caster)
+                {
+                    Debug.Log($"Skipping caster: {hitObject.name}");
+                    continue;
+                }
+
+                // Skip if this is a child of the caster (includes the beam VFX)
+                Transform checkParent = hitObject.transform;
+                bool isChildOfCaster = false;
+                while (checkParent != null)
+                {
+                    if (checkParent.gameObject == caster)
+                    {
+                        isChildOfCaster = true;
+                        break;
+                    }
+                    checkParent = checkParent.parent;
+                }
+
+                if (isChildOfCaster)
+                {
+                    Debug.Log($"Skipping caster child (beam VFX): {hitObject.name}");
+                    continue;
+                }
+
+                Debug.Log($"Beam hit: {hitObject.name} on layer {LayerMask.LayerToName(hitObject.layer)}");
+
+                var health = hitObject.GetComponent<IHealth>();
                 if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
                 {
                     // Calculate damage based on charge
@@ -142,6 +196,8 @@ namespace Havengard.Abilities
                     bool targetWasAlive = healthSystem.IsAlive;
 
                     healthSystem.Damage(tickDamage);
+                    
+                    Debug.Log($"Beam damaged {hitObject.name} for {tickDamage} damage");
 
                     // Generate resource per hit
                     GenerateResourceOnHit(caster);
@@ -158,8 +214,12 @@ namespace Havengard.Abilities
                     // Apply status effects continuously if enabled
                     if (applyContinuousStatusEffects && statusEffect != null)
                     {
-                        ApplyBuffDebuff(hit.collider.gameObject);
+                        ApplyBuffDebuff(hitObject);
                     }
+                }
+                else
+                {
+                    Debug.Log($"Cannot damage {hitObject.name} - health: {health != null}, Can damage: {(health != null ? FactionUtility.CanDamage(casterFaction, health, friendlyFire).ToString() : "N/A")}");
                 }
             }
         }

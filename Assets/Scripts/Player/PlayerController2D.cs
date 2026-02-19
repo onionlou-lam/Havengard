@@ -33,6 +33,7 @@ namespace Havengard.Player
         private Rigidbody2D rb;
         private NavMeshAgent agent;
         private AbilityUser abilityUser;
+        private ChannelController channelController;
 
         private Vector2 clickMoveTarget;
         private bool isClickMoving;
@@ -53,6 +54,7 @@ namespace Havengard.Player
         {
             rb = GetComponent<Rigidbody2D>();
             abilityUser = GetComponent<AbilityUser>();
+            channelController = GetComponent<ChannelController>();
             agent = GetComponent<NavMeshAgent>();
             if (animator == null) animator = GetComponent<Animator>();
 
@@ -150,10 +152,35 @@ namespace Havengard.Player
 
         private void HandleKeyboardAbilities()
         {
-            if (Input.GetKeyDown(KeyCode.Q)) CastAbilityAtMouse(0);
-            if (Input.GetKeyDown(KeyCode.W)) CastAbilityAtMouse(1);
-            if (Input.GetKeyDown(KeyCode.E)) CastAbilityAtMouse(2);
-            if (Input.GetKeyDown(KeyCode.R)) CastAbilityAtMouse(3);
+            // Q - Regular ability
+            if (Input.GetKeyDown(KeyCode.Q)) 
+                CastAbilityAtMouse(0);
+            
+            // W - Regular ability
+            if (Input.GetKeyDown(KeyCode.W)) 
+                CastAbilityAtMouse(1);
+            
+            // E - Channeled ability (FrostBeam)
+            if (Input.GetKey(KeyCode.E))
+            {
+                // Hold to channel
+                if (!IsChanneling())
+                {
+                    StartChanneledAbility();
+                }
+            }
+            else
+            {
+                // Release to stop
+                if (IsChanneling())
+                {
+                    StopChanneledAbility();
+                }
+            }
+            
+            // R - Regular ability
+            if (Input.GetKeyDown(KeyCode.R)) 
+                CastAbilityAtMouse(3);
         }
 
         private void HandleRollInput()
@@ -165,6 +192,34 @@ namespace Havengard.Player
             if (dir.sqrMagnitude < 0.0001f) return;
 
             StartCoroutine(RollRoutine(dir));
+        }
+
+        // --- CHANNELED ABILITY HELPERS ---
+
+        private bool IsChanneling()
+        {
+            // Check if ChannelController is actively channeling
+            return channelController != null && channelController.GetType()
+                .GetField("isChanneling", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.GetValue(channelController) is bool isChanneling && isChanneling;
+        }
+
+        private void StartChanneledAbility()
+        {
+            if (channelController != null && channelController.ability != null)
+            {
+                channelController.StartChannel();
+                Debug.Log("Started channeling FrostBeam");
+            }
+        }
+
+        private void StopChanneledAbility()
+        {
+            if (channelController != null)
+            {
+                channelController.StopChannel();
+                Debug.Log("Stopped channeling FrostBeam");
+            }
         }
 
         // --- HELPERS ---
@@ -259,7 +314,7 @@ namespace Havengard.Player
                 animator.SetFloat(AnimHorizontal, lastFacingDir.x);
                 animator.SetFloat(AnimVertical, lastFacingDir.y);
 
-                // force “first frame”
+                // force "first frame"
                 animator.SetFloat(AnimIdleFrame, 0f);
             }
         }

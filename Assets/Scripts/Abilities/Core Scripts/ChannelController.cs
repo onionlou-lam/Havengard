@@ -1,15 +1,22 @@
 using UnityEngine;
 using Havengard.Abilities;
 
-// Attach to a caster GameObject. This controller demonstrates a channeled usage of a ChanneledAbilityBase.
-// For demo/input hooking it uses left mouse; replace with your input system as needed.
 public class ChannelController : MonoBehaviour
 {
     [Tooltip("Channeled ability to use")]
     public ChanneledAbilityBase ability;
 
-    // Optional override: permit control via methods (StartChannel/StopChannel) instead of automatic mouse
     public bool useManualControl = false;
+
+    [Tooltip("Use 2D physics for raycasting (set true for 2D games)")]
+    public bool use2DPhysics = true;
+
+    [Tooltip("Z position for beam in 2D (should match your sprite layer, typically 0)")]
+    public float beamZPosition = 0f;
+
+    [Header("Spawn Offset")]
+    [Tooltip("Offset from caster position where beam/charge VFX spawn (local space)")]
+    public Vector3 spawnOffset = new Vector3(0.5f, 0f, 0f); // ADD THIS
 
     private float chargeTimer;
     private bool isChanneling;
@@ -17,6 +24,8 @@ public class ChannelController : MonoBehaviour
     private GameObject beamInstance;
     private MagicArsenal.MagicBeamScript beamScript;
     private Camera mainCamera;
+    
+    private Vector3 originalChargeVFXScale = Vector3.one; // ADD THIS
 
     void Start()
     {
@@ -40,31 +49,28 @@ public class ChannelController : MonoBehaviour
             chargeTimer += Time.deltaTime;
             float percent = Mathf.Clamp01(chargeTimer / ability.MaxChargeTime);
 
-            // Update VFX scale
+            // Update VFX scale - NOW RESPECTS ORIGINAL SCALE
             if (chargingVFXInstance)
             {
                 float scale = Mathf.Lerp(0.2f, 1f, percent);
-                chargingVFXInstance.transform.localScale = Vector3.one * scale;
+                chargingVFXInstance.transform.localScale = originalChargeVFXScale * scale;
             }
 
             // Update beam visuals & direction if present
-            if (beamScript)
+            if (beamScript && beamInstance)
             {
                 beamScript.SetCharge(percent);
 
-                // align beam to mouse cursor position (raycast)
+                // Ensure beam stays at correct Z depth
+                Vector3 beamPos = beamInstance.transform.position;
+                beamPos.z = beamZPosition;
+                beamInstance.transform.position = beamPos;
+
+                // align beam to mouse cursor position
                 if (mainCamera != null)
                 {
-                    Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out RaycastHit hit))
-                    {
-                        beamScript.UpdateDirectionToPoint(hit.point);
-                    }
-                    else
-                    {
-                        // No hit: point some distance along the ray
-                        beamScript.UpdateDirectionToPoint(ray.origin + ray.direction * 100f);
-                    }
+                    Vector3 targetPoint = GetMouseWorldPoint();
+                    beamScript.UpdateDirectionToPoint(targetPoint);
                 }
             }
 
@@ -84,23 +90,53 @@ public class ChannelController : MonoBehaviour
         isChanneling = true;
         chargeTimer = 0f;
 
-        // Spawn charging VFX
+        // Calculate spawn position with offset
+        Vector3 spawnPos = transform.position + transform.TransformDirection(spawnOffset);
+        spawnPos.z = beamZPosition;
+
+        // Spawn charging VFX with offset
         if (ability.ChargingVFXPrefab != null)
         {
             chargingVFXInstance = Instantiate(ability.ChargingVFXPrefab, transform);
-            chargingVFXInstance.transform.localPosition = Vector3.zero;
+            chargingVFXInstance.transform.position = spawnPos; // Apply offset
+            
+            // Store original scale
+            originalChargeVFXScale = chargingVFXInstance.transform.localScale;
         }
 
         // Spawn beam prefab if provided and try to find MagicBeamScript
         if (ability.BeamPrefab != null)
         {
-            beamInstance = Instantiate(ability.BeamPrefab, transform.position, transform.rotation, transform);
+            beamInstance = Instantiate(ability.BeamPrefab, spawnPos, transform.rotation, transform);
+
+            // Set beam and all children to VFX layer (layer 31 for example, or use LayerMask.NameToLayer("VFX"))
+            int vfxLayer = LayerMask.NameToLayer("VFX");
+            if (vfxLayer >= 0)
+            {
+                SetLayerRecursively(beamInstance, vfxLayer);
+            }
+
             beamScript = beamInstance.GetComponent<MagicArsenal.MagicBeamScript>();
+            
             if (beamScript != null)
             {
+                // Sync beam range with ability range if it's a ChanneledBeamAbility
+                var beamAbility = ability as Havengard.Abilities.ChanneledBeamAbility;
+                if (beamAbility != null)
+                {
+                    beamScript.maxBeamDistance = beamAbility.BeamMaxRange;
+                    Debug.Log($"Synced beam visual range to ability range: {beamAbility.BeamMaxRange}");
+                }
+                
                 // let MagicBeamScript be driven externally
                 beamScript.externalControl = true;
                 beamScript.Activate();
+                
+                Debug.Log($"Beam activated at Z={beamZPosition}, Position={beamInstance.transform.position}");
+            }
+            else
+            {
+                Debug.LogError("MagicBeamScript component not found on beam prefab!");
             }
         }
     }
@@ -129,19 +165,6 @@ public class ChannelController : MonoBehaviour
             ability.OnChannelCancel(gameObject);
             isChanneling = false;
             return;
-        }
-
-        // Pick a target point from last beam direction or a raycast under mouse
-        Vector3 targetPoint = transform.position;
-        if (beamScript != null)
-        {
-            // BeamScript tracks endpoints internally; provide an approximate point ahead
-            // Use a ray from camera if possible
-            Ray ray = Camera.main != null ? Camera.main.ScreenPointToRay(Input.mousePosition) : new Ray(transform.position, transform.forward);
-            if (Physics.Raycast(ray, out RaycastHit hit))
-                targetPoint = hit.point;
-            else
-                targetPoint = ray.origin + ray.direction * 50f;
         }
 
         // Generate resource on cast (before effect) - keep consistent with AbilityBase
@@ -185,5 +208,40 @@ public class ChannelController : MonoBehaviour
         CleanUpChannel();
         ability.OnChannelCancel(gameObject);
         isChanneling = false;
+    }
+
+    // Helper to get mouse world point in 2D or 3D
+    private Vector3 GetMouseWorldPoint()
+    {
+        if (use2DPhysics)
+        {
+            // For 2D: Simply convert screen to world
+            Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorld.z = beamZPosition; // Match beam Z depth
+            return mouseWorld;
+        }
+        else
+        {
+            // For 3D: Use raycast to find world point
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                return hit.point;
+            }
+            else
+            {
+                // No hit: point some distance along the ray
+                return ray.origin + ray.direction * 100f;
+            }
+        }
+    }
+
+    private void SetLayerRecursively(GameObject obj, int layer)
+    {
+        obj.layer = layer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, layer);
+        }
     }
 }

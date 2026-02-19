@@ -31,3 +31,5 @@ MonoBehaviour:
   classAbilities:
   - ability: {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
     requiredLevel: 0
+  - ability: {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
+    requiredLevel: 0

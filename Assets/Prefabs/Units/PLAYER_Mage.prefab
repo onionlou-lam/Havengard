@@ -97,13 +97,14 @@ GameObject:
   m_Component:
   - component: {fileID: 6250790238334552682}
   - component: {fileID: 3307356029797602280}
+  - component: {fileID: 5853180210194291965}
+  - component: {fileID: 7159940041745289962}
   - component: {fileID: 1865082179602180432}
   - component: {fileID: 4995737479362608597}
-  - component: {fileID: 5853180210194291965}
-  - component: {fileID: 2607155558985287343}
-  - component: {fileID: 7159940041745289962}
   - component: {fileID: 2808568041207367182}
+  - component: {fileID: -1937085905959086540}
   - component: {fileID: 5604034864961013460}
+  - component: {fileID: 2607155558985287343}
   - component: {fileID: 6675863252050415021}
   - component: {fileID: 750057627197447055}
   - component: {fileID: 7605921635188842516}
@@ -160,40 +161,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!114 &1865082179602180432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6277567805243431862}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0440ea8cb8e55e44c948b492532c7115, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  startingMaxHealth: 500
-  faction: 1
---- !u!114 &4995737479362608597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6277567805243431862}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3ca4a2d1ef393748a91b3934052cfaa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  abilities:
-  - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
-  - {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
-  - {fileID: 11400000, guid: 010b655fd6a3f5e4fb98d6d5e9722383, type: 2}
-  - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
-  resourceComponent: {fileID: 1865082179602180432}
-  useGlobalCooldown: 0
-  globalCooldownDuration: 0.1
 --- !u!70 &5853180210194291965
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -231,18 +198,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.3, y: 0.4}
   m_Direction: 0
---- !u!114 &2607155558985287343
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6277567805243431862}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df080b2de42b9014f9a3cf62f6b3bc5b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!195 &7159940041745289962
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -265,6 +220,38 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1865082179602180432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6277567805243431862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0440ea8cb8e55e44c948b492532c7115, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startingMaxHealth: 500
+  faction: 1
+--- !u!114 &4995737479362608597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6277567805243431862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3ca4a2d1ef393748a91b3934052cfaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  abilities:
+  - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+  - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
+  resourceComponent: {fileID: 1865082179602180432}
+  useGlobalCooldown: 0
+  globalCooldownDuration: 0.1
 --- !u!114 &2808568041207367182
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286,6 +273,20 @@ MonoBehaviour:
   rollDuration: 0.15
   rollCooldown: 0.75
   rollTowardMouseIfIdle: 1
+--- !u!114 &-1937085905959086540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6277567805243431862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866fb693fe0c04841a95739b16df19bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ability: {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
+  useManualControl: 1
 --- !u!114 &5604034864961013460
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -302,6 +303,18 @@ MonoBehaviour:
   playerClassOverride: {fileID: 0}
   abilityUser: {fileID: 4995737479362608597}
   expSystem: {fileID: 2607155558985287343}
+--- !u!114 &2607155558985287343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6277567805243431862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df080b2de42b9014f9a3cf62f6b3bc5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6675863252050415021
 MonoBehaviour:
   m_ObjectHideFlags: 0
