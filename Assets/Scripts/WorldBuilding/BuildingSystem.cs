@@ -10,9 +10,8 @@ public class BuildingSystem : MonoBehaviour
     [SerializeField] private Tilemap MainTilemap;
     [SerializeField] private TileBase whiteTile;
 
-    public GameObject prefab1;
-    public GameObject prefab2;
-    public GameObject frostTower;
+    public GameObject[] placeableObjects;
+    private GameObject selectedObject;
 
     private PlaceableObject objectToPlace;
     public bool isPlacingObject;
@@ -22,18 +21,15 @@ public class BuildingSystem : MonoBehaviour
     {
         current = this;
         grid = gridLayout.gameObject.GetComponent<Grid>();
+        selectedObject = placeableObjects[0];
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.F))
         {
-            InitializeWithObject(frostTower);
+            InitializeWithObject(selectedObject);
             isPlacingObject = true;
-        }
-        if (Input.GetKeyDown(KeyCode.V))
-        {
-            InitializeWithObject(prefab2);
         }
         if(isPlacingObject)
         {
