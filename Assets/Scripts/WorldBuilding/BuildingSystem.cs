@@ -1,75 +1,64 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class BuildingSystem : MonoBehaviour
 {
-    public static BuildingSystem current;
+    public static BuildingSystem _currentBuildingSystem;
 
     public GridLayout gridLayout;
-    private Grid grid;
+    private Grid _grid;
     [SerializeField] private Tilemap MainTilemap;
     [SerializeField] private TileBase buildableTile;
 
-    public GameObject[] placeableObjects;
-    private GameObject selectedObject;
+    [SerializeField] private GameObject[] placeableObjects;
+    private GameObject _selectedObject;
 
-    private PlaceableObject objectToPlace;
-    private GameObject objectPlacing;
-    public bool isPlacingObject;
+    private PlaceableObject _objectToPlace;
+    private GameObject _objectPlacing;
+    private bool _isPlacingObject;
+    private Dictionary<Vector3Int, bool> _placedObjects = new Dictionary<Vector3Int, bool>();
 
     #region Unity methods
     private void Awake()
     {
-        current = this;
-        grid = gridLayout.gameObject.GetComponent<Grid>();
-        selectedObject = placeableObjects[0];
+        _currentBuildingSystem = this;
+        _grid = gridLayout.gameObject.GetComponent<Grid>();
+        _selectedObject = placeableObjects[0];
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.F))
         {
-            InitializeWithObject(selectedObject);
-            isPlacingObject = true;
+            InitializeWithObject(_selectedObject);
+            _isPlacingObject = true;
         }
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3Int cellPosition = MainTilemap.WorldToCell(worldPosition);
-            TileBase tile = MainTilemap.GetTile(cellPosition);
-            if(tile != null)
-            {
-                Debug.Log("tile exists:", tile);
-            }
-            else
-            {
-                Debug.Log("tile doesn't exist:", tile);
-
-            }
-        }
-        if (isPlacingObject)
+        if (_isPlacingObject)
         {
             if (Input.GetMouseButtonDown(0))
             {
                 Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3Int cellPosition = MainTilemap.WorldToCell(mousePosition);
                 TileBase tile = MainTilemap.GetTile(cellPosition);
-                if(tile != null)
+                
+                if (tile != null && !_placedObjects.ContainsKey(cellPosition))
                 {
-                    isPlacingObject = false;
-                    objectToPlace = null;
+                    _isPlacingObject = false;
+                    _objectToPlace = null;
+                    _placedObjects[cellPosition] = true;
                 }
             }
             else if (Input.GetKeyDown(KeyCode.Escape))
             {
-                Destroy(objectPlacing);
-                isPlacingObject = false;
+                Destroy(_objectPlacing);
+                _isPlacingObject = false;
             }
             else
             {
                 Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3 position = SnapCoordinateToGrid(mousePosition);
-                objectToPlace.transform.position = position;
+                _objectToPlace.transform.position = position;
             }
         }
     }
@@ -81,7 +70,8 @@ public class BuildingSystem : MonoBehaviour
     public static Vector3 GetMouseWorldPosition()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit)) {
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
             Debug.Log(hit);
             return hit.point;
         };
@@ -91,7 +81,7 @@ public class BuildingSystem : MonoBehaviour
     public Vector3 SnapCoordinateToGrid(Vector3 position)
     {
         Vector3Int cellPos = gridLayout.WorldToCell(position);
-        position = grid.GetCellCenterWorld(cellPos);
+        position = _grid.GetCellCenterWorld(cellPos);
         return position;
     }
     #endregion
@@ -102,9 +92,9 @@ public class BuildingSystem : MonoBehaviour
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 position = SnapCoordinateToGrid(mousePosition);
-        objectPlacing = Instantiate(prefab, position, Quaternion.identity);
-        objectToPlace = objectPlacing.GetComponent<PlaceableObject>();
-        objectPlacing.AddComponent<ObjectDrag>();
+        _objectPlacing = Instantiate(prefab, position, Quaternion.identity);
+        _objectToPlace = _objectPlacing.GetComponent<PlaceableObject>();
+        _objectPlacing.AddComponent<ObjectDrag>();
     }
     #endregion
 
