@@ -8,12 +8,13 @@ public class BuildingSystem : MonoBehaviour
     public GridLayout gridLayout;
     private Grid grid;
     [SerializeField] private Tilemap MainTilemap;
-    [SerializeField] private TileBase whiteTile;
+    [SerializeField] private TileBase buildableTile;
 
     public GameObject[] placeableObjects;
     private GameObject selectedObject;
 
     private PlaceableObject objectToPlace;
+    private GameObject objectPlacing;
     public bool isPlacingObject;
 
     #region Unity methods
@@ -31,12 +32,38 @@ public class BuildingSystem : MonoBehaviour
             InitializeWithObject(selectedObject);
             isPlacingObject = true;
         }
-        if(isPlacingObject)
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3Int cellPosition = MainTilemap.WorldToCell(worldPosition);
+            TileBase tile = MainTilemap.GetTile(cellPosition);
+            if(tile != null)
+            {
+                Debug.Log("tile exists:", tile);
+            }
+            else
+            {
+                Debug.Log("tile doesn't exist:", tile);
+
+            }
+        }
+        if (isPlacingObject)
         {
             if (Input.GetMouseButtonDown(0))
             {
+                Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector3Int cellPosition = MainTilemap.WorldToCell(mousePosition);
+                TileBase tile = MainTilemap.GetTile(cellPosition);
+                if(tile != null)
+                {
+                    isPlacingObject = false;
+                    objectToPlace = null;
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Destroy(objectPlacing);
                 isPlacingObject = false;
-                objectToPlace = null;
             }
             else
             {
@@ -75,9 +102,9 @@ public class BuildingSystem : MonoBehaviour
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 position = SnapCoordinateToGrid(mousePosition);
-        GameObject obj = Instantiate(prefab, position, Quaternion.identity);
-        objectToPlace = obj.GetComponent<PlaceableObject>();
-        obj.AddComponent<ObjectDrag>();
+        objectPlacing = Instantiate(prefab, position, Quaternion.identity);
+        objectToPlace = objectPlacing.GetComponent<PlaceableObject>();
+        objectPlacing.AddComponent<ObjectDrag>();
     }
     #endregion
 
