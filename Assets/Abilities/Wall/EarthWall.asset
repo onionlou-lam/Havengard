@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9884fd2e1f5c31846a2ad5fba849b004, type: 3}
+  m_Name: EarthWall
+  m_EditorClassIdentifier: 
+  abilityName: Earth Wall
+  cooldown: 3
+  resourceCost: 10
+  icon: {fileID: 21300000, guid: 8f7fdb1d43e18f5468a627858738aa32, type: 3}
+  resourceGeneratedOnCast: 0
+  resourceGeneratedPerHit: 0
+  resourceGeneratedOnKill: 0
+  statusEffect: {fileID: 0}
+  maxStatusStacks: 1
+  lifestealPercent: 0
+  wallPrefab: {fileID: 4812405278425788624, guid: 4e4c6e98a0c82464e8104379705ea83a,
+    type: 3}
+  maximumRange: 15
+  wallDuration: 10
+  behaviorType: 0
+  isTargetable: 1
+  wallMaxHealth: 150
+  showHealthBar: 1
+  damagePerTick: 5
+  damageTickRate: 0.5
+  friendlyFire: 0

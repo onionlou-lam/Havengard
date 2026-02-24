@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1504551520965394930}
   - component: {fileID: 885127274857089545}
   m_Layer: 9
-  m_Name: WallOfFire
+  m_Name: FireWall
   m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
