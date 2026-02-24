@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 576dd620423d4a0479c57571ce626c4e, type: 3}
+  m_Name: HealthBuff
+  m_EditorClassIdentifier: 
+  abilityName: Health Buff
+  cooldown: 1
+  resourceCost: 0
+  icon: {fileID: 21300000, guid: 3835debd002d7ca4bb666f7734341d5e, type: 3}
+  resourceGeneratedOnCast: 0
+  resourceGeneratedPerHit: 0
+  resourceGeneratedOnKill: 0
+  statusEffect: {fileID: 0}
+  maxStatusStacks: 1
+  lifestealPercent: 0
+  buffType: 0
+  duration: 5
+  canRefreshOrToggle: 1
+  statModifiers:
+  - statType: 0
+    modifierType: 0
+    value: 100
+  activationVFX: {fileID: 105302, guid: 26593846532cf8d488a17b6d494d798e, type: 3}
+  persistentVFX: {fileID: 162680, guid: bcfd5e7a10ac3d445b5daa1df683f5d7, type: 3}
+  deactivationVFX: {fileID: 124420, guid: f86b46b2331fbb2419e59fafbcc09c02, type: 3}
+  activationSFX: {fileID: 8300000, guid: 1f5fbd822190c4f42b7786a5bd5f1fe8, type: 3}
+  deactivationSFX: {fileID: 8300000, guid: 31e41ba2e4d8e334081ae2e2d1fe8d19, type: 3}

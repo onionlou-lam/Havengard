@@ -17,7 +17,7 @@ MonoBehaviour:
   faction: 1
   heroClass: {fileID: 11400000, guid: 9a9f2646e0fdc5a4788efb5c4a55eaf5, type: 2}
   startingAbilities:
-  - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+  - {fileID: 11400000, guid: c940f213fc2a81a45bc8d3c4c72a1cbb, type: 2}
   - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
   - {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
   - {fileID: 11400000, guid: 6b4f0a8b8373c7e4e879090a649713e5, type: 2}
