@@ -36,6 +36,7 @@ public class BuildingSystem : MonoBehaviour
         }
         if (_isPlacingObject)
         {
+            // Attemt to place building
             if (Input.GetMouseButtonDown(0))
             {
                 Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -58,7 +59,7 @@ public class BuildingSystem : MonoBehaviour
             {
                 Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3 position = SnapCoordinateToGrid(mousePosition);
-                _objectToPlace.transform.position = position;
+                _objectToPlace.transform.position = position - _objectToPlace.getBuildingCenter();
             }
         }
     }
@@ -94,6 +95,7 @@ public class BuildingSystem : MonoBehaviour
         Vector3 position = SnapCoordinateToGrid(mousePosition);
         _objectPlacing = Instantiate(prefab, position, Quaternion.identity);
         _objectToPlace = _objectPlacing.GetComponent<PlaceableObject>();
+        _objectPlacing.transform.position += _objectToPlace.getBuildingCenter();
         _objectPlacing.AddComponent<ObjectDrag>();
     }
     #endregion
