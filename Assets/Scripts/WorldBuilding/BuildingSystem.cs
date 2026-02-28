@@ -29,17 +29,17 @@ public class BuildingSystem : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F) && !_isPlacingObject)
         {
             InitializeWithObject(_selectedObject);
             _isPlacingObject = true;
         }
         if (_isPlacingObject)
         {
+            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             // Attemt to place building
             if (Input.GetMouseButtonDown(0))
             {
-                Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3Int cellPosition = MainTilemap.WorldToCell(mousePosition);
                 TileBase tile = MainTilemap.GetTile(cellPosition);
                 
@@ -57,7 +57,6 @@ public class BuildingSystem : MonoBehaviour
             }
             else
             {
-                Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3 position = SnapCoordinateToGrid(mousePosition);
                 _objectToPlace.transform.position = position - _objectToPlace.getBuildingCenter();
             }
