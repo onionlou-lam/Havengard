@@ -45,7 +45,7 @@ namespace Havengard.Items
         /// </summary>
         public void TryDropItem(Vector3 position)
         {
-            Debug.Log($"[ItemDropper] TryDropItem called on {gameObject.name} at position {position}");
+            //Debug.Log($"[ItemDropper] TryDropItem called on {gameObject.name} at position {position}");
             
             if (dropTable == null)
             {

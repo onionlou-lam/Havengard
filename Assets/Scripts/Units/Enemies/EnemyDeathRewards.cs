@@ -44,7 +44,7 @@ namespace Havengard.Units.Enemies
             HeroInstance player = FindPlayerHero();
             if (player != null)
             {
-                Debug.Log($"[EnemyDeathRewards] {name} died. Granting {expValue} EXP to {player.name}.");
+                //Debug.Log($"[EnemyDeathRewards] {name} died. Granting {expValue} EXP to {player.name}.");
                 player.GrantEXP(expValue);
             }
             else
@@ -64,7 +64,7 @@ namespace Havengard.Units.Enemies
                 Havengard.Resources.CelestiumSystem.Instance.AddCelestium(celestiumValue);
             }
 
-            Debug.Log($"[EnemyDeathRewards] {name} rewards: EXP={expValue}, Gold={goldValue}, Celestium={celestiumValue}");
+            //Debug.Log($"[EnemyDeathRewards] {name} rewards: EXP={expValue}, Gold={goldValue}, Celestium={celestiumValue}");
 
             // Handle item drops
             HandleItemDrop();

@@ -172,7 +172,7 @@ namespace Havengard.Heroes
 
         public void GrantEXP(int amount)
         {
-            Debug.Log($"[HeroInstance] GrantEXP({amount}) called on {name}");
+            //Debug.Log($"[HeroInstance] GrantEXP({amount}) called on {name}");
             expSystem?.AddEXP(amount);
         }
 

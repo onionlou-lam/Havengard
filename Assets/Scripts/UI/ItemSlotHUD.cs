@@ -56,7 +56,7 @@ namespace Havengard.UI
                 {
                     iconImage.sprite = itemData.icon;
                     iconImage.enabled = true;
-                    
+
                     // Ensure visible
                     Color color = iconImage.color;
                     color.a = 1f;

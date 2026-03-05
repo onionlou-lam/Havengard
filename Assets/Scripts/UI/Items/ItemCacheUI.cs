@@ -1,22 +1,31 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Havengard.Items;
 using System.Collections.Generic;
+using Havengard.Items;
 
 namespace Havengard.UI
 {
     /// <summary>
-    /// UI panel for managing the item cache
+    /// UI panel for managing the item cache and viewing equipped items
     /// </summary>
     public class ItemCacheUI : MonoBehaviour
     {
-        [Header("References")]
+        [Header("Panel References")]
         [SerializeField] private GameObject panel;
-        [SerializeField] private Transform contentParent;
-        [SerializeField] private GameObject itemSlotPrefab;
-        [SerializeField] private TextMeshProUGUI celestiumText;
+
+        [Header("Equipped Items Section")]
+        [SerializeField] private Transform equippedItemsParent; // EquippedItemsGrid
+        [SerializeField] private TextMeshProUGUI equippedCountText;
+        [SerializeField] private GameObject equippedItemSlotPrefab;
+
+        [Header("Cached Items Section")]
+        [SerializeField] private Transform cachedItemsParent; // ItemInventory_Grid (in scroll view)
         [SerializeField] private TextMeshProUGUI itemCountText;
+        [SerializeField] private GameObject cachedItemSlotPrefab;
+
+        [Header("Common")]
+        [SerializeField] private TextMeshProUGUI celestiumText;
         [SerializeField] private ItemTooltipUI tooltip;
 
         [Header("Buttons")]
@@ -24,19 +33,37 @@ namespace Havengard.UI
         [SerializeField] private Button sortByRarityButton;
         [SerializeField] private Button sortByTimeButton;
         [SerializeField] private Button sortByLevelButton;
+        [SerializeField] private Button backButton;
 
         [Header("Filter")]
         [SerializeField] private TMP_Dropdown rarityFilterDropdown;
         [SerializeField] private TMP_Dropdown typeFilterDropdown;
 
-        private List<ItemSlotUI> itemSlots = new List<ItemSlotUI>();
+        [Header("Player Reference")]
+        [SerializeField] private ItemInventory playerInventory;
+
+        private List<ItemSlotUI> equippedItemSlots = new List<ItemSlotUI>();
+        private List<ItemSlotUI> cachedItemSlots = new List<ItemSlotUI>();
         private ItemSlotUI selectedSlot;
 
         private void Start()
         {
+            // Find player inventory if not assigned
+            if (playerInventory == null)
+            {
+                var player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                {
+                    playerInventory = player.GetComponent<ItemInventory>();
+                }
+            }
+
             // Hook up buttons
             if (closeButton != null)
                 closeButton.onClick.AddListener(Hide);
+
+            if (backButton != null)
+                backButton.onClick.AddListener(Hide);
 
             if (sortByRarityButton != null)
                 sortByRarityButton.onClick.AddListener(() => SortCache(SortType.Rarity));
@@ -47,13 +74,21 @@ namespace Havengard.UI
             if (sortByLevelButton != null)
                 sortByLevelButton.onClick.AddListener(() => SortCache(SortType.Level));
 
-            // Subscribe to events
+            // Subscribe to cache events
             if (ItemCache.Instance != null)
             {
-                ItemCache.Instance.OnItemAddedToCache += OnItemAddedToCache;
-                ItemCache.Instance.OnItemRemovedFromCache += OnItemRemovedFromCache;
+                ItemCache.Instance.OnItemAddedToCache += OnCacheChanged;
+                ItemCache.Instance.OnItemRemovedFromCache += OnCacheChanged;
+                ItemCache.Instance.OnCacheCleared += RefreshDisplay;
             }
 
+            // Subscribe to inventory events
+            if (playerInventory != null)
+            {
+                playerInventory.OnInventoryChanged += RefreshEquippedItems;
+            }
+
+            // Subscribe to currency events
             if (ItemManager.Instance != null)
             {
                 ItemManager.Instance.OnCelestiumChanged += UpdateCelestiumDisplay;
@@ -66,8 +101,14 @@ namespace Havengard.UI
         {
             if (ItemCache.Instance != null)
             {
-                ItemCache.Instance.OnItemAddedToCache -= OnItemAddedToCache;
-                ItemCache.Instance.OnItemRemovedFromCache -= OnItemRemovedFromCache;
+                ItemCache.Instance.OnItemAddedToCache -= OnCacheChanged;
+                ItemCache.Instance.OnItemRemovedFromCache -= OnCacheChanged;
+                ItemCache.Instance.OnCacheCleared -= RefreshDisplay;
+            }
+
+            if (playerInventory != null)
+            {
+                playerInventory.OnInventoryChanged -= RefreshEquippedItems;
             }
 
             if (ItemManager.Instance != null)
@@ -99,51 +140,131 @@ namespace Havengard.UI
 
         private void RefreshDisplay()
         {
-            ClearSlots();
-            PopulateSlots();
+            RefreshEquippedItems();
+            RefreshCachedItems();
             UpdateCelestiumDisplay(ItemManager.Instance?.Celestium ?? 0);
-            UpdateItemCountDisplay();
         }
 
-        private void ClearSlots()
+        /// <summary>
+        /// Refresh the equipped items section (from player inventory)
+        /// </summary>
+        private void RefreshEquippedItems()
         {
-            foreach (var slot in itemSlots)
+            // Clear existing slots
+            foreach (var slot in equippedItemSlots)
             {
-                Destroy(slot.gameObject);
+                if (slot != null)
+                    Destroy(slot.gameObject);
             }
-            itemSlots.Clear();
+            equippedItemSlots.Clear();
+
+            if (playerInventory == null || equippedItemsParent == null) return;
+
+            // Get items from player's inventory
+            var equippedItems = playerInventory.GetAllItems();
+            int maxSlots = playerInventory.MaxItems;
+
+            // Create slots for max inventory size
+            for (int i = 0; i < maxSlots; i++)
+            {
+                GameObject slotObj = Instantiate(
+                    equippedItemSlotPrefab ?? cachedItemSlotPrefab,
+                    equippedItemsParent
+                );
+
+                ItemSlotUI slot = slotObj.GetComponent<ItemSlotUI>();
+                if (slot != null)
+                {
+                    if (i < equippedItems.Count)
+                    {
+                        // Show equipped item
+                        slot.SetItem(equippedItems[i]);
+                    }
+                    else
+                    {
+                        // Empty slot
+                        slot.ClearSlot();
+                    }
+
+                    slot.OnSlotClicked += OnEquippedSlotClicked;
+                    slot.OnSlotHoverEnter += OnSlotHoverEnter;
+                    slot.OnSlotHoverExit += OnSlotHoverExit;
+                    equippedItemSlots.Add(slot);
+                }
+            }
+
+            // Update count text
+            if (equippedCountText != null)
+            {
+                equippedCountText.text = $"Equipped Items: {equippedItems.Count}/{maxSlots}";
+            }
+
+            Debug.Log($"[ItemCacheUI] Refreshed {equippedItems.Count} equipped items ({maxSlots} slots)");
         }
 
-        private void PopulateSlots()
+        /// <summary>
+        /// Refresh the cached items section (from item cache)
+        /// </summary>
+        private void RefreshCachedItems()
         {
-            if (ItemCache.Instance == null) return;
+            // Clear existing cached slots
+            foreach (var slot in cachedItemSlots)
+            {
+                if (slot != null)
+                    Destroy(slot.gameObject);
+            }
+            cachedItemSlots.Clear();
 
+            if (ItemCache.Instance == null || cachedItemsParent == null) return;
+
+            // Create slots for cached items
             foreach (var item in ItemCache.Instance.CachedItems)
             {
-                CreateSlot(item);
+                CreateCachedSlot(item);
             }
+
+            // Update count
+            if (itemCountText != null)
+            {
+                int count = ItemCache.Instance.Count;
+                int max = 100;
+                itemCountText.text = $"Cache: {count}/{max}";
+            }
+
+            Debug.Log($"[ItemCacheUI] Refreshed {cachedItemSlots.Count} cached items");
         }
 
-        private void CreateSlot(ItemInstance item)
+        private void CreateCachedSlot(ItemInstance item)
         {
-            GameObject slotObj = Instantiate(itemSlotPrefab, contentParent);
+            if (cachedItemSlotPrefab == null || cachedItemsParent == null) return;
+
+            GameObject slotObj = Instantiate(cachedItemSlotPrefab, cachedItemsParent);
             ItemSlotUI slot = slotObj.GetComponent<ItemSlotUI>();
-            
+
             if (slot != null)
             {
                 slot.SetItem(item);
-                slot.OnSlotClicked += OnSlotClicked;
+                slot.OnSlotClicked += OnCachedSlotClicked;
                 slot.OnSlotHoverEnter += OnSlotHoverEnter;
                 slot.OnSlotHoverExit += OnSlotHoverExit;
-                itemSlots.Add(slot);
+                cachedItemSlots.Add(slot);
             }
         }
 
-        private void OnSlotClicked(ItemSlotUI slot)
+        private void OnEquippedSlotClicked(ItemSlotUI slot)
         {
+            if (slot.IsEmpty) return;
             selectedSlot = slot;
-            // Open assignment menu or show options
-            ShowItemOptions(slot.CurrentItem);
+            Debug.Log($"[ItemCacheUI] Equipped slot clicked: {slot.CurrentItem?.itemData.itemName}");
+            ShowEquippedItemOptions(slot.CurrentItem);
+        }
+
+        private void OnCachedSlotClicked(ItemSlotUI slot)
+        {
+            if (slot.IsEmpty) return;
+            selectedSlot = slot;
+            Debug.Log($"[ItemCacheUI] Cached slot clicked: {slot.CurrentItem?.itemData.itemName}");
+            ShowCachedItemOptions(slot.CurrentItem);
         }
 
         private void OnSlotHoverEnter(ItemSlotUI slot)
@@ -162,27 +283,21 @@ namespace Havengard.UI
             }
         }
 
-        private void ShowItemOptions(ItemInstance item)
+        private void ShowEquippedItemOptions(ItemInstance item)
         {
-            // Show context menu: Assign, Disenchant, Upgrade
-            // This would open another UI panel
-            Debug.Log($"[ItemCacheUI] Selected: {item}");
+            Debug.Log($"[ItemCacheUI] Equipped item options for: {item}");
         }
 
-        private void OnItemAddedToCache(ItemInstance item)
+        private void ShowCachedItemOptions(ItemInstance item)
+        {
+            Debug.Log($"[ItemCacheUI] Cached item options for: {item}");
+        }
+
+        private void OnCacheChanged(ItemInstance item)
         {
             if (panel.activeSelf)
             {
-                CreateSlot(item);
-                UpdateItemCountDisplay();
-            }
-        }
-
-        private void OnItemRemovedFromCache(ItemInstance item)
-        {
-            if (panel.activeSelf)
-            {
-                RefreshDisplay();
+                RefreshCachedItems();
             }
         }
 
@@ -191,15 +306,6 @@ namespace Havengard.UI
             if (celestiumText != null)
             {
                 celestiumText.text = $"Celestium: {amount}";
-            }
-        }
-
-        private void UpdateItemCountDisplay()
-        {
-            if (itemCountText != null)
-            {
-                int count = ItemCache.Instance?.Count ?? 0;
-                itemCountText.text = $"Items: {count}";
             }
         }
 
@@ -222,16 +328,12 @@ namespace Havengard.UI
                     break;
             }
 
-            RefreshDisplay();
+            RefreshCachedItems();
         }
 
-        /// <summary>
-        /// Disenchant selected item
-        /// </summary>
         public void DisenchantSelectedItem()
         {
             if (selectedSlot == null || selectedSlot.CurrentItem == null) return;
-
             int celestium = ItemCache.Instance.DisenchantItem(selectedSlot.CurrentItem);
             Debug.Log($"[ItemCacheUI] Disenchanted for {celestium} Celestium");
         }

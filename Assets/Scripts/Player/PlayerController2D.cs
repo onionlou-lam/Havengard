@@ -209,7 +209,7 @@ namespace Havengard.Player
             if (channelController != null && channelController.ability != null)
             {
                 channelController.StartChannel();
-                Debug.Log("Started channeling FrostBeam");
+                //Debug.Log("Started channeling FrostBeam");
             }
         }
 
@@ -218,7 +218,7 @@ namespace Havengard.Player
             if (channelController != null)
             {
                 channelController.StopChannel();
-                Debug.Log("Stopped channeling FrostBeam");
+                //Debug.Log("Stopped channeling FrostBeam");
             }
         }
 

@@ -16,6 +16,9 @@ MonoBehaviour:
   - item: {fileID: 11400000, guid: 43ee2fce4dc4aad488fb0669f2e7ec78, type: 2}
     weight: 100
     minLevel: 0
+  - item: {fileID: 11400000, guid: 43ee2fce4dc4aad488fb0669f2e7ec78, type: 2}
+    weight: 50
+    minLevel: 0
   commonWeight: 1
   uncommonWeight: 0.7
   rareWeight: 0.4

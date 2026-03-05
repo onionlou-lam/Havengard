@@ -84,13 +84,13 @@ namespace Havengard.Abilities
             // Apply continuous damage while channeling
             if (Time.time - lastDamageTick >= damageTickRate)
             {
-                Debug.Log($"Applying beam damage at {Time.time}, last tick was at {lastDamageTick}"); // ADD THIS
+                //Debug.Log($"Applying beam damage at {Time.time}, last tick was at {lastDamageTick}"); // ADD THIS
                 ApplyBeamDamage(caster, chargePercent);
                 lastDamageTick = Time.time;
             }
             else
             {
-                Debug.Log($"Skipping damage tick - Time.time: {Time.time}, lastDamageTick: {lastDamageTick}, difference: {Time.time - lastDamageTick}, required: {damageTickRate}"); // ADD THIS
+                //Debug.Log($"Skipping damage tick - Time.time: {Time.time}, lastDamageTick: {lastDamageTick}, difference: {Time.time - lastDamageTick}, required: {damageTickRate}"); // ADD THIS
             }
         }
 
@@ -113,8 +113,7 @@ namespace Havengard.Abilities
                     AudioSource.PlayClipAtPoint(fullChargeReleaseSFX, caster.transform.position);
                 }
             }
-            
-            Debug.Log($"Beam released at {chargePercent * 100}% charge");
+            //Debug.Log($"Beam released at {chargePercent * 100}% charge");
         }
 
         public override void OnChannelCancel(GameObject caster)
@@ -145,7 +144,7 @@ namespace Havengard.Abilities
                 hitLayers
             );
 
-            Debug.Log($"Beam damage raycast: start={startPos}, dir={beamDirection}, range={beamMaxRange}, hits={hits.Length}, hitLayers={hitLayers.value}");
+            //Debug.Log($"Beam damage raycast: start={startPos}, dir={beamDirection}, range={beamMaxRange}, hits={hits.Length}, hitLayers={hitLayers.value}");
 
             var casterHealth = caster.GetComponent<IHealth>();
             Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
@@ -183,7 +182,7 @@ namespace Havengard.Abilities
                     continue;
                 }
 
-                Debug.Log($"Beam hit: {hitObject.name} on layer {LayerMask.LayerToName(hitObject.layer)}");
+                //Debug.Log($"Beam hit: {hitObject.name} on layer {LayerMask.LayerToName(hitObject.layer)}");
 
                 var health = hitObject.GetComponent<IHealth>();
                 if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
@@ -197,7 +196,7 @@ namespace Havengard.Abilities
 
                     healthSystem.Damage(tickDamage);
                     
-                    Debug.Log($"Beam damaged {hitObject.name} for {tickDamage} damage");
+                    //Debug.Log($"Beam damaged {hitObject.name} for {tickDamage} damage");
 
                     // Generate resource per hit
                     GenerateResourceOnHit(caster);
@@ -219,7 +218,7 @@ namespace Havengard.Abilities
                 }
                 else
                 {
-                    Debug.Log($"Cannot damage {hitObject.name} - health: {health != null}, Can damage: {(health != null ? FactionUtility.CanDamage(casterFaction, health, friendlyFire).ToString() : "N/A")}");
+                    //Debug.Log($"Cannot damage {hitObject.name} - health: {health != null}, Can damage: {(health != null ? FactionUtility.CanDamage(casterFaction, health, friendlyFire).ToString() : "N/A")}");
                 }
             }
         }
