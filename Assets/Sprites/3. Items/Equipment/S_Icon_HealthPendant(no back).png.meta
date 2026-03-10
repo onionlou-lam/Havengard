@@ -1,12 +1,5 @@
 fileFormatVersion: 2
-guid: 93328c5444a700f4298ef2fdeb7e8cdd
-AssetOrigin:
-  serializedVersion: 1
-  productId: 229460
-  packageName: 5800 Fantasy RPG Icons Pack
-  packageVersion: 1.4
-  assetPath: Assets/Sprites/UI/Fantasy RPG Icons Pack/Fantasy RPG Loot Icons 4/PNG/background/27.png
-  uploadId: 702879
+guid: 8b857d11ba0f1ef438856dd72ccf1eaf
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -46,7 +39,7 @@ TextureImporter:
     mipBias: 0
     wrapU: 1
     wrapV: 1
-    wrapW: 1
+    wrapW: 0
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
@@ -72,11 +65,11 @@ TextureImporter:
   ignorePngGamma: 0
   applyGammaDecoding: 0
   swizzle: 50462976
-  cookieLightType: 1
+  cookieLightType: 0
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 128
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1

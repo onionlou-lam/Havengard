@@ -21,6 +21,9 @@ namespace Havengard.Waves
         [Tooltip("Optional receiver for Gold/EXP/Celestium wave rewards.")]
         [SerializeField] private MonoBehaviour rewardReceiverBehaviour;
 
+        [Header("UI")]
+        [SerializeField] private Havengard.UI.WaveHUDButtons hudButtons;
+
         private IWaveRewardReceiver rewardReceiver;
 
         private int currentWaveIndex = -1;
@@ -38,6 +41,9 @@ namespace Havengard.Waves
             spawner.SetZones(spawnZones);
 
             rewardReceiver = rewardReceiverBehaviour as IWaveRewardReceiver;
+
+            if (hudButtons == null)
+                hudButtons = FindFirstObjectByType<Havengard.UI.WaveHUDButtons>();
         }
 
         private void OnEnable()
@@ -75,6 +81,10 @@ namespace Havengard.Waves
             {
                 var wave = waveSet.waves[i];
                 if (wave == null) continue;
+
+                // Notify HUD: wave starting
+                if (hudButtons != null)
+                    hudButtons.StartWavePhase(i);
 
                 // Start condition
                 float delay = Mathf.Max(0f, wave.startDelay);
@@ -114,11 +124,26 @@ namespace Havengard.Waves
                 // Rewards
                 if (rewardReceiver != null)
                     rewardReceiver.GrantWaveRewards(wave.rewardGold, wave.rewardExp, wave.rewardCelestium);
+
+                // Notify HUD: wave ended
+                if (hudButtons != null)
+                    hudButtons.EndWavePhase();
+
+                // Wait for player to manually start next wave (or timeout)
+                // The HUD button will call StartNight() again when clicked
+                if (i < waveSet.waves.Length - 1)
+                {
+                    yield return new WaitUntil(() => !IsRunning);
+                }
             }
 
             Debug.Log("[WaveManager] Night complete (all waves finished).");
             runRoutine = null;
-        }
+
+            // Notify HUD: all waves complete
+            if (hudButtons != null)
+                hudButtons.EndWavePhase();
+        } 
 
         private void HandleEnemySpawned(GameObject enemy)
         {

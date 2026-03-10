@@ -1,4 +1,6 @@
-namespace Havengard.Heroes
+/*
+ * ARCHIVE
+ * namespace Havengard.Heroes
 {
     public struct HeroStats
     {
@@ -8,3 +10,4 @@ namespace Havengard.Heroes
         public int MaxResource;
     }
 }
+*/

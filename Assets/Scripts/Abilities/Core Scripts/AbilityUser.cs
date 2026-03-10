@@ -183,5 +183,52 @@ namespace Havengard.Abilities
 
             return true;
         }
+
+        private bool CanAffordAbility(AbilityBase ability)
+        {
+            if (ability.resourceCost <= 0)
+                return true;
+
+            // Find resource system matching the ability's resource type
+            var resourceSystems = GetComponents<ResourceSystem>();
+            foreach (var rs in resourceSystems)
+            {
+                if (rs.Type == ability.resourceType)
+                {
+                    return rs.HasResource(ability.resourceCost);
+                }
+            }
+
+            // Fallback to any resource system (for backward compatibility)
+            if (resourceSystems.Length > 0)
+            {
+                return resourceSystems[0].HasResource(ability.resourceCost);
+            }
+
+            return true; // No resource system = free ability
+        }
+
+        private bool SpendResourceForAbility(AbilityBase ability)
+        {
+            if (ability.resourceCost <= 0)
+                return true;
+
+            var resourceSystems = GetComponents<ResourceSystem>();
+            foreach (var rs in resourceSystems)
+            {
+                if (rs.Type == ability.resourceType)
+                {
+                    return rs.SpendResource(ability.resourceCost);
+                }
+            }
+
+            // Fallback
+            if (resourceSystems.Length > 0)
+            {
+                return resourceSystems[0].SpendResource(ability.resourceCost);
+            }
+
+            return true;
+        }
     }
 }

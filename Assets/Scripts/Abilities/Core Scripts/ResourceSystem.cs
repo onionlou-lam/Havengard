@@ -11,23 +11,42 @@ namespace Havengard.Character
     /// </summary>
     public class ResourceSystem : MonoBehaviour, IResource
     {
+        [Header("Resource Configuration")]
+        [SerializeField] private ResourceType resourceType = ResourceType.Mana;
         [SerializeField] private int maxResource = 100;
-        [SerializeField] private int currentResource;
+        [SerializeField] private int currentResource = 100;
+        
+        [Header("Regeneration")]
+        [SerializeField] private float regenRate = 5f; // Per second
+        [SerializeField] private float regenDelay = 2f; // Delay after spending
+        
+        private float lastSpendTime;
 
         /// <summary>
         /// Fired whenever Current or Max changes.
         /// Used by UI bars.
         /// </summary>
-        public event Action OnResourceChanged;
+        public event Action<int, int> OnResourceChanged;
+        public event Action OnResourceDepleted;
 
         // IResource implementation
         public int CurrentResource => currentResource;
         public int MaxResource => maxResource;
 
-        private void Awake()
+        private void Start()
         {
             currentResource = maxResource;
-            RaiseChanged();
+            OnResourceChanged?.Invoke(currentResource, maxResource);
+        }
+
+        private void Update()
+        {
+            // Regenerate resource
+            if (currentResource < maxResource && Time.time >= lastSpendTime + regenDelay)
+            {
+                float regenAmount = regenRate * Time.deltaTime;
+                AddResource((int)regenAmount);
+            }
         }
 
         // ------------- IResource implementation -------------
@@ -42,7 +61,8 @@ namespace Havengard.Character
             if (currentResource < amount) return false;
 
             currentResource -= amount;
-            RaiseChanged();
+            lastSpendTime = Time.time;
+            OnResourceChanged?.Invoke(currentResource, maxResource);
             return true;
         }
 
@@ -54,7 +74,7 @@ namespace Havengard.Character
             if (amount <= 0) return;
 
             currentResource = Mathf.Min(currentResource + amount, maxResource);
-            RaiseChanged();
+            OnResourceChanged?.Invoke(currentResource, maxResource);
         }
 
         /// <summary>
@@ -67,7 +87,7 @@ namespace Havengard.Character
 
             currentResource = Mathf.RoundToInt(maxResource * percent);
             currentResource = Mathf.Clamp(currentResource, 0, maxResource);
-            RaiseChanged();
+            OnResourceChanged?.Invoke(currentResource, maxResource);
         }
 
         // ------------- Additional utility methods -------------
@@ -78,7 +98,7 @@ namespace Havengard.Character
         public void SetToMax()
         {
             currentResource = maxResource;
-            RaiseChanged();
+            OnResourceChanged?.Invoke(currentResource, maxResource);
         }
 
         /// <summary>
@@ -87,7 +107,7 @@ namespace Havengard.Character
         public void SetResource(int value)
         {
             currentResource = Mathf.Clamp(value, 0, maxResource);
-            RaiseChanged();
+            OnResourceChanged?.Invoke(currentResource, maxResource);
         }
 
         /// <summary>
@@ -99,11 +119,21 @@ namespace Havengard.Character
             return Mathf.Clamp01((float)currentResource / maxResource);
         }
 
-        // ------------- Helpers -------------
-
-        private void RaiseChanged()
+        public void IncreaseMaxResource(int amount)
         {
-            OnResourceChanged?.Invoke();
+            maxResource += amount;
+            currentResource = Mathf.Min(currentResource + amount, maxResource);
+            OnResourceChanged?.Invoke(currentResource, maxResource);
+            Debug.Log($"[ResourceSystem] Max {resourceType} increased by {amount}. New max: {maxResource}");
+        }
+
+        /// <summary>
+        /// Restore to full.
+        /// </summary>
+        public void RestoreToFull()
+        {
+            currentResource = maxResource;
+            OnResourceChanged?.Invoke(currentResource, maxResource);
         }
     }
 }

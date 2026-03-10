@@ -38,10 +38,9 @@ public abstract class ChanneledAbilityBase : AbilityBase
     public virtual void OnChannelCancel(GameObject caster) { }
 
     // For compatibility: fall back Cast to immediate full release
-    public override void Cast(GameObject caster, GameObject target)
+    public void Cast(GameObject caster, GameObject target)
     {
         // Generate resource if appropriate then do a full-power release
-        GenerateResourceOnCast(caster);
         OnRelease(caster, target, 1f);
     }
 }

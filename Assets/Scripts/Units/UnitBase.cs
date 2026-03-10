@@ -347,7 +347,7 @@ namespace Havengard.Units
 
         // ---------------- Faction ----------------
 
-        protected virtual Faction GetMyFaction()
+        public virtual Faction GetMyFaction()
         {
             var h = GetComponent<IHealth>();
             return h != null ? h.GetFaction() : Faction.Neutral;
