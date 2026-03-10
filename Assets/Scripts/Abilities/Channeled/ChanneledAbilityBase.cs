@@ -12,6 +12,8 @@ public abstract class ChanneledAbilityBase : AbilityBase
     [SerializeField] private float minReleasePercent = 0.05f;
     [Tooltip("Allow releasing early and deal partial effect based on charge percent")]
     [SerializeField] private bool allowPartialRelease = true;
+    [Tooltip("If true, prevents the caster from moving while channeling")]
+    [SerializeField] private bool preventMovement = true;
 
     [Header("VFX/Beam (optional)")]
     [Tooltip("Charging VFX prefab instantiated on the caster while charging. Should be scalable by localScale.")]
@@ -22,6 +24,7 @@ public abstract class ChanneledAbilityBase : AbilityBase
     public float MaxChargeTime => Mathf.Max(0.0001f, maxChargeTime);
     public float MinReleasePercent => Mathf.Clamp01(minReleasePercent);
     public bool AllowPartialRelease => allowPartialRelease;
+    public bool PreventMovement => preventMovement;
     public GameObject ChargingVFXPrefab => chargingVFXPrefab;
     public GameObject BeamPrefab => beamPrefab;
 

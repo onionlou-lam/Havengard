@@ -1,5 +1,6 @@
 using UnityEngine;
 using Havengard.Abilities;
+using UnityEngine.AI;
 
 public class ChannelController : MonoBehaviour
 {
@@ -15,8 +16,14 @@ public class ChannelController : MonoBehaviour
     public float beamZPosition = 0f;
 
     [Header("Spawn Offset")]
-    [Tooltip("Offset from caster position where beam/charge VFX spawn (local space)")]
-    public Vector3 spawnOffset = new Vector3(0.5f, 0f, 0f); // ADD THIS
+    [Tooltip("Distance in front of caster to spawn beam/charge VFX")]
+    public float spawnDistance = 0.5f;
+
+    [Header("Caster Rotation")]
+    [Tooltip("Enable to rotate the caster sprite/gameobject to face the beam direction")]
+    public bool rotateCasterToBeam = true;
+    [Tooltip("If specified, only this transform will rotate. Leave empty to rotate the root GameObject")]
+    public Transform rotationTarget;
 
     private float chargeTimer;
     private bool isChanneling;
@@ -24,12 +31,29 @@ public class ChannelController : MonoBehaviour
     private GameObject beamInstance;
     private MagicArsenal.MagicBeamScript beamScript;
     private Camera mainCamera;
-    
-    private Vector3 originalChargeVFXScale = Vector3.one; // ADD THIS
+
+    private Vector3 originalChargeVFXScale = Vector3.one;
+    private Animator animator; // For reading facing direction
+    private NavMeshAgent navAgent; // For preventing movement
+
+    // Rotation tracking
+    private Quaternion originalRotation;
+    private bool wasRotatingBeforeChannel;
 
     void Start()
     {
         mainCamera = Camera.main;
+        animator = GetComponent<Animator>();
+        navAgent = GetComponent<NavMeshAgent>();
+
+        // Store original rotation
+        if (rotateCasterToBeam)
+        {
+            if (rotationTarget != null)
+                originalRotation = rotationTarget.rotation;
+            else
+                originalRotation = transform.rotation;
+        }
     }
 
     void Update()
@@ -49,11 +73,29 @@ public class ChannelController : MonoBehaviour
             chargeTimer += Time.deltaTime;
             float percent = Mathf.Clamp01(chargeTimer / ability.MaxChargeTime);
 
-            // Update VFX scale - NOW RESPECTS ORIGINAL SCALE
+            // Get current facing direction
+            Vector2 facingDir = GetFacingDirection();
+
+            // Rotate caster to face beam direction
+            if (rotateCasterToBeam)
+            {
+                RotateCasterToDirection(facingDir);
+            }
+
+            // Update beam and charge VFX positions to follow caster
+            Vector3 spawnPos = transform.position + (Vector3)facingDir * spawnDistance;
+            spawnPos.z = beamZPosition;
+
+            // Update charging VFX position and scale
             if (chargingVFXInstance)
             {
                 float scale = Mathf.Lerp(0.2f, 1f, percent);
                 chargingVFXInstance.transform.localScale = originalChargeVFXScale * scale;
+                chargingVFXInstance.transform.position = spawnPos;
+
+                // Rotate VFX to face direction
+                float angle = Mathf.Atan2(facingDir.y, facingDir.x) * Mathf.Rad2Deg;
+                chargingVFXInstance.transform.rotation = Quaternion.Euler(0, 0, angle);
             }
 
             // Update beam visuals & direction if present
@@ -61,10 +103,12 @@ public class ChannelController : MonoBehaviour
             {
                 beamScript.SetCharge(percent);
 
-                // Ensure beam stays at correct Z depth
-                Vector3 beamPos = beamInstance.transform.position;
-                beamPos.z = beamZPosition;
-                beamInstance.transform.position = beamPos;
+                // Update beam position
+                beamInstance.transform.position = spawnPos;
+
+                // Update beam rotation based on facing direction
+                float angle = Mathf.Atan2(facingDir.y, facingDir.x) * Mathf.Rad2Deg;
+                beamInstance.transform.rotation = Quaternion.Euler(0, 0, angle);
 
                 // align beam to mouse cursor position
                 if (mainCamera != null)
@@ -89,17 +133,28 @@ public class ChannelController : MonoBehaviour
 
         isChanneling = true;
         chargeTimer = 0f;
+        wasRotatingBeforeChannel = true;
 
-        // Calculate spawn position with offset
-        Vector3 spawnPos = transform.position + transform.TransformDirection(spawnOffset);
+        // Prevent movement if configured
+        if (ability.PreventMovement)
+        {
+            PreventMovement();
+        }
+
+        // Get facing direction and calculate spawn position
+        Vector2 facingDir = GetFacingDirection();
+        Vector3 spawnPos = transform.position + (Vector3)facingDir * spawnDistance;
         spawnPos.z = beamZPosition;
 
-        // Spawn charging VFX with offset
+        // Calculate rotation based on facing direction
+        float angle = Mathf.Atan2(facingDir.y, facingDir.x) * Mathf.Rad2Deg;
+        Quaternion spawnRotation = Quaternion.Euler(0, 0, angle);
+
+        // Spawn charging VFX with offset and rotation
         if (ability.ChargingVFXPrefab != null)
         {
-            chargingVFXInstance = Instantiate(ability.ChargingVFXPrefab, transform);
-            chargingVFXInstance.transform.position = spawnPos; // Apply offset
-            
+            chargingVFXInstance = Instantiate(ability.ChargingVFXPrefab, spawnPos, spawnRotation, transform);
+
             // Store original scale
             originalChargeVFXScale = chargingVFXInstance.transform.localScale;
         }
@@ -107,7 +162,7 @@ public class ChannelController : MonoBehaviour
         // Spawn beam prefab if provided and try to find MagicBeamScript
         if (ability.BeamPrefab != null)
         {
-            beamInstance = Instantiate(ability.BeamPrefab, spawnPos, transform.rotation, transform);
+            beamInstance = Instantiate(ability.BeamPrefab, spawnPos, spawnRotation, transform);
 
             // Set beam and all children to VFX layer (layer 31 for example, or use LayerMask.NameToLayer("VFX"))
             int vfxLayer = LayerMask.NameToLayer("VFX");
@@ -117,7 +172,7 @@ public class ChannelController : MonoBehaviour
             }
 
             beamScript = beamInstance.GetComponent<MagicArsenal.MagicBeamScript>();
-            
+
             if (beamScript != null)
             {
                 // Sync beam range with ability range if it's a ChanneledBeamAbility
@@ -127,11 +182,11 @@ public class ChannelController : MonoBehaviour
                     beamScript.maxBeamDistance = beamAbility.BeamMaxRange;
                     Debug.Log($"Synced beam visual range to ability range: {beamAbility.BeamMaxRange}");
                 }
-                
+
                 // let MagicBeamScript be driven externally
                 beamScript.externalControl = true;
                 beamScript.Activate();
-                
+
                 Debug.Log($"Beam activated at Z={beamZPosition}, Position={beamInstance.transform.position}");
             }
             else
@@ -147,6 +202,18 @@ public class ChannelController : MonoBehaviour
         if (!isChanneling || ability == null) return;
 
         float percent = Mathf.Clamp01(chargeTimer / ability.MaxChargeTime);
+
+        // Restore movement if it was prevented
+        if (ability.PreventMovement)
+        {
+            RestoreMovement();
+        }
+
+        // Restore rotation if we were rotating the caster
+        if (rotateCasterToBeam)
+        {
+            RestoreCasterRotation();
+        }
 
         // Determine whether release is allowed
         if (!ability.AllowPartialRelease && percent < 1f)
@@ -205,9 +272,127 @@ public class ChannelController : MonoBehaviour
     public void CancelChannel()
     {
         if (!isChanneling) return;
+
+        // Restore movement if it was prevented
+        if (ability != null && ability.PreventMovement)
+        {
+            RestoreMovement();
+        }
+
+        // Restore rotation
+        if (rotateCasterToBeam)
+        {
+            RestoreCasterRotation();
+        }
+
         CleanUpChannel();
         ability.OnChannelCancel(gameObject);
         isChanneling = false;
+    }
+
+    /// <summary>
+    /// Prevents movement by stopping NavMeshAgent and broadcasting to PlayerController
+    /// </summary>
+    private void PreventMovement()
+    {
+        // Stop NavMeshAgent movement
+        if (navAgent != null && navAgent.enabled)
+        {
+            if (navAgent.hasPath)
+            {
+                navAgent.ResetPath();
+            }
+            navAgent.isStopped = true;
+        }
+
+        // Notify PlayerController to stop click movement
+        SendMessage("OnChannelStarted", SendMessageOptions.DontRequireReceiver);
+    }
+
+    /// <summary>
+    /// Restores movement by re-enabling NavMeshAgent
+    /// </summary>
+    private void RestoreMovement()
+    {
+        // Re-enable NavMeshAgent movement
+        if (navAgent != null && navAgent.enabled)
+        {
+            navAgent.isStopped = false;
+        }
+
+        // Notify PlayerController that channeling ended
+        SendMessage("OnChannelEnded", SendMessageOptions.DontRequireReceiver);
+    }
+
+    /// <summary>
+    /// Rotates the caster sprite/GameObject to face the beam direction
+    /// </summary>
+    private void RotateCasterToDirection(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 0.01f) return;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        Quaternion targetRotation = Quaternion.Euler(0, 0, angle);
+
+        if (rotationTarget != null)
+        {
+            rotationTarget.rotation = Quaternion.Slerp(rotationTarget.rotation, targetRotation, Time.deltaTime * 15f);
+        }
+        else
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 15f);
+        }
+    }
+
+    /// <summary>
+    /// Restores the caster's original rotation
+    /// </summary>
+    private void RestoreCasterRotation()
+    {
+        if (rotationTarget != null)
+        {
+            rotationTarget.rotation = originalRotation;
+        }
+        else
+        {
+            transform.rotation = originalRotation;
+        }
+    }
+
+    /// <summary>
+    /// Gets the facing direction from Animator parameters or falls back to mouse direction
+    /// </summary>
+    private Vector2 GetFacingDirection()
+    {
+        if (animator != null)
+        {
+            // Try to get facing direction from animator parameters
+            float horizontal = animator.GetFloat("Horizontal");
+            float vertical = animator.GetFloat("Vertical");
+
+            Vector2 facingDir = new Vector2(horizontal, vertical);
+
+            // If we have a valid direction from animator, use it
+            if (facingDir.sqrMagnitude > 0.01f)
+            {
+                return facingDir.normalized;
+            }
+        }
+
+        // Fallback: direction toward mouse
+        if (mainCamera != null)
+        {
+            Vector3 mouseWorld = GetMouseWorldPoint();
+            Vector2 dirToMouse = (mouseWorld - transform.position).normalized;
+
+            if (dirToMouse.sqrMagnitude > 0.01f)
+            {
+                return dirToMouse;
+            }
+        }
+
+        // Last resort: face right
+        return Vector2.right;
     }
 
     // Helper to get mouse world point in 2D or 3D
@@ -244,4 +429,9 @@ public class ChannelController : MonoBehaviour
             SetLayerRecursively(child.gameObject, layer);
         }
     }
+
+    /// <summary>
+    /// Public property to check if currently channeling
+    /// </summary>
+    public bool IsChanneling => isChanneling;
 }

@@ -37,6 +37,7 @@ namespace Havengard.Player
 
         private Vector2 clickMoveTarget;
         private bool isClickMoving;
+        private bool isChannelingWithMovementLock; // Tracks if movement is locked due to channeling
 
         private float lastRollTime = -999f;
         private bool isRolling;
@@ -79,9 +80,14 @@ namespace Havengard.Player
                 return;
             }
 
-            HandleMouseInput();
+            // Don't process movement input if channeling with movement lock
+            if (!isChannelingWithMovementLock)
+            {
+                HandleMouseInput();
+                HandleRollInput();
+            }
+
             HandleKeyboardAbilities();
-            HandleRollInput();
 
             // If we stopped click-moving, avoid constantly ResetPath every frame
             if (!isClickMoving && agent.hasPath)
@@ -98,8 +104,8 @@ namespace Havengard.Player
                 return;
             }
 
-            // NavMesh handles normal movement
-            if (isClickMoving)
+            // NavMesh handles normal movement (only if not channeling with movement lock)
+            if (isClickMoving && !isChannelingWithMovementLock)
             {
                 if (!agent.pathPending && agent.remainingDistance <= stoppingDistance)
                 {
@@ -198,10 +204,12 @@ namespace Havengard.Player
 
         private bool IsChanneling()
         {
-            // Check if ChannelController is actively channeling
-            return channelController != null && channelController.GetType()
-                .GetField("isChanneling", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(channelController) is bool isChanneling && isChanneling;
+            // Use public property if available, otherwise use reflection
+            if (channelController != null)
+            {
+                return channelController.IsChanneling;
+            }
+            return false;
         }
 
         private void StartChanneledAbility()
@@ -220,6 +228,21 @@ namespace Havengard.Player
                 channelController.StopChannel();
                 //Debug.Log("Stopped channeling FrostBeam");
             }
+        }
+
+        // --- CHANNEL CALLBACKS (called via SendMessage from ChannelController) ---
+
+        private void OnChannelStarted()
+        {
+            isChannelingWithMovementLock = true;
+            isClickMoving = false;
+            //Debug.Log("Movement locked - channeling started");
+        }
+
+        private void OnChannelEnded()
+        {
+            isChannelingWithMovementLock = false;
+            //Debug.Log("Movement unlocked - channeling ended");
         }
 
         // --- HELPERS ---
