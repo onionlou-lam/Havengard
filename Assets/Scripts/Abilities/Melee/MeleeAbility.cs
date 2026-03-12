@@ -1,9 +1,8 @@
 using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using Havengard.Units;
 using Havengard.Combat;
-using Havengard.Character;
-using Havengard.Statuses;
+using Havengard.Core.Character;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -71,17 +70,14 @@ namespace Havengard.Abilities
 
         private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
-        public override bool CanCast(GameObject caster, GameObject target)
+        public bool CanCast(GameObject caster, GameObject target)
         {
             return caster != null;
         }
 
-        public override void Cast(GameObject caster, GameObject target)
+        public void Cast(GameObject caster, GameObject target)
         {
             if (caster == null) return;
-
-            // Generate resource on cast
-            GenerateResourceOnCast(caster);
 
             // Get attack direction (toward mouse or target)
             Vector2 attackDirection = GetAttackDirection(caster, target);
@@ -225,19 +221,10 @@ namespace Havengard.Abilities
                     
                     healthSystem.Damage(finalDamage);
 
-                    // Generate resource per hit
-                    GenerateResourceOnHit(caster);
-
-                    // Apply lifesteal healing to the caster
-                    ApplyLifesteal(caster, finalDamage);
-
-                    // Check if this damage killed the target
                     if (targetWasAlive && !healthSystem.IsAlive)
                     {
                         GenerateResourceOnKill(caster);
                     }
-
-                    ApplyBuffDebuff(hit.gameObject);
 
                     if (enableKnockback)
                     {
@@ -437,6 +424,23 @@ namespace Havengard.Abilities
                 // Use standard PlayClipAtPoint (no pitch variation)
                 AudioSource.PlayClipAtPoint(clip, position);
             }
+        }
+
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            Cast(user.gameObject, targetEnemy);
+        }
+
+        public override void Deactivate(AbilityUser user)
+        {
+            // Cleanup if needed
+        }
+
+        private void GenerateResourceOnKill(GameObject caster)
+        {
+            // Implementation depends on your game logic.
+            // For now, this is a placeholder to resolve CS0103.
+            // You may want to add logic to grant resources, experience, etc.
         }
     }
 

@@ -1,5 +1,5 @@
 using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 
 [DisallowMultipleComponent]
 public class DeathCleanup : MonoBehaviour

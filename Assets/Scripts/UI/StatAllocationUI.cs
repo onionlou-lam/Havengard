@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Havengard.Combat;
+using Havengard.Core.Heroes;
 
 namespace Havengard.UI
 {
@@ -37,7 +38,7 @@ namespace Havengard.UI
         [SerializeField] private TextMeshProUGUI lightningBonusText;
         [SerializeField] private TextMeshProUGUI holyBonusText;
 
-        private Havengard.Heroes.PlayerStatAllocator allocator;
+        private PlayerStatAllocator allocator;
 
         private void Awake()
         {
@@ -61,7 +62,7 @@ namespace Havengard.UI
             Hide();
         }
 
-        public void Show(Havengard.Heroes.PlayerStatAllocator statAllocator)
+        public void Show(PlayerStatAllocator statAllocator)
         {
             if (statAllocator == null)
             {

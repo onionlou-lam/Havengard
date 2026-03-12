@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Havengard.Character;
+using Havengard.Core.Character;
 
 public class ResourceBarHUD : MonoBehaviour
 {
@@ -25,7 +25,8 @@ public class ResourceBarHUD : MonoBehaviour
     private void OnEnable()
     {
         Hook();
-        UpdateBar();
+        UpdateBar(resource != null ? resource.CurrentResource : 0, 
+                  resource != null ? resource.MaxResource : 0);
     }
 
     private void OnDisable()
@@ -45,18 +46,17 @@ public class ResourceBarHUD : MonoBehaviour
         resource.OnResourceChanged -= UpdateBar;
     }
 
-    private void UpdateBar()
+    // CHANGED: Added parameters to match Action<int, int> delegate signature
+    private void UpdateBar(int currentResource, int maxResource)
     {
-        if (resource == null || fillImage == null) return;
+        if (fillImage == null) return;
 
-        float normalized = resource.MaxResource > 0f ? (float)resource.CurrentResource / resource.MaxResource : 0f;
+        float normalized = maxResource > 0f ? (float)currentResource / maxResource : 0f;
         fillImage.fillAmount = normalized;
 
         if (valueText != null)
         {
-            int cur = Mathf.FloorToInt(resource.CurrentResource);
-            int max = Mathf.FloorToInt(resource.MaxResource);
-            valueText.text = $"{cur}/{max}";
+            valueText.text = $"{currentResource}/{maxResource}";
         }
     }
 }

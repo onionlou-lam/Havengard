@@ -1,5 +1,5 @@
 using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using System.Collections;
 
 namespace Havengard.UI
@@ -20,7 +20,7 @@ namespace Havengard.UI
         [SerializeField] private int flashCount = 2;
 
         // FIX: Fully qualify HealthSystem with its namespace if needed, or import the correct type.
-        private Havengard.HealthSystem.HealthSystem healthSystem;
+        private Havengard.Core.HealthSystem.HealthSystem healthSystem;
         private Color originalColor;
         private Coroutine currentFlashCoroutine;
 

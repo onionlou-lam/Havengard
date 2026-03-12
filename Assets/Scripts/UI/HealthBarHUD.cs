@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using System.Collections;
 
 public class HealthBarHUD : MonoBehaviour

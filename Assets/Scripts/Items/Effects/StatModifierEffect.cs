@@ -1,5 +1,5 @@
 using UnityEngine;
-using Havengard.Character;
+using Havengard.Core.Character;
 
 namespace Havengard.Items
 {
@@ -50,7 +50,7 @@ namespace Havengard.Items
             {
                 case StatType.MaxHP:
                     stats.CurrentStats.MaxHP += Mathf.RoundToInt(totalValue);
-                    var health = target.GetComponent<Havengard.HealthSystem.Health>();
+                    var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
                     if (health != null)
                     {
                         health.SetMaxHealthFromStats(refill: false);
@@ -105,7 +105,7 @@ namespace Havengard.Items
                 case StatType.MaxHP:
                     stats.CurrentStats.MaxHP -= Mathf.RoundToInt(totalValue);
                     stats.CurrentStats.MaxHP = Mathf.Max(1, stats.CurrentStats.MaxHP);
-                    var health = target.GetComponent<Havengard.HealthSystem.Health>();
+                    var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
                     if (health != null)
                     {
                         health.SetMaxHealthFromStats(refill: false);

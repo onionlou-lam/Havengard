@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Havengard.Resources;
-using Havengard.Heroes;
+using Havengard.Core.Heroes;
 
 namespace Havengard.Core
 {

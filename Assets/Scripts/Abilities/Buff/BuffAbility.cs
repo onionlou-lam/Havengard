@@ -1,6 +1,6 @@
 using UnityEngine;
-using Havengard.Character;
-using Havengard.HealthSystem;
+using Havengard.Core.Character;
+using Havengard.Core.HealthSystem;
 
 namespace Havengard.Abilities
 {
@@ -39,7 +39,8 @@ namespace Havengard.Abilities
         [SerializeField] private AudioClip activationSFX;
         [SerializeField] private AudioClip deactivationSFX;
 
-        public override bool CanCast(GameObject caster, GameObject target)
+        // REMOVED 'override' - this method doesn't exist in AbilityBase
+        public bool CanCast(GameObject caster, GameObject target)
         {
             if (caster == null) return false;
 
@@ -55,12 +56,12 @@ namespace Havengard.Abilities
             return true;
         }
 
-        public override void Cast(GameObject caster, GameObject target)
+        // REMOVED 'override' - this method doesn't exist in AbilityBase
+        public void Cast(GameObject caster, GameObject target)
         {
             if (caster == null) return;
 
-            // Generate resource on cast
-            GenerateResourceOnCast(caster);
+            // REMOVED: GenerateResourceOnCast(caster); - method doesn't exist
 
             // Check for existing buff instance
             BuffInstance existingBuff = caster.GetComponent<BuffInstance>();
@@ -72,24 +73,35 @@ namespace Havengard.Abilities
                 {
                     // Refresh duration
                     existingBuff.RefreshDuration(duration);
-                    Debug.Log($"[BuffAbility] Refreshed {AbilityName} on {caster.name}");
+                    Debug.Log($"[BuffAbility] Refreshed {abilityName} on {caster.name}");
                 }
                 else if (buffType == BuffType.Toggle && canRefreshOrToggle)
                 {
                     // Toggle off
                     Destroy(existingBuff);
-                    Debug.Log($"[BuffAbility] Toggled off {AbilityName} on {caster.name}");
+                    Debug.Log($"[BuffAbility] Toggled off {abilityName} on {caster.name}");
                 }
                 return;
             }
 
             // Create new buff instance
             BuffInstance buffInstance = caster.AddComponent<BuffInstance>();
-            buffInstance.Initialize(this, caster, duration, statModifiers, 
-                activationVFX, persistentVFX, deactivationVFX, 
+            buffInstance.Initialize(this, caster, duration, statModifiers,
+                activationVFX, persistentVFX, deactivationVFX,
                 activationSFX, deactivationSFX);
 
-            Debug.Log($"[BuffAbility] Applied {AbilityName} to {caster.name}");
+            Debug.Log($"[BuffAbility] Applied {abilityName} to {caster.name}");
+        }
+
+        // ADD: Implement abstract methods from AbilityBase
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            Cast(user.gameObject, targetEnemy);
+        }
+
+        public override void Deactivate(AbilityUser user)
+        {
+            // Buff cleanup is handled by BuffInstance component
         }
 
         /// <summary>

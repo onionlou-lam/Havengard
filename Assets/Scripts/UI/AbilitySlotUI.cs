@@ -68,9 +68,9 @@ namespace Havengard.UI
 
             if (abilityIcon != null)
             {
-                if (ability != null && ability.Icon != null)
+                if (ability != null && ability.icon != null)
                 {
-                    abilityIcon.sprite = ability.Icon;
+                    abilityIcon.sprite = ability.icon;
                     abilityIcon.enabled = true;
                 }
                 else
@@ -153,7 +153,7 @@ namespace Havengard.UI
             // Update cooldown overlay (radial fill)
             if (cooldownOverlay != null && ability != null)
             {
-                float cooldownDuration = ability.Cooldown;
+                float cooldownDuration = ability.baseCooldown;
                 if (cooldownDuration > 0f)
                 {
                     float progress = remaining / cooldownDuration;

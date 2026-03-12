@@ -1,7 +1,8 @@
-using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.Character;
+using Havengard.Core.HealthSystem;
+using Havengard.Statuses;
 using Havengard.Units;
-using Havengard.Character;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
@@ -28,15 +29,16 @@ namespace Havengard.Abilities
         [SerializeField] private float splashRadius = 3f;
         [SerializeField] private int splashDamage = 15;
 
+        [Header("Status Effects")]
+        [SerializeField] private StatusEffectData statusEffect;
+        [SerializeField] private int maxStatusStacks = 1;
+
         [Header("Homing")]
         [SerializeField] private bool enableHoming = false;
         [SerializeField] private float homingStrength = 5f;
         [SerializeField] private float homingDelay = 0f;
 
-        public override bool CanCast(GameObject caster, GameObject target)
-        {
-            return caster != null && projectilePrefab != null;
-        }
+        // REMOVED: CanCast override - not in base class
 
         public override void OnRelease(GameObject caster, GameObject target, float chargePercent)
         {
@@ -125,6 +127,17 @@ namespace Havengard.Abilities
         {
             base.OnChannelCancel(caster);
             Debug.Log("Charged shot cancelled");
+        }
+
+        // ADD: Implement abstract methods from AbilityBase
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            Cast(user.gameObject, targetEnemy);
+        }
+
+        public override void Deactivate(AbilityUser user)
+        {
+            // Channeled abilities handle their own cleanup
         }
     }
 }

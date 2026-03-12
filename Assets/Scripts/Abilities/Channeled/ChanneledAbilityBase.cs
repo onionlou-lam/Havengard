@@ -18,7 +18,7 @@ public abstract class ChanneledAbilityBase : AbilityBase
     [Header("VFX/Beam (optional)")]
     [Tooltip("Charging VFX prefab instantiated on the caster while charging. Should be scalable by localScale.")]
     [SerializeField] private GameObject chargingVFXPrefab = null;
-    [Tooltip("Optional beam prefab (contains MagicBeamScript). If set, ChannelController will instantiate it.")]
+    [Tooltip("Optional beam prefab (contains MagicBeamScript). If set, ChannelController willinstantiate it.")]
     [SerializeField] private GameObject beamPrefab = null;
 
     public float MaxChargeTime => Mathf.Max(0.0001f, maxChargeTime);
@@ -37,10 +37,11 @@ public abstract class ChanneledAbilityBase : AbilityBase
     // Called when channeling is cancelled (didn't meet release conditions or interrupted)
     public virtual void OnChannelCancel(GameObject caster) { }
 
-    // For compatibility: fall back Cast to immediate full release
-    public void Cast(GameObject caster, GameObject target)
+    // Override Cast to use channeled ability logic
+    public override void Cast(GameObject caster, GameObject target)
     {
-        // Generate resource if appropriate then do a full-power release
+        // Channeled abilities trigger through ChannelController
+        // This is a fallback for immediate full-power release
         OnRelease(caster, target, 1f);
     }
 }

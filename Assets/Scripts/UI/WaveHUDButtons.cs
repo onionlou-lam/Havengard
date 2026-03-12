@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using Havengard.Items;
-using Havengard.Stats;
+using Havengard.Core.Heroes;
 using Havengard.Resources;
 
 namespace Havengard.UI

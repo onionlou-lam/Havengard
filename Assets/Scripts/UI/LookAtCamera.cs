@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Havengard.HealthSystem
+namespace Havengard.Core.HealthSystem
 {
     /// <summary>
     /// Makes a Transform face the main camera.

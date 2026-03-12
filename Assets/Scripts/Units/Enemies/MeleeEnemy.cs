@@ -14,7 +14,7 @@ namespace Havengard.Units
             if (attackAbility == null) return;
 
             // Cooldown gate
-            if (Time.time < lastAttackTime + attackAbility.Cooldown) return;
+            if (Time.time < lastAttackTime + attackAbility.baseCooldown) return;
 
             // CanCast gate
             if (!attackAbility.CanCast(gameObject, target)) return;

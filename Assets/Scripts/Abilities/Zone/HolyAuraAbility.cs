@@ -40,7 +40,7 @@ namespace Havengard.Abilities
             {
                 // Heal allies
                 float healing = CalculateHealing(user.gameObject, CurrentLevel);
-                var targetHealth = affectedTarget.GetComponent<Havengard.HealthSystem.Health>();
+                var targetHealth = affectedTarget.GetComponent<Havengard.Core.HealthSystem.Health>();
                 if (targetHealth != null)
                 {
                     targetHealth.Heal((int)healing);
@@ -61,7 +61,7 @@ namespace Havengard.Abilities
                     damage *= damageToUndeadMultiplier;
                 }
 
-                var targetHealth = affectedTarget.GetComponent<Havengard.HealthSystem.Health>();
+                var targetHealth = affectedTarget.GetComponent<Havengard.Core.HealthSystem.Health>();
                 if (targetHealth != null)
                 {
                     targetHealth.Damage((int)damage);
@@ -79,7 +79,7 @@ namespace Havengard.Abilities
 
         private void ApplyHolyBuffs(GameObject target)
         {
-            var stats = target.GetComponent<Havengard.Character.StatsComponent>();
+            var stats = target.GetComponent<Havengard.Core.Character.StatsComponent>();
             if (stats != null)
             {
                 // Apply temporary buffs (you might need to implement temporary modifiers)

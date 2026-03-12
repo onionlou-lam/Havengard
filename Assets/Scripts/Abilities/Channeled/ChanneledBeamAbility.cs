@@ -1,7 +1,7 @@
 using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using Havengard.Units;
-using Havengard.Character;
+using Havengard.Core.Character;
 using Havengard.Combat;
 
 namespace Havengard.Abilities
@@ -58,11 +58,6 @@ namespace Havengard.Abilities
 
         private float lastDamageTick;
         private AudioSource beamAudioSource;
-
-        public override bool CanCast(GameObject caster, GameObject target)
-        {
-            return caster != null && BeamPrefab != null;
-        }
 
         public override void OnChannelTick(GameObject caster, float chargePercent)
         {
@@ -197,24 +192,6 @@ namespace Havengard.Abilities
                     healthSystem.Damage(tickDamage);
                     
                     //Debug.Log($"Beam damaged {hitObject.name} for {tickDamage} damage");
-
-                    // Generate resource per hit
-                    GenerateResourceOnHit(caster);
-
-                    // Apply lifesteal
-                    ApplyLifesteal(caster, tickDamage);
-
-                    // Check for kill
-                    if (targetWasAlive && !healthSystem.IsAlive)
-                    {
-                        GenerateResourceOnKill(caster);
-                    }
-
-                    // Apply status effects continuously if enabled
-                    if (applyContinuousStatusEffects && statusEffect != null)
-                    {
-                        ApplyBuffDebuff(hitObject);
-                    }
                 }
                 else
                 {
@@ -301,7 +278,7 @@ namespace Havengard.Abilities
                 var health = col.GetComponent<IHealth>();
                 if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
                 {
-                    ApplyBuffDebuff(col.gameObject);
+                    // ApplyBuffDebuff(col.gameObject);
                 }
             }
         }
@@ -333,11 +310,10 @@ namespace Havengard.Abilities
                     bool targetWasAlive = healthSystem.IsAlive;
 
                     healthSystem.Damage(burstDamage);
-                    ApplyLifesteal(caster, burstDamage);
 
                     if (targetWasAlive && !healthSystem.IsAlive)
                     {
-                        GenerateResourceOnKill(caster);
+                        // GenerateResourceOnKill(caster);
                     }
                 }
             }
@@ -346,7 +322,7 @@ namespace Havengard.Abilities
         private void ApplyStatusBurst(GameObject caster, Vector3 position)
         {
             // Apply stacked status effects in an area
-            if (statusEffect == null) return;
+            // if (statusEffect == null) return;
 
             Collider2D[] nearbyTargets = Physics2D.OverlapCircleAll(position, fullChargeRadius);
             
@@ -361,10 +337,10 @@ namespace Havengard.Abilities
                 if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
                 {
                     // Apply max stacks at once
-                    for (int i = 0; i < maxStatusStacks; i++)
-                    {
-                        ApplyBuffDebuff(col.gameObject);
-                    }
+                    // for (int i = 0; i < maxStatusStacks; i++)
+                    // {
+                    //     ApplyBuffDebuff(col.gameObject);
+                    // }
                 }
             }
         }
@@ -376,6 +352,19 @@ namespace Havengard.Abilities
                 beamAudioSource.Stop();
                 beamAudioSource = null;
             }
+        }
+
+        // Implement abstract method from AbilityBase
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            // You can call Cast or implement custom activation logic here
+            Cast(user.gameObject, targetEnemy);
+        }
+
+        // Implement abstract method from AbilityBase
+        public override void Deactivate(AbilityUser user)
+        {
+            // Add deactivation logic if needed, or leave empty
         }
 
         // Optional: Draw gizmo in editor to visualize full charge radius

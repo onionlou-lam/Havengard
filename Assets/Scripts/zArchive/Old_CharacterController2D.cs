@@ -2,7 +2,7 @@
 using UnityEngine.AI; // optional if using navmesh for smooth movement
 using Havengard.Abilities;
 
-namespace Havengard.CharacterController
+namespace Havengard.Core.CharacterController
 {
     [RequireComponent(typeof(Rigidbody2D))]
     public class CharacterController2D : MonoBehaviour

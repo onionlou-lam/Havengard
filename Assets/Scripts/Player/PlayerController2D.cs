@@ -1,5 +1,5 @@
 ﻿using Havengard.Abilities;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using Havengard.Units;
 using UnityEngine;
 using UnityEngine.AI;

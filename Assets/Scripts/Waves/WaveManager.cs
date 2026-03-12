@@ -149,7 +149,7 @@ namespace Havengard.Waves
         {
             // We need to detect death to decrement alive count
             // You already use Health + OnDeath for enemies.
-            var health = enemy.GetComponent<Havengard.HealthSystem.Health>();
+            var health = enemy.GetComponent<Havengard.Core.HealthSystem.Health>();
             if (health != null)
             {
                 health.OnDeath += () =>

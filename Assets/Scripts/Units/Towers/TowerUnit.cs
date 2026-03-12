@@ -1,7 +1,7 @@
 using UnityEngine;
 using Havengard.Abilities;
 using Havengard.Combat;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 
 namespace Havengard.Units
 {
@@ -140,7 +140,7 @@ namespace Havengard.Units
             // Intentionally empty
         }
 
-        protected override Faction GetMyFaction()
+        public override Faction GetMyFaction()
         {
             // Towers typically belong to Player or Ally faction
             return Faction.Ally;

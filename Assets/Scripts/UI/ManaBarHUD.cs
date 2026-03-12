@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Havengard.Character;   // where ResourceSystem lives
+using Havengard.Core.Character;   // where ResourceSystem lives
 
 public class ManaBarHUD : MonoBehaviour
 {

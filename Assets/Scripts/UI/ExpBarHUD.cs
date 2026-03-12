@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Havengard.Progression;
+using Havengard.Core.Progression;
 
 public class EXPBarHUD : MonoBehaviour
 {

@@ -1,6 +1,7 @@
-using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
+using Havengard.Statuses;
 using Havengard.Units;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
@@ -14,7 +15,7 @@ namespace Havengard.Abilities
         [Header("Wall Properties")]
         [SerializeField] private float wallDuration = 10f;
         [SerializeField] private WallBehaviorType behaviorType = WallBehaviorType.Blocking;
-        
+
         [Header("Wall Health (if targetable)")]
         [SerializeField] private bool isTargetable = true;
         [SerializeField] private int wallMaxHealth = 100;
@@ -25,7 +26,12 @@ namespace Havengard.Abilities
         [SerializeField] private float damageTickRate = 0.5f;
         [SerializeField] private bool friendlyFire = false;
 
-        public override bool CanCast(GameObject caster, GameObject target)
+        [Header("Status Effects")]
+        [SerializeField] private StatusEffectData statusEffect;
+        [SerializeField] private int maxStatusStacks = 1;
+
+        // REMOVED 'override' - not in base class
+        public bool CanCast(GameObject caster, GameObject target)
         {
             if (wallPrefab == null) return false;
 
@@ -34,7 +40,8 @@ namespace Havengard.Abilities
             return Vector3.Distance(caster.transform.position, mouseWorld) <= maximumRange;
         }
 
-        public override void Cast(GameObject caster, GameObject target)
+        // REMOVED 'override' - not in base class
+        public void Cast(GameObject caster, GameObject target)
         {
             if (wallPrefab == null || !CanCast(caster, target)) return;
 
@@ -66,6 +73,17 @@ namespace Havengard.Abilities
                 Debug.LogError($"[WallAbility] Wall prefab '{wallPrefab.name}' is missing WallEffect component!");
                 Destroy(wallInstance);
             }
+        }
+
+        // ADD: Implement abstract methods from AbilityBase
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            Cast(user.gameObject, targetEnemy);
+        }
+
+        public override void Deactivate(AbilityUser user)
+        {
+            // Walls handle their own cleanup
         }
     }
 

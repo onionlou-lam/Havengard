@@ -66,9 +66,9 @@ namespace Havengard.Abilities
             
             // Set icon image
             Image iconImage = icon.GetComponent<Image>();
-            if (iconImage != null && buff.SourceAbility != null && buff.SourceAbility.Icon != null)
+            if (iconImage != null && buff.SourceAbility != null && buff.SourceAbility.icon != null)
             {
-                iconImage.sprite = buff.SourceAbility.Icon;
+                iconImage.sprite = buff.SourceAbility.icon;
             }
 
             // Set duration text (only for duration-based buffs)

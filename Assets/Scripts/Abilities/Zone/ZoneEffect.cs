@@ -1,5 +1,5 @@
 using Havengard.Combat;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using Havengard.Statuses;
 using Havengard.Units;
 using System.Collections;

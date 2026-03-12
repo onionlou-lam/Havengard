@@ -129,8 +129,8 @@ namespace Havengard.Items
             float value = GetValue(level) * 100f; // Convert to percentage
             string displayName = GetShortDisplayName();
 
-            // Use the public property AbilityName instead of the private field abilityName
-            string abilityName = targetAbility != null ? targetAbility.AbilityName : "All Abilities";
+            // Use the public field 'abilityName' (not 'AbilityName' property)
+            string abilityName = targetAbility != null ? targetAbility.abilityName : "All Abilities";
 
             return $"+{value:F0}% {displayName}";
         }

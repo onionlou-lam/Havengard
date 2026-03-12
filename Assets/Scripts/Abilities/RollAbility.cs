@@ -8,12 +8,14 @@ namespace Havengard.Abilities
         [SerializeField] private float rollDistance = 3f;
         [SerializeField] private float rollDuration = 0.15f;
 
-        public override bool CanCast(GameObject caster, GameObject target)
+        // REMOVED 'override' - not in base class
+        public bool CanCast(GameObject caster, GameObject target)
         {
             return caster != null;
         }
 
-        public override void Cast(GameObject caster, GameObject target)
+        // REMOVED 'override' - not in base class
+        public void Cast(GameObject caster, GameObject target)
         {
             var rb = caster.GetComponent<Rigidbody2D>();
             if (rb == null) return;
@@ -38,6 +40,17 @@ namespace Havengard.Abilities
             }
 
             rb.linearVelocity = Vector2.zero;
+        }
+
+        // ADD: Implement abstract methods from AbilityBase
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            Cast(user.gameObject, targetEnemy);
+        }
+
+        public override void Deactivate(AbilityUser user)
+        {
+            // Roll is instant, no cleanup needed
         }
     }
 }

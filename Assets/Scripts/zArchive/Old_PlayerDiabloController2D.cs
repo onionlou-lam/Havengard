@@ -1,6 +1,6 @@
 ﻿/*using UnityEngine;
 using Havengard.Abilities;
-using Havengard.HealthSystem;
+using Havengard.Core.Health;
 using Havengard.Units;
 using Havengard.Statuses;
 

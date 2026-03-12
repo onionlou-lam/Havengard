@@ -1,6 +1,6 @@
     using UnityEngine;
-using Havengard.Character;
-using Havengard.HealthSystem;
+using Havengard.Core.Character;
+using Havengard.Core.HealthSystem;
 using System.Collections;
 
 namespace Havengard.Abilities
@@ -88,7 +88,7 @@ namespace Havengard.Abilities
                 StartCoroutine(DurationCountdown());
             }
 
-            Debug.Log($"[BuffInstance] Initialized {sourceAbility.AbilityName} on {caster.name}");
+            Debug.Log($"[BuffInstance] Initialized {sourceAbility.abilityName} on {caster.name}");
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ namespace Havengard.Abilities
                 AudioSource.PlayClipAtPoint(deactivationSFX, caster.transform.position);
             }
 
-            Debug.Log($"[BuffInstance] Cleaned up {sourceAbility.AbilityName} from {caster.name}");
+            Debug.Log($"[BuffInstance] Cleaned up {sourceAbility.abilityName} from {caster.name}");
         }
 
         private void OnDestroy()

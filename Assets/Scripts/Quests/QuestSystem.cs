@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Havengard.Resources;
-
+using Havengard.Core.Heroes;
 namespace Havengard.Quests
 {
     [System.Serializable]
@@ -16,9 +16,9 @@ namespace Havengard.Quests
 
     public class QuestSystem : MonoBehaviour
     {
-        private List<(Havengard.Heroes.HeroInstance hero, Quest quest)> activeQuests = new();
+        private List<(HeroInstance hero, Quest quest)> activeQuests = new();
 
-        public void SendOnQuest(Havengard.Heroes.HeroInstance hero, Quest quest)
+        public void SendOnQuest(HeroInstance hero, Quest quest)
         {
             hero.StartQuest(quest.durationDays);
             activeQuests.Add((hero, quest));
@@ -38,7 +38,7 @@ namespace Havengard.Quests
             }
         }
 
-        private void DistributeRewards(Havengard.Heroes.HeroInstance hero, Quest quest)
+        private void DistributeRewards(HeroInstance hero, Quest quest)
         {
             GoldSystem.Instance.AddGold(quest.baseGoldReward);
             CelestiumSystem.Instance.AddCelestium(quest.baseCelestiumReward);

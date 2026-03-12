@@ -1,7 +1,7 @@
 using UnityEngine;
 using Havengard.Abilities;
 using Havengard.Combat;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 
 namespace Havengard.Units
 {

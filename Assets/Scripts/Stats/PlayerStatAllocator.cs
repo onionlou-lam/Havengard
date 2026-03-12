@@ -2,8 +2,10 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Havengard.Combat;
+using Havengard.Core.Character;
+using Havengard.Core.HealthSystem;
 
-namespace Havengard.Heroes
+namespace Havengard.Core.Heroes
 {
     /// <summary>
     /// Manages stat point allocation for the player
@@ -40,8 +42,8 @@ namespace Havengard.Heroes
         };
 
         [Header("References")]
-        [SerializeField] private Havengard.HealthSystem.Health health;
-        [SerializeField] private Havengard.Character.StatsComponent stats;
+        [SerializeField] private Health health;
+        [SerializeField] private StatsComponent stats;
 
         // Events
         public event Action<int> OnStatPointsChanged;
@@ -54,11 +56,11 @@ namespace Havengard.Heroes
 
         private void Awake()
         {
-            if (health == null) health = GetComponent<Havengard.HealthSystem.Health>();
-            if (stats == null) stats = GetComponent<Havengard.Character.StatsComponent>();
+            if (health == null) health = GetComponent<Health>();
+            if (stats == null) stats = GetComponent<StatsComponent>();
 
             // Subscribe to level up
-            var expSystem = GetComponent<Havengard.Progression.EXPSystem>();
+            var expSystem = GetComponent<Havengard.Core.Progression.EXPSystem>();
             if (expSystem != null)
             {
                 expSystem.OnLevelUp += OnPlayerLevelUp;
@@ -105,12 +107,15 @@ namespace Havengard.Heroes
 
             unspentStatPoints -= cost;
             
-            if (health != null && stats != null && stats.CurrentStats != null)
+            if (health != null)
             {
-                int bonusHealth = 10 * points; // +10 HP per point
-                stats.CurrentStats.MaxHP += bonusHealth;
-                health.SetMaxHealthFromStats(refill: false);
-                Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Health (+{bonusHealth} max HP)");
+                var healthSystem = health.GetHealthSystem();
+                if (healthSystem != null)
+                {
+                    int bonusHealth = 10 * points;
+                    healthSystem.SetMaxHealth(healthSystem.MaxHealth + bonusHealth, refill: false);
+                    Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Health (+{bonusHealth} max HP)");
+                }
             }
 
             OnStatPointsChanged?.Invoke(unspentStatPoints);
@@ -161,7 +166,7 @@ namespace Havengard.Heroes
             unspentStatPoints -= cost;
             
             // Find resource system (mana/energy/etc)
-            var resourceSystem = GetComponent<Havengard.Character.ResourceSystem>();
+            var resourceSystem = GetComponent<ResourceSystem>();
             if (resourceSystem != null)
             {
                 int bonusResource = 10 * points; // +10 resource per point

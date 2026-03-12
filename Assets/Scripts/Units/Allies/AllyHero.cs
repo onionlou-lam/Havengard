@@ -1,8 +1,8 @@
 using UnityEngine;
-using Havengard.HealthSystem;
+using Havengard.Core.HealthSystem;
 using Havengard.Abilities;
 using Havengard.Combat;
-using Havengard.Progression;
+using Havengard.Core.Progression;
 using Havengard.Items;
 
 namespace Havengard.Units

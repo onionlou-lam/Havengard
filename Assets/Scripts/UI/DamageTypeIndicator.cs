@@ -1,6 +1,6 @@
 using UnityEngine;
 using TMPro;
-using Havengard.Stats;
+using Havengard.Combat;
 
 namespace Havengard.UI
 {
