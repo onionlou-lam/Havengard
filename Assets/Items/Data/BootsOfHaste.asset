@@ -26,6 +26,7 @@ MonoBehaviour:
   effects:
   - {fileID: 11400000, guid: 010fa06af89de38419d60374b9e587d1, type: 2}
   - {fileID: 11400000, guid: 19c96ed30ef3dbb4cbe6da13341286f6, type: 2}
+  pickupSprite: {fileID: 21300000, guid: 3e96891eff645c947bc23aee991f8990, type: 3}
   rarityColor: {r: 1, g: 1, b: 1, a: 1}
   pickupVFX: {fileID: 106788, guid: 2f99ecca0dcb5d64a86c68c065ee62db, type: 3}
   pickupSFX: {fileID: 8300000, guid: 9f2a8aaee6b49234299d7a37c49a1dfb, type: 3}

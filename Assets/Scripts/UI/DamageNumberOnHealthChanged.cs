@@ -49,7 +49,7 @@ namespace Havengard.UI
             var hs = health.GetHealthSystem();
             if (hs == null) return;
 
-            lastHealth = hs.Current;
+            lastHealth = hs.CurrentHealth;
             suppressNextChange = true;
             initialized = true;
 
@@ -75,7 +75,7 @@ namespace Havengard.UI
             var hs = health.GetHealthSystem();
             if (hs == null) return;
 
-            int current = hs.Current;
+            int current = hs.CurrentHealth;
             int delta = current - lastHealth;
 
             if (suppressNextChange)

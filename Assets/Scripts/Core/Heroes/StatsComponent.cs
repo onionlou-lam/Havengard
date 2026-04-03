@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Havengard.Core.Character
 {
     [System.Serializable]
-    public class Stats
+    public class HeroStats
     {
         public int MaxHP = 100;
 
@@ -19,9 +19,9 @@ namespace Havengard.Core.Character
         // ? Resource (mana) support
         public int MaxResource = 50;
 
-        public Stats Clone()
+        public HeroStats Clone()
         {
-            return new Stats
+            return new HeroStats
             {
                 MaxHP = MaxHP,
                 Attack = Attack,
@@ -39,29 +39,29 @@ namespace Havengard.Core.Character
     public class StatsComponent : MonoBehaviour
     {
         [Header("Base stats (authoring)")]
-        [SerializeField] private Stats baseStats = new Stats();
+        [SerializeField] private HeroStats baseStats = new HeroStats();
 
-        public Stats BaseStats => baseStats;
+        public HeroStats BaseStats => baseStats;
 
         // Runtime stats (mutated by buffs/debuffs)
-        public Stats CurrentStats { get; private set; }
+        public HeroStats CurrentStats { get; private set; }
 
         private void Awake()
         {
             // Always start runtime stats from base
-            CurrentStats = baseStats != null ? baseStats.Clone() : new Stats();
+            CurrentStats = baseStats != null ? baseStats.Clone() : new HeroStats();
         }
 
         /// <summary>Hard overwrite runtime stats.</summary>
-        public void SetCurrentStats(Stats newStats)
+        public void SetCurrentStats(HeroStats newStats)
         {
-            CurrentStats = newStats != null ? newStats.Clone() : new Stats();
+            CurrentStats = newStats != null ? newStats.Clone() : new HeroStats();
         }
 
         /// <summary>Alias for older code paths.</summary>
-        public void SetStats(Stats newStats) => SetCurrentStats(newStats);
+        public void SetStats(HeroStats newStats) => SetCurrentStats(newStats);
 
-        public Stats GetCurrentStatsClone() => CurrentStats != null ? CurrentStats.Clone() : new Stats();
-        public Stats GetBaseStatsClone() => baseStats != null ? baseStats.Clone() : new Stats();
+        public HeroStats GetCurrentStatsClone() => CurrentStats != null ? CurrentStats.Clone() : new HeroStats();
+        public HeroStats GetBaseStatsClone() => baseStats != null ? baseStats.Clone() : new HeroStats();
     }
 }

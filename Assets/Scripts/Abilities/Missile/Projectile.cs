@@ -1,205 +1,124 @@
-﻿using Havengard.Combat;
-using Havengard.Core.HealthSystem;
-using Havengard.Units;
-using Havengard.Abilities;
+﻿using UnityEngine;
 using System;
-using UnityEngine;
 
 namespace Havengard.Abilities
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    [RequireComponent(typeof(Collider2D))]
     public class Projectile : MonoBehaviour
     {
-        [Header("Projectile Settings")]
-        [SerializeField] private float lifetime = 5f;
+        private Vector3 direction;
+        private float speed;
+        private float lifetime;
+        private GameObject caster;
+        private Action<GameObject> onHit;
 
-        [Header("Launch Effects")]
-        [Tooltip("Audio clip played when projectile is spawned/cast")]
-        [SerializeField] private AudioClip launchSFX;
-        [Tooltip("VFX spawned at launch position when projectile is created")]
-        [SerializeField] private GameObject launchVFX;
-
-        [Header("Impact VFX")]
-        [SerializeField] private GameObject hitVFX;
-        [SerializeField] private GameObject wallHitVFX;
-        [SerializeField] private float impactDestroyDelay = 0.05f;
-
-        [Header("Impact SFX")]
-        [SerializeField] private AudioClip hitSFX;
-        [SerializeField] private AudioClip wallHitSFX;
-
-        [Header("Impact Animation")]
-        [Tooltip("Animator on this projectile (or child) that will trigger impact animation")]
-        [SerializeField] private Animator impactAnimator;
-        [Tooltip("Name of the trigger parameter in Animator to play on impact")]
-        [SerializeField] private string impactAnimTrigger = "Impact";
-        [Tooltip("If true, projectile sprite will remain visible during impact animation")]
-        [SerializeField] private bool keepSpriteOnImpact = false;
-
-        [Header("Trail VFX (Optional)")]
-        [SerializeField] private TrailRenderer trail;
-        [SerializeField] private ParticleSystem trailParticles;
-
-        [Header("Homing Settings")]
-        [SerializeField] private bool enableHoming = false;
-        [SerializeField] private float homingStrength = 5f;
-        [SerializeField] private float homingDelay = 0f;
-
-        public event Action<Vector3, Collider2D> OnImpact;
+        private Transform homingTarget;
+        private float homingStrength;
+        private bool isHoming;
 
         private Rigidbody2D rb;
-        private int damage;
-        private Faction sourceFaction;
-        private bool allowFriendlyFire;
+        private TrailRenderer trailRenderer;
+        private SpriteRenderer spriteRenderer;
+        private float spawnTime;
         private bool hasHit;
-        private Collider2D col;
-        private SpriteRenderer sr;
-        private float speed;
-        private Vector2 direction;
-        private GameObject casterGameObject;
-        
-        // Homing variables
-        private GameObject homingTarget;
-        private float launchTime;
-
-        // Animation hash
-        private int impactAnimHash;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
-            col = GetComponent<Collider2D>();
-            sr = GetComponentInChildren<SpriteRenderer>();
-            rb.gravityScale = 0f;
+            trailRenderer = GetComponent<TrailRenderer>();
+            spriteRenderer = GetComponent<SpriteRenderer>();
 
-            // Cache animator trigger hash if animator is assigned
-            if (impactAnimator != null && !string.IsNullOrEmpty(impactAnimTrigger))
+            if (rb != null)
             {
-                impactAnimHash = Animator.StringToHash(impactAnimTrigger);
+                rb.gravityScale = 0f;
             }
         }
 
-        public void Initialize(Vector2 direction, Faction faction, bool friendlyFire, int damage, float speed, GameObject caster = null)
+        public void Initialize(
+            Vector3 direction,
+            float speed,
+            float lifetime,
+            GameObject caster,
+            Action<GameObject> onHit)
         {
-            this.damage = damage;
-            this.sourceFaction = faction;
-            this.allowFriendlyFire = friendlyFire;
-            this.speed = speed;
             this.direction = direction.normalized;
-            this.launchTime = Time.time;
-            this.casterGameObject = caster;
+            this.speed = speed;
+            this.lifetime = lifetime;
+            this.caster = caster;
+            this.onHit = onHit;
 
-            rb.linearVelocity = this.direction * speed;
+            spawnTime = Time.time;
+            hasHit = false;
 
-            // Rotate to face direction
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, angle);
-
-            // Play launch effects
-            PlayLaunchEffects();
-
-            Destroy(gameObject, lifetime);
-        }
-
-        /// <summary>
-        /// Plays audio and visual effects when the projectile is launched
-        /// </summary>
-        private void PlayLaunchEffects()
-        {
-            // Play launch SFX
-            if (launchSFX != null)
+            if (rb != null)
             {
-                AudioSource.PlayClipAtPoint(launchSFX, transform.position);
-            }
-
-            // Spawn launch VFX
-            if (launchVFX != null)
-            {
-                GameObject vfx = Instantiate(launchVFX, transform.position, transform.rotation);
-                
-                // Auto-destroy launch VFX
-                var ps = vfx.GetComponent<ParticleSystem>();
-                if (ps != null)
-                {
-                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
-                }
-                else
-                {
-                    Destroy(vfx, 2f);
-                }
+                rb.linearVelocity = this.direction * this.speed;
             }
         }
 
-        /// <summary>
-        /// Enable homing behavior with optional target override
-        /// </summary>
-        public void EnableHoming(float strength = 5f, float delay = 0f, GameObject specificTarget = null)
+        public void ConfigureVisuals(Color color, float trailTime = 0.5f)
         {
-            enableHoming = true;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = color;
+            }
+
+            if (trailRenderer != null)
+            {
+                trailRenderer.time = trailTime;
+                trailRenderer.startColor = color;
+                trailRenderer.endColor = new Color(color.r, color.g, color.b, 0f);
+            }
+
+            var particles = GetComponentsInChildren<ParticleSystem>();
+            foreach (var ps in particles)
+            {
+                var main = ps.main;
+                main.startColor = color;
+            }
+        }
+
+        public void SetHomingTarget(Transform target, float strength)
+        {
+            homingTarget = target;
             homingStrength = strength;
-            homingDelay = delay;
-            homingTarget = specificTarget;
+            isHoming = true;
         }
 
-        private void FixedUpdate()
+        // Overload for compatibility with enemy code (strength, delay, target)
+        public void EnableHoming(float strength, float delay, GameObject target)
         {
-            if (hasHit || !enableHoming) return;
-
-            // Check if homing delay has passed
-            if (Time.time < launchTime + homingDelay) return;
-
-            // Find or update target
-            if (homingTarget == null || !homingTarget.activeInHierarchy)
+            if (target != null)
             {
-                homingTarget = FindNearestTarget();
-            }
-
-            if (homingTarget != null)
-            {
-                ApplyHoming();
+                // Note: delay parameter ignored for simplicity, could be implemented with coroutine if needed
+                SetHomingTarget(target.transform, strength);
             }
         }
 
-        private GameObject FindNearestTarget()
+        public void EnableHoming(Transform target, float strength)
         {
-            GameObject closest = null;
-            float closestDist = Mathf.Infinity;
-
-            foreach (var unit in UnitTargetManager.ActiveUnits)
-            {
-                if (FactionUtility.CanDamage(sourceFaction, unit, allowFriendlyFire))
-                {
-                    var mb = unit as MonoBehaviour;
-                    if (mb == null || !mb.gameObject.activeInHierarchy) continue;
-
-                    float dist = Vector2.Distance(transform.position, mb.transform.position);
-                    if (dist < closestDist)
-                    {
-                        closestDist = dist;
-                        closest = mb.gameObject;
-                    }
-                }
-            }
-
-            return closest;
+            SetHomingTarget(target, strength);
         }
 
-        private void ApplyHoming()
+        public Action<GameObject> OnImpact
         {
-            Vector2 targetPos = homingTarget.transform.position;
-            Vector2 currentPos = transform.position;
-            Vector2 desiredDirection = (targetPos - currentPos).normalized;
+            get => onHit;
+            set => onHit = value;
+        }
 
-            // Smoothly steer towards target
-            Vector2 currentVelocity = rb.linearVelocity;
-            Vector2 steeringForce = (desiredDirection * speed - currentVelocity) * homingStrength;
-            
-            rb.linearVelocity = Vector2.ClampMagnitude(currentVelocity + steeringForce * Time.fixedDeltaTime, speed);
-
-            // Rotate sprite to face velocity direction
-            if (rb.linearVelocity.sqrMagnitude > 0.01f)
+        private void Update()
+        {
+            if (Time.time >= spawnTime + lifetime)
             {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (isHoming && homingTarget != null && rb != null)
+            {
+                Vector2 targetDirection = (homingTarget.position - transform.position).normalized;
+                rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, targetDirection * speed, Time.deltaTime * homingStrength);
+
                 float angle = Mathf.Atan2(rb.linearVelocity.y, rb.linearVelocity.x) * Mathf.Rad2Deg;
                 transform.rotation = Quaternion.Euler(0, 0, angle);
             }
@@ -208,121 +127,13 @@ namespace Havengard.Abilities
         private void OnTriggerEnter2D(Collider2D collision)
         {
             if (hasHit) return;
+            if (collision.gameObject == caster) return;
 
-            var health = collision.GetComponent<IHealth>();
-
-            // Hit a valid target
-            if (health != null && FactionUtility.CanDamage(sourceFaction, health, allowFriendlyFire))
-            {
-                health.GetHealthSystem().Damage(damage);
-                
-                // Apply lifesteal
-                if (casterGameObject != null)
-                {
-                    LifestealHandler.ApplyLifesteal(casterGameObject, damage);
-                }
-                
-                HandleImpact(true, collision, collision.transform.position);
-                return;
-            }
-
-            // Hit a wall or obstacle
-            if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacles") ||
-                collision.gameObject.CompareTag("Wall"))
-            {
-                HandleImpact(false, collision, transform.position);
-            }
-        }
-
-        private void HandleImpact(bool hitTarget, Collider2D collider, Vector3 fxPos)
-        {
-            if (hasHit) return;
             hasHit = true;
+            onHit?.Invoke(collision.gameObject);
 
-            // Stop physics immediately
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector2.zero;
-                rb.simulated = false;
-            }
-
-            // Disable collider so we don't re-trigger
-            if (col != null) col.enabled = false;
-
-            // Trigger impact animation if available
-            if (impactAnimator != null && impactAnimHash != 0)
-            {
-                impactAnimator.SetTrigger(impactAnimHash);
-            }
-
-            // Hide sprite immediately unless we want to keep it for animation
-            if (sr != null && !keepSpriteOnImpact)
-            {
-                sr.enabled = false;
-            }
-
-            // Detach trail so it can fade naturally
-            if (trail != null)
-            {
-                trail.transform.SetParent(null, true);
-                trail.autodestruct = true;
-                trail.emitting = false;
-            }
-
-            if (trailParticles != null)
-            {
-                trailParticles.transform.SetParent(null, true);
-                trailParticles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-                Destroy(trailParticles.gameObject, 2f);
-            }
-
-            // Play VFX/SFX
-            PlayImpactEffects(hitTarget, fxPos);
-
-            // Notify listeners (for splash damage, etc.)
-            OnImpact?.Invoke(transform.position, collider);
-
-            // Destroy after a delay (longer if we have an animation)
-            float destroyDelay = impactDestroyDelay;
-            if (impactAnimator != null && keepSpriteOnImpact)
-            {
-                // Give animation time to play
-                var currentClip = impactAnimator.GetCurrentAnimatorClipInfo(0);
-                if (currentClip.Length > 0)
-                {
-                    destroyDelay = Mathf.Max(destroyDelay, currentClip[0].clip.length);
-                }
-            }
-
-            Destroy(gameObject, destroyDelay);
-        }
-
-        private void PlayImpactEffects(bool hitTarget, Vector3 position)
-        {
-            // Spawn VFX
-            GameObject vfx = hitTarget ? hitVFX : wallHitVFX;
-            if (vfx != null)
-            {
-                GameObject fxInstance = Instantiate(vfx, position, Quaternion.identity);
-                
-                // Auto-destroy impact VFX
-                var ps = fxInstance.GetComponent<ParticleSystem>();
-                if (ps != null)
-                {
-                    Destroy(fxInstance, ps.main.duration + ps.main.startLifetime.constantMax);
-                }
-                else
-                {
-                    Destroy(fxInstance, 2f);
-                }
-            }
-
-            // Play SFX
-            AudioClip sfx = hitTarget ? hitSFX : wallHitSFX;
-            if (sfx != null)
-            {
-                AudioSource.PlayClipAtPoint(sfx, position);
-            }
+            // Note: Projectile does not destroy itself here
+            // The callback (onHit) is responsible for calling Destroy(projectile)
         }
     }
 }

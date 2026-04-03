@@ -1,11 +1,10 @@
-using UnityEngine;
-using System;
-using System.Collections.Generic;
 using Havengard.Combat;
 using Havengard.Core.Character;
-using Havengard.Core.HealthSystem;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 
-namespace Havengard.Core.Heroes
+namespace Havengard.Stats
 {
     /// <summary>
     /// Manages stat point allocation for the player
@@ -15,7 +14,7 @@ namespace Havengard.Core.Heroes
         [Header("Stat Points")]
         [SerializeField] private int unspentStatPoints = 0;
         [SerializeField] private int statPointsPerLevel = 3;
-        
+
         [Header("Power Points")]
         [SerializeField] private int unspentPowerPoints = 0;
         [SerializeField] private int powerPointsPerLevel = 1;
@@ -32,7 +31,8 @@ namespace Havengard.Core.Heroes
         [SerializeField] private int damageTypeCost = 1;
 
         [Header("Damage Type Bonuses")]
-        [SerializeField] private Dictionary<DamageType, float> damageTypeBonuses = new Dictionary<DamageType, float>()
+        [SerializeField]
+        private Dictionary<DamageType, float> damageTypeBonuses = new Dictionary<DamageType, float>()
         {
             { DamageType.Physical, 0f },
             { DamageType.Fire, 0f },
@@ -42,7 +42,7 @@ namespace Havengard.Core.Heroes
         };
 
         [Header("References")]
-        [SerializeField] private Health health;
+        [SerializeField] private Havengard.Core.HealthSystem.Health health;
         [SerializeField] private StatsComponent stats;
 
         // Events
@@ -56,7 +56,7 @@ namespace Havengard.Core.Heroes
 
         private void Awake()
         {
-            if (health == null) health = GetComponent<Health>();
+            if (health == null) health = GetComponent<Havengard.Core.HealthSystem.Health>();
             if (stats == null) stats = GetComponent<StatsComponent>();
 
             // Subscribe to level up
@@ -106,14 +106,14 @@ namespace Havengard.Core.Heroes
             if (!CanAllocateStat(cost)) return false;
 
             unspentStatPoints -= cost;
-            
+
             if (health != null)
             {
                 var healthSystem = health.GetHealthSystem();
                 if (healthSystem != null)
                 {
-                    int bonusHealth = 10 * points;
-                    healthSystem.SetMaxHealth(healthSystem.MaxHealth + bonusHealth, refill: false);
+                    int bonusHealth = 10 * points; // +10 HP per point
+                    healthSystem.IncreaseMaxHealth(bonusHealth);
                     Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Health (+{bonusHealth} max HP)");
                 }
             }
@@ -128,11 +128,11 @@ namespace Havengard.Core.Heroes
             if (!CanAllocateStat(cost)) return false;
 
             unspentStatPoints -= cost;
-            
+
             if (stats != null && stats.CurrentStats != null)
             {
-                float bonusDefense = 2f * points; // +2 defense per point
-                stats.CurrentStats.Defense += Mathf.RoundToInt(bonusDefense);
+                int bonusDefense = 2 * points; // +2 defense per point
+                stats.CurrentStats.Defense += bonusDefense;
                 Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Defense (+{bonusDefense})");
             }
 
@@ -146,11 +146,11 @@ namespace Havengard.Core.Heroes
             if (!CanAllocateStat(cost)) return false;
 
             unspentStatPoints -= cost;
-            
+
             if (stats != null && stats.CurrentStats != null)
             {
-                float bonusAttack = 3f * points; // +3 attack per point
-                stats.CurrentStats.Attack += Mathf.RoundToInt(bonusAttack);
+                int bonusAttack = 3 * points; // +3 attack per point
+                stats.CurrentStats.Attack += bonusAttack;
                 Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Attack (+{bonusAttack})");
             }
 
@@ -164,9 +164,9 @@ namespace Havengard.Core.Heroes
             if (!CanAllocateStat(cost)) return false;
 
             unspentStatPoints -= cost;
-            
+
             // Find resource system (mana/energy/etc)
-            var resourceSystem = GetComponent<ResourceSystem>();
+            var resourceSystem = GetComponent<Havengard.Abilities.ResourceSystem>();
             if (resourceSystem != null)
             {
                 int bonusResource = 10 * points; // +10 resource per point
@@ -184,12 +184,12 @@ namespace Havengard.Core.Heroes
             if (!CanAllocateStat(cost)) return false;
 
             unspentStatPoints -= cost;
-            
+
             if (stats != null && stats.CurrentStats != null)
             {
-                float bonusSpeed = 0.05f * points; // +5% speed per point
+                float bonusSpeed = 0.25f * points; // +0.25 speed per point
                 stats.CurrentStats.MoveSpeed += bonusSpeed;
-                Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Movement Speed (+{bonusSpeed * 100}%)");
+                Debug.Log($"[PlayerStatAllocator] Allocated {points} points to Movement Speed (+{bonusSpeed})");
             }
 
             OnStatPointsChanged?.Invoke(unspentStatPoints);
@@ -217,7 +217,7 @@ namespace Havengard.Core.Heroes
             if (!CanAllocatePower(cost)) return false;
 
             unspentPowerPoints -= cost;
-            
+
             // TODO: Implement ability level upgrade through AbilityUser
             var abilityUser = GetComponent<Havengard.Abilities.AbilityUser>();
             if (abilityUser != null)
@@ -236,18 +236,18 @@ namespace Havengard.Core.Heroes
             if (!CanAllocatePower(cost)) return false;
 
             unspentPowerPoints -= cost;
-            
+
             float bonusPerPoint = 0.1f; // +10% damage per point
             if (!damageTypeBonuses.ContainsKey(damageType))
             {
                 damageTypeBonuses[damageType] = 0f;
             }
-            
+
             damageTypeBonuses[damageType] += bonusPerPoint * points;
-            
+
             OnDamageTypeBonusChanged?.Invoke(damageType, damageTypeBonuses[damageType]);
             OnPowerPointsChanged?.Invoke(unspentPowerPoints);
-            
+
             Debug.Log($"[PlayerStatAllocator] Increased {damageType} damage bonus to {damageTypeBonuses[damageType] * 100}%");
             return true;
         }

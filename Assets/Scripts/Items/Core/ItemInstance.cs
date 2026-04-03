@@ -3,14 +3,11 @@ using UnityEngine;
 
 namespace Havengard.Items
 {
-    /// <summary>
-    /// Runtime instance of an item with level and unique ID
-    /// </summary>
     [Serializable]
     public class ItemInstance
     {
         public ItemData itemData;
-        public int level;
+        public int level;  // ADD THIS BACK
         public string uniqueID;
         public float acquiredTime;
 
@@ -22,22 +19,16 @@ namespace Havengard.Items
             acquiredTime = Time.time;
         }
 
-        /// <summary>
-        /// Can this item stack with another?
-        /// </summary>
         public bool CanStackWith(ItemInstance other)
         {
             if (other == null || itemData == null || other.itemData == null)
                 return false;
 
-            return itemData == other.itemData && 
-                   itemData.autoStackOnPickup && 
+            return itemData == other.itemData &&
+                   itemData.autoStackOnPickup &&
                    level < itemData.maxLevel;
         }
 
-        /// <summary>
-        /// Stack this item with another (increase level)
-        /// </summary>
         public bool TryStack()
         {
             if (itemData == null) return false;
@@ -50,9 +41,6 @@ namespace Havengard.Items
             return false;
         }
 
-        /// <summary>
-        /// Get disenchant value for this item
-        /// </summary>
         public int GetDisenchantValue()
         {
             if (itemData == null) return 0;

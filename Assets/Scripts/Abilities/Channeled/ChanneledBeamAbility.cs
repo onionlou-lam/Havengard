@@ -1,391 +1,63 @@
 using UnityEngine;
-using Havengard.Core.HealthSystem;
-using Havengard.Units;
-using Havengard.Core.Character;
 using Havengard.Combat;
 
 namespace Havengard.Abilities
 {
-    /// <summary>
-    /// Flexible channeled beam ability that can be configured for different beam types
-    /// (Frost Beam, Arcane Beam, Fire Beam, etc.) through inspector settings
-    /// </summary>
-    [CreateAssetMenu(menuName = "Havengard/Abilities/Channeled Beam")]
+    [CreateAssetMenu(menuName = "Havengard/Abilities/Channeled/Beam Ability")]
     public class ChanneledBeamAbility : ChanneledAbilityBase
     {
-        [Header("Beam Damage")]
-        [SerializeField] private int baseDamagePerSecond = 40;
-        [Tooltip("Damage multiplier at full charge (1 = no scaling, 2 = double damage at full charge)")]
-        [SerializeField] private float damageScaling = 2f;
-        [Tooltip("How often damage ticks are applied (lower = more frequent damage)")]
-        [SerializeField] private float damageTickRate = 0.1f;
-        [SerializeField] private bool friendlyFire = false;
+        [Header("Beam Configuration")]
+        [SerializeField] private float beamWidth = 1f;
+        [SerializeField] private float beamMaxDistance = 15f;
+        [SerializeField] private LayerMask hitLayers;
 
-        [Header("Beam Properties")]
-        [SerializeField] private float beamMaxRange = 25f;
-        [SerializeField] private LayerMask hitLayers = -1;
+        [Header("Damage Type Specific Effects")]
+        [SerializeField] private float frostSlowPercent = 0.3f;
+        [SerializeField] private float fireBurnDamagePerTick = 5f;
+        [SerializeField] private int lightningChainCount = 2;
+        [SerializeField] private float holyHealingBonus = 1.2f;
 
-        // PUBLIC PROPERTY for external access
-        public float BeamMaxRange => beamMaxRange;
+        // Public property for ChannelController
+        public float BeamMaxRange => beamMaxDistance;
 
-        [Header("Full Charge Release Effect")]
-        [Tooltip("Enable special effect when released at full charge")]
-        [SerializeField] private bool enableFullChargeEffect = false;
-        [SerializeField] private FullChargeEffectType fullChargeEffectType = FullChargeEffectType.AreaEffect;
-        [Tooltip("Radius for area effects at release")]
-        [SerializeField] private float fullChargeRadius = 3f;
-        [Tooltip("VFX spawned at release point when fully charged")]
-        [SerializeField] private GameObject fullChargeVFXPrefab;
-
-        [Header("Continuous Effects")]
-        [Tooltip("Apply status effects continuously while beam is active")]
-        [SerializeField] private bool applyContinuousStatusEffects = true;
-
-        [Header("Audio")]
-        [SerializeField] private AudioClip beamLoopSFX;
-        [SerializeField] private AudioClip fullChargeReleaseSFX;
-        [Tooltip("Volume for beam loop sound (0-1)")]
-        [Range(0f, 1f)]
-        [SerializeField] private float beamLoopVolume = 0.5f;
-
-        [Header("2D Support")]
-        [Tooltip("Enable for 2D games - uses screen to world point instead of raycasting")]
-        public bool use2DMode = true;
-        [Tooltip("Maximum beam distance in world units")]
-        public float maxBeamDistance = 100f;
-        [Tooltip("Layers that block the beam visually (leave as Nothing for infinite beam)")]
-        public LayerMask beamBlockingLayers = 0; // ADD THIS - default to "Nothing"
-
-        private float lastDamageTick;
-        private AudioSource beamAudioSource;
-
+        // ChannelController calls this with (GameObject, float)
         public override void OnChannelTick(GameObject caster, float chargePercent)
         {
-            base.OnChannelTick(caster, chargePercent);
-
-            // Play looping beam sound if configured
-            if (beamLoopSFX != null && beamAudioSource == null)
-            {
-                beamAudioSource = caster.GetComponent<AudioSource>();
-                if (beamAudioSource == null)
-                    beamAudioSource = caster.AddComponent<AudioSource>();
-                
-                beamAudioSource.clip = beamLoopSFX;
-                beamAudioSource.loop = true;
-                beamAudioSource.volume = beamLoopVolume;
-                beamAudioSource.Play();
-            }
-
-            // Apply continuous damage while channeling
-            if (Time.time - lastDamageTick >= damageTickRate)
-            {
-                //Debug.Log($"Applying beam damage at {Time.time}, last tick was at {lastDamageTick}"); // ADD THIS
-                ApplyBeamDamage(caster, chargePercent);
-                lastDamageTick = Time.time;
-            }
-            else
-            {
-                //Debug.Log($"Skipping damage tick - Time.time: {Time.time}, lastDamageTick: {lastDamageTick}, difference: {Time.time - lastDamageTick}, required: {damageTickRate}"); // ADD THIS
-            }
+            // This is for ChannelController
+            // Damage calculations happen here
         }
 
-        public override void OnRelease(GameObject caster, GameObject target, float chargePercent)
+        // AbilityUser calls this with (AbilityUser, Vector3, GameObject)
+        protected override void OnChannelTick(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
-            // Stop beam sound
-            StopBeamAudio();
+            if (user == null) return;
 
-            // IMPORTANT: Reset lastDamageTick for next cast
-            lastDamageTick = 0f;
-
-            // Apply full charge effect if enabled and fully charged
-            if (enableFullChargeEffect && chargePercent >= 0.99f)
-            {
-                ApplyFullChargeEffect(caster);
-                
-                // Play release sound
-                if (fullChargeReleaseSFX != null)
-                {
-                    AudioSource.PlayClipAtPoint(fullChargeReleaseSFX, caster.transform.position);
-                }
-            }
-            //Debug.Log($"Beam released at {chargePercent * 100}% charge");
-        }
-
-        public override void OnChannelCancel(GameObject caster)
-        {
-            base.OnChannelCancel(caster);
-            lastDamageTick = 0f; // Reset for next cast
-            StopBeamAudio();
-            Debug.Log("Beam channeling cancelled");
-        }
-
-        private void ApplyBeamDamage(GameObject caster, float chargePercent)
-        {
-            // Get mouse world position
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = 0;
-
-            Vector2 beamDirection = (mouseWorld - caster.transform.position).normalized;
-            Vector2 startPos = caster.transform.position;
-
-            // VISUAL DEBUG - Draw the raycast in Scene view
-            Debug.DrawRay(startPos, beamDirection * beamMaxRange, Color.red, 0.1f);
-
-            // Raycast along beam path
+            Vector3 direction = (targetPosition - user.transform.position).normalized;
             RaycastHit2D[] hits = Physics2D.RaycastAll(
-                startPos,
-                beamDirection,
-                beamMaxRange,
+                user.transform.position,
+                direction,
+                beamMaxDistance,
                 hitLayers
             );
 
-            //Debug.Log($"Beam damage raycast: start={startPos}, dir={beamDirection}, range={beamMaxRange}, hits={hits.Length}, hitLayers={hitLayers.value}");
-
-            var casterHealth = caster.GetComponent<IHealth>();
-            Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
             foreach (var hit in hits)
             {
-                if (hit.collider == null)
+                if (hit.collider == null || hit.collider.gameObject == user.gameObject)
                     continue;
 
-                GameObject hitObject = hit.collider.gameObject;
-
-                // Skip the caster
-                if (hitObject == caster)
-                {
-                    Debug.Log($"Skipping caster: {hitObject.name}");
-                    continue;
-                }
-
-                // Skip if this is a child of the caster (includes the beam VFX)
-                Transform checkParent = hitObject.transform;
-                bool isChildOfCaster = false;
-                while (checkParent != null)
-                {
-                    if (checkParent.gameObject == caster)
-                    {
-                        isChildOfCaster = true;
-                        break;
-                    }
-                    checkParent = checkParent.parent;
-                }
-
-                if (isChildOfCaster)
-                {
-                    Debug.Log($"Skipping caster child (beam VFX): {hitObject.name}");
-                    continue;
-                }
-
-                //Debug.Log($"Beam hit: {hitObject.name} on layer {LayerMask.LayerToName(hitObject.layer)}");
-
-                var health = hitObject.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
-                {
-                    // Calculate damage based on charge
-                    float damageMultiplier = Mathf.Lerp(1f, damageScaling, chargePercent);
-                    int tickDamage = CalculateTickDamage(caster, damageMultiplier);
-
-                    var healthSystem = health.GetHealthSystem();
-                    bool targetWasAlive = healthSystem.IsAlive;
-
-                    healthSystem.Damage(tickDamage);
-                    
-                    //Debug.Log($"Beam damaged {hitObject.name} for {tickDamage} damage");
-                }
-                else
-                {
-                    //Debug.Log($"Cannot damage {hitObject.name} - health: {health != null}, Can damage: {(health != null ? FactionUtility.CanDamage(casterFaction, health, friendlyFire).ToString() : "N/A")}");
-                }
+                GameObject target = hit.collider.gameObject;
+                ApplyDamage(target, user.gameObject);
             }
         }
 
-        private int CalculateTickDamage(GameObject caster, float damageMultiplier)
+        private void ApplyDamage(GameObject target, GameObject caster)
         {
-            int tickDamage = Mathf.RoundToInt((baseDamagePerSecond * damageTickRate) * damageMultiplier);
-
-            // Use caster's attack stat if available
-            var stats = caster.GetComponent<StatsComponent>();
-            if (stats != null && stats.CurrentStats != null)
+            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            if (health != null)
             {
-                float statDamage = stats.CurrentStats.Attack * damageTickRate;
-                tickDamage = Mathf.RoundToInt(statDamage * damageMultiplier);
-            }
-
-            return Mathf.Max(1, tickDamage);
-        }
-
-        private void ApplyFullChargeEffect(GameObject caster)
-        {
-            Vector3 effectPosition = GetEffectPosition(caster);
-
-            // Spawn VFX if configured
-            if (fullChargeVFXPrefab != null)
-            {
-                GameObject vfx = Instantiate(fullChargeVFXPrefab, effectPosition, Quaternion.identity);
-                
-                // Auto-destroy after particle lifetime
-                var ps = vfx.GetComponent<ParticleSystem>();
-                if (ps != null)
-                {
-                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
-                }
-                else
-                {
-                    Destroy(vfx, 3f);
-                }
-            }
-
-            // Apply effect based on type
-            switch (fullChargeEffectType)
-            {
-                case FullChargeEffectType.AreaEffect:
-                    ApplyAreaEffect(caster, effectPosition);
-                    break;
-                    
-                case FullChargeEffectType.ExtraDamage:
-                    ApplyExtraDamageEffect(caster, effectPosition);
-                    break;
-                    
-                case FullChargeEffectType.StatusBurst:
-                    ApplyStatusBurst(caster, effectPosition);
-                    break;
-            }
-
-            Debug.Log($"{caster.name} released beam at full charge - {fullChargeEffectType} activated!");
-        }
-
-        private Vector3 GetEffectPosition(GameObject caster)
-        {
-            // Use mouse position as effect center
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = 0;
-            return mouseWorld;
-        }
-
-        private void ApplyAreaEffect(GameObject caster, Vector3 position)
-        {
-            // Apply status effects in an area
-            Collider2D[] nearbyTargets = Physics2D.OverlapCircleAll(position, fullChargeRadius);
-            
-            var casterHealth = caster.GetComponent<IHealth>();
-            Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
-            foreach (var col in nearbyTargets)
-            {
-                if (col.gameObject == caster) continue;
-
-                var health = col.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
-                {
-                    // ApplyBuffDebuff(col.gameObject);
-                }
+                float damage = CalculateDamage(caster);
+                health.TakeDamage((int)damage, caster);
             }
         }
-
-        private void ApplyExtraDamageEffect(GameObject caster, Vector3 position)
-        {
-            // Apply extra burst damage in an area
-            Collider2D[] nearbyTargets = Physics2D.OverlapCircleAll(position, fullChargeRadius);
-            
-            var casterHealth = caster.GetComponent<IHealth>();
-            Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
-            int burstDamage = Mathf.RoundToInt(baseDamagePerSecond * 0.5f); // 50% of DPS as burst
-
-            var stats = caster.GetComponent<StatsComponent>();
-            if (stats != null && stats.CurrentStats != null)
-            {
-                burstDamage = Mathf.RoundToInt(stats.CurrentStats.Attack * 0.5f);
-            }
-
-            foreach (var col in nearbyTargets)
-            {
-                if (col.gameObject == caster) continue;
-
-                var health = col.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
-                {
-                    var healthSystem = health.GetHealthSystem();
-                    bool targetWasAlive = healthSystem.IsAlive;
-
-                    healthSystem.Damage(burstDamage);
-
-                    if (targetWasAlive && !healthSystem.IsAlive)
-                    {
-                        // GenerateResourceOnKill(caster);
-                    }
-                }
-            }
-        }
-
-        private void ApplyStatusBurst(GameObject caster, Vector3 position)
-        {
-            // Apply stacked status effects in an area
-            // if (statusEffect == null) return;
-
-            Collider2D[] nearbyTargets = Physics2D.OverlapCircleAll(position, fullChargeRadius);
-            
-            var casterHealth = caster.GetComponent<IHealth>();
-            Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
-            foreach (var col in nearbyTargets)
-            {
-                if (col.gameObject == caster) continue;
-
-                var health = col.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
-                {
-                    // Apply max stacks at once
-                    // for (int i = 0; i < maxStatusStacks; i++)
-                    // {
-                    //     ApplyBuffDebuff(col.gameObject);
-                    // }
-                }
-            }
-        }
-
-        private void StopBeamAudio()
-        {
-            if (beamAudioSource != null && beamAudioSource.isPlaying)
-            {
-                beamAudioSource.Stop();
-                beamAudioSource = null;
-            }
-        }
-
-        // Implement abstract method from AbilityBase
-        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
-        {
-            // You can call Cast or implement custom activation logic here
-            Cast(user.gameObject, targetEnemy);
-        }
-
-        // Implement abstract method from AbilityBase
-        public override void Deactivate(AbilityUser user)
-        {
-            // Add deactivation logic if needed, or leave empty
-        }
-
-        // Optional: Draw gizmo in editor to visualize full charge radius
-        private void OnDrawGizmosSelected()
-        {
-            if (enableFullChargeEffect)
-            {
-                Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f);
-                Gizmos.DrawWireSphere(Vector3.zero, fullChargeRadius);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Types of effects that can occur when beam is released at full charge
-    /// </summary>
-    public enum FullChargeEffectType
-    {
-        None,           // No special effect
-        AreaEffect,     // Apply status effects in area
-        ExtraDamage,    // Deal extra burst damage in area
-        StatusBurst     // Apply maximum stacks of status effect instantly
     }
 }

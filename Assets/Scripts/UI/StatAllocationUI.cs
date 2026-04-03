@@ -1,8 +1,8 @@
+using Havengard.Combat;
+using Havengard.Stats;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using Havengard.Combat;
-using Havengard.Core.Heroes;
 
 namespace Havengard.UI
 {
@@ -30,13 +30,6 @@ namespace Havengard.UI
         [SerializeField] private Button lightningButton;
         [SerializeField] private Button holyButton;
         [SerializeField] private Button physicalButton;
-
-        [Header("Damage Type Displays")]
-        [SerializeField] private TextMeshProUGUI physicalBonusText;
-        [SerializeField] private TextMeshProUGUI fireBonusText;
-        [SerializeField] private TextMeshProUGUI frostBonusText;
-        [SerializeField] private TextMeshProUGUI lightningBonusText;
-        [SerializeField] private TextMeshProUGUI holyBonusText;
 
         private PlayerStatAllocator allocator;
 
@@ -115,18 +108,6 @@ namespace Havengard.UI
             if (lightningButton != null) lightningButton.interactable = hasPowerPoints;
             if (holyButton != null) holyButton.interactable = hasPowerPoints;
             if (physicalButton != null) physicalButton.interactable = hasPowerPoints;
-
-            // Update damage type bonus displays
-            if (physicalBonusText != null)
-                physicalBonusText.text = $"+{allocator.GetDamageTypeBonus(DamageType.Physical) * 100:F0}%";
-            if (fireBonusText != null)
-                fireBonusText.text = $"+{allocator.GetDamageTypeBonus(DamageType.Fire) * 100:F0}%";
-            if (frostBonusText != null)
-                frostBonusText.text = $"+{allocator.GetDamageTypeBonus(DamageType.Frost) * 100:F0}%";
-            if (lightningBonusText != null)
-                lightningBonusText.text = $"+{allocator.GetDamageTypeBonus(DamageType.Lightning) * 100:F0}%";
-            if (holyBonusText != null)
-                holyBonusText.text = $"+{allocator.GetDamageTypeBonus(DamageType.Holy) * 100:F0}%";
         }
 
         private void AllocateStat(string statType)

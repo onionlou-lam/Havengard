@@ -106,5 +106,12 @@ namespace Havengard.Abilities
             // Could check for a specific tag, component, or enemy type
             return target.CompareTag("Undead");
         }
+
+        private float GetDamagePortion(GameObject caster, int level)
+        {
+            // Example implementation: calculate damage based on level and healingRatio
+            float baseDamage = CalculateDamage(caster, level);
+            return baseDamage * (1f - healingRatio);
+        }
     }
 }

@@ -64,6 +64,13 @@ namespace Havengard.Units
         private Color originalSpriteColor;
         private Coroutine currentFlashCoroutine;
 
+        [Header("Unit Identity")]
+        public string unitName = "Unit";
+        public UnitFaction faction = UnitFaction.Neutral;
+
+        [Header("Stats")]
+        [SerializeField] protected int maxHealth = 100;
+
         protected virtual void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
@@ -363,5 +370,13 @@ namespace Havengard.Units
             Gizmos.DrawWireSphere(transform.position, attackRange);
         }
 #endif
+    }
+
+    public enum UnitFaction
+    {
+        Player,
+        Ally,
+        Enemy,
+        Neutral
     }
 }

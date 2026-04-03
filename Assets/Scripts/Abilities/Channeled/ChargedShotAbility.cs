@@ -1,143 +1,72 @@
-using Havengard.Core.Character;
-using Havengard.Core.HealthSystem;
-using Havengard.Statuses;
-using Havengard.Units;
 using UnityEngine;
+using Havengard.Combat;
 
 namespace Havengard.Abilities
 {
-    [CreateAssetMenu(menuName = "Havengard/Abilities/Charged Shot")]
+    [CreateAssetMenu(menuName = "Havengard/Abilities/Channeled/Charged Shot")]
     public class ChargedShotAbility : ChanneledAbilityBase
     {
-        [Header("Projectile")]
+        [Header("Charged Shot Settings")]
         [SerializeField] private GameObject projectilePrefab;
-        [SerializeField] private float baseProjectileSpeed = 15f;
-        [SerializeField] private float chargedSpeedMultiplier = 2f;
-        [SerializeField] private bool friendlyFire = false;
+        [SerializeField] private float minChargeSpeed = 10f;
+        [SerializeField] private float maxChargeSpeed = 30f;
+        [SerializeField] private float minChargeDamageMultiplier = 1f;
+        [SerializeField] private float maxChargeDamageMultiplier = 3f;
 
-        [Header("Damage")]
-        [SerializeField] private int baseDamage = 20;
-        [SerializeField] private float chargedDamageMultiplier = 3f; // 3x damage at full charge
+        protected override void OnChannelTick(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            // Visual feedback during charge (optional)
+        }
 
-        [Header("Size Scaling")]
-        [SerializeField] private bool scaleProjectileWithCharge = true;
-        [SerializeField] private float minScale = 0.5f;
-        [SerializeField] private float maxScale = 2f;
+        protected override void OnRelease(GameObject caster, GameObject target, float channelTime)
+        {
+            float chargePercent = Mathf.Clamp01(channelTime / channelDuration);
 
-        [Header("Splash (at full charge)")]
-        [SerializeField] private bool enableSplashAtFullCharge = true;
-        [SerializeField] private float splashRadius = 3f;
-        [SerializeField] private int splashDamage = 15;
+            float speed = Mathf.Lerp(minChargeSpeed, maxChargeSpeed, chargePercent);
+            float damageMultiplier = Mathf.Lerp(minChargeDamageMultiplier, maxChargeDamageMultiplier, chargePercent);
 
-        [Header("Status Effects")]
-        [SerializeField] private StatusEffectData statusEffect;
-        [SerializeField] private int maxStatusStacks = 1;
+            Vector3 direction = target != null
+                ? (target.transform.position - caster.transform.position).normalized
+                : caster.transform.right;
 
-        [Header("Homing")]
-        [SerializeField] private bool enableHoming = false;
-        [SerializeField] private float homingStrength = 5f;
-        [SerializeField] private float homingDelay = 0f;
+            SpawnProjectile(caster, direction, speed, damageMultiplier);
+        }
 
-        // REMOVED: CanCast override - not in base class
-
-        public override void OnRelease(GameObject caster, GameObject target, float chargePercent)
+        private void SpawnProjectile(GameObject caster, Vector3 direction, float speed, float damageMultiplier)
         {
             if (projectilePrefab == null) return;
 
-            // Get shoot direction
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = 0;
-            Vector2 direction = (mouseWorld - caster.transform.position).normalized;
+            GameObject proj = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
 
-            var casterHealth = caster.GetComponent<IHealth>();
-            var casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
-            // Calculate damage based on charge
-            float damageMultiplier = Mathf.Lerp(1f, chargedDamageMultiplier, chargePercent);
-            int finalDamage = baseDamage;
-
-            var stats = caster.GetComponent<StatsComponent>();
-            if (stats != null && stats.CurrentStats != null)
+            var projectile = proj.GetComponent<Projectile>();
+            if (projectile != null)
             {
-                finalDamage = stats.CurrentStats.Attack;
-            }
+                float finalDamage = CalculateDamage(caster) * damageMultiplier;
 
-            finalDamage = Mathf.RoundToInt(finalDamage * damageMultiplier);
-
-            // Calculate projectile speed based on charge
-            float speed = Mathf.Lerp(baseProjectileSpeed, baseProjectileSpeed * chargedSpeedMultiplier, chargePercent);
-
-            // Spawn projectile
-            var projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
-
-            // Scale projectile if enabled
-            if (scaleProjectileWithCharge)
-            {
-                float scale = Mathf.Lerp(minScale, maxScale, chargePercent);
-                projGO.transform.localScale = Vector3.one * scale;
-            }
-
-            var projectile = projGO.GetComponent<Projectile>();
-            if (projectile == null)
-            {
-                Debug.LogError($"[ChargedShotAbility] Projectile prefab is missing Projectile component!");
-                Destroy(projGO);
-                return;
-            }
-
-            // Initialize projectile
-            projectile.Initialize(direction, casterFaction, friendlyFire, finalDamage, speed, caster);
-
-            // Enable homing if configured
-            if (enableHoming)
-            {
-                projectile.EnableHoming(homingStrength, homingDelay, target);
-            }
-
-            // Add splash damage at full charge
-            bool isFullCharge = chargePercent >= 0.99f;
-            if ((enableSplashAtFullCharge && isFullCharge) || statusEffect != null)
-            {
-                var splash = projGO.GetComponent<SplashDamage>();
-                if (splash == null) splash = projGO.AddComponent<SplashDamage>();
-
-                float radius = (enableSplashAtFullCharge && isFullCharge) ? splashRadius : 0f;
-                int damage = (enableSplashAtFullCharge && isFullCharge) ? splashDamage : 0;
-
-                splash.Initialize(
+                projectile.Initialize(
+                    direction,
+                    speed,
+                    5f,
                     caster,
-                    radius,
-                    casterFaction,
-                    friendlyFire,
-                    damage,
-                    statusEffect,
-                    maxStatusStacks
+                    (hit) => OnProjectileHit(hit, caster, finalDamage)
                 );
-
-                projectile.OnImpact += (impactPoint, collider) =>
-                {
-                    splash.HandleProjectileImpact(impactPoint, collider?.gameObject);
-                };
             }
-
-            Debug.Log($"Released charged shot at {chargePercent * 100}% charge with {finalDamage} damage");
         }
 
+        private void OnProjectileHit(GameObject target, GameObject caster, float damage)
+        {
+            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            if (health != null)
+            {
+                health.TakeDamage((int)damage, caster);
+            }
+        }
+
+        // Make this public override to match base signature
         public override void OnChannelCancel(GameObject caster)
         {
             base.OnChannelCancel(caster);
-            Debug.Log("Charged shot cancelled");
-        }
-
-        // ADD: Implement abstract methods from AbilityBase
-        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
-        {
-            Cast(user.gameObject, targetEnemy);
-        }
-
-        public override void Deactivate(AbilityUser user)
-        {
-            // Channeled abilities handle their own cleanup
+            // Released too early - no projectile
         }
     }
 }

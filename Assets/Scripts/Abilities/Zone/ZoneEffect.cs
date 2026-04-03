@@ -116,7 +116,16 @@ namespace Havengard.Abilities
                     health.GetHealthSystem().Damage(damagePerTick);
 
                     if (statusEffect != null)
-                        StatusEffectApplier.ApplyEffect(hit.gameObject, statusEffect, maxStatusStacks);
+                    {
+                        var applier = hit.GetComponent<StatusEffectApplier>();
+                        if (applier != null)
+                        {
+                            for (int i = 0; i < maxStatusStacks; i++)
+                            {
+                                applier.ApplyStatusEffect(statusEffect, caster);
+                            }
+                        }
+                    }
                 }
             }
         }

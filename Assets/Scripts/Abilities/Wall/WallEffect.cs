@@ -174,7 +174,14 @@ namespace Havengard.Abilities
                     // Apply status effect
                     if (statusEffect != null)
                     {
-                        StatusEffectApplier.ApplyEffect(unit, statusEffect, maxStatusStacks);
+                        var applier = unit.GetComponent<StatusEffectApplier>();
+                        if (applier != null)
+                        {
+                            for (int i = 0; i < maxStatusStacks; i++)
+                            {
+                                applier.ApplyStatusEffect(statusEffect, caster);
+                            }
+                        }
                     }
 
                     Debug.Log($"[WallEffect] Damaged {unit.name} for {damagePerTick}");

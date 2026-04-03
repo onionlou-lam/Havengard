@@ -97,6 +97,6 @@ public class BossHealthBarHUD : MonoBehaviour
     private void UpdateText()
     {
         if (bossHealthText == null || healthSystem == null) return;
-        bossHealthText.text = $"{healthSystem.GetHealth()} / {healthSystem.GetMaxHealth()}";
+        bossHealthText.text = $"{healthSystem.CurrentHealth} / {healthSystem.MaxHealth}";
     }
 }

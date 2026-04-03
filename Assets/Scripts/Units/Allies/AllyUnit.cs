@@ -21,11 +21,13 @@ namespace Havengard.Units
         [SerializeField] private float attackCooldown = 1f;
 
         private AllyBehavior currentBehavior;
+        private AbilityUser abilityUser;
         private float lastAttackTime;
 
         protected override void Awake()
         {
             base.Awake();
+            abilityUser = GetComponent<AbilityUser>();
             InitializeBehavior();
         }
 
@@ -132,12 +134,9 @@ namespace Havengard.Units
             // Use ability if available
             if (attackAbility != null)
             {
-                if (attackAbility.CanCast(gameObject, target))
-                {
-                    TriggerAttackAnim();
-                    attackAbility.Cast(gameObject, target);
-                    lastAttackTime = Time.time;
-                }
+                TriggerAttackAnim();
+                attackAbility.Activate(abilityUser, target.transform.position, target);
+                lastAttackTime = Time.time;
                 return;
             }
 

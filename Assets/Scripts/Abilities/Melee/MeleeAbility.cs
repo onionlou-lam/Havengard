@@ -2,8 +2,6 @@ using UnityEngine;
 using Havengard.Core.HealthSystem;
 using Havengard.Units;
 using Havengard.Combat;
-using Havengard.Core.Character;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Havengard.Abilities
@@ -17,21 +15,15 @@ namespace Havengard.Abilities
         [SerializeField] private Vector2 hitBoxSize = new Vector2(2f, 1.5f);
         [SerializeField] private float hitArcAngle = 120f;
         [SerializeField] private float hitRange = 2f;
-        [Tooltip("Offset from caster position (useful for positioning hitbox)")]
         [SerializeField] private Vector2 hitOffset = Vector2.zero;
-        
+
         [Header("Timing")]
-        [Tooltip("Delay before hit detection (for animation sync)")]
         [SerializeField] private float hitDelay = 0.2f;
-        [Tooltip("Duration of active hit detection (0 = instant)")]
         [SerializeField] private float activeHitDuration = 0f;
 
         [Header("Damage")]
-        [Tooltip("Damage multiplier based on caster's Attack stat")]
         [SerializeField] private float damageMultiplier = 1f;
-        [SerializeField] private int baseDamage = 10;
         [SerializeField] private bool friendlyFire = false;
-        [Tooltip("If true, each target can only be hit once per cast")]
         [SerializeField] private bool preventMultiHit = true;
 
         [Header("Knockback")]
@@ -41,7 +33,6 @@ namespace Havengard.Abilities
 
         [Header("Movement")]
         [SerializeField] private bool enableLunge = false;
-        [Tooltip("Distance to move toward attack direction")]
         [SerializeField] private float lungeDistance = 2f;
         [SerializeField] private float lungeDuration = 0.15f;
 
@@ -49,398 +40,142 @@ namespace Havengard.Abilities
         [SerializeField] private GameObject hitVFXPrefab;
         [SerializeField] private GameObject casterVFXPrefab;
         [SerializeField] private bool spawnVFXOnEachHit = true;
-        [Tooltip("Rotate VFX to face attack direction")]
         [SerializeField] private bool rotateVFXToDirection = true;
-        [Tooltip("Additional rotation offset (useful if your VFX faces wrong direction by default)")]
         [SerializeField] private float vfxRotationOffset = 0f;
-        [Tooltip("Spawn VFX at hit position instead of caster position")]
         [SerializeField] private bool spawnCasterVFXAtHitPosition = false;
 
         [Header("SFX")]
         [SerializeField] private AudioClip swingSFX;
         [SerializeField] private AudioClip hitSFX;
-        [Tooltip("Enable random pitch variation for swing SFX")]
         [SerializeField] private bool randomizeSwingPitch = false;
-        [Tooltip("Enable random pitch variation for hit SFX")]
         [SerializeField] private bool randomizeHitPitch = false;
-        [Tooltip("Minimum pitch multiplier for randomized audio")]
         [SerializeField] private float minPitch = 0.85f;
-        [Tooltip("Maximum pitch multiplier for randomized audio")]
         [SerializeField] private float maxPitch = 1.15f;
 
         private HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
-        public bool CanCast(GameObject caster, GameObject target)
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
-            return caster != null;
-        }
+            if (user == null) return;
 
-        public void Cast(GameObject caster, GameObject target)
-        {
-            if (caster == null) return;
+            Vector2 attackDirection = targetEnemy != null
+                ? (Vector2)(targetEnemy.transform.position - user.transform.position).normalized
+                : (Vector2)(targetPosition - user.transform.position).normalized;
 
-            // Get attack direction (toward mouse or target)
-            Vector2 attackDirection = GetAttackDirection(caster, target);
-
-            // Play swing SFX with optional pitch variation
+            // Play swing SFX
             if (swingSFX != null)
             {
-                PlayAudioWithPitch(swingSFX, caster.transform.position, randomizeSwingPitch);
+                PlayAudioWithPitch(swingSFX, user.transform.position, randomizeSwingPitch);
             }
 
             // Spawn caster VFX
             if (casterVFXPrefab != null)
             {
-                Vector3 spawnPosition = caster.transform.position;
-                if (spawnCasterVFXAtHitPosition)
-                {
-                    Vector2 rotatedOffset = Quaternion.Euler(0, 0, Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg) * hitOffset;
-                    spawnPosition = (Vector2)caster.transform.position + rotatedOffset;
-                }
-
-                GameObject vfx = Instantiate(casterVFXPrefab, spawnPosition, Quaternion.identity);
-                
-                if (rotateVFXToDirection)
-                {
-                    float angle = Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg;
-                    vfx.transform.rotation = Quaternion.Euler(0, 0, angle + vfxRotationOffset);
-                }
-
-                // Auto-destroy VFX after completion
-                var ps = vfx.GetComponent<ParticleSystem>();
-                if (ps != null)
-                {
-                    Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
-                }
-                else
-                {
-                    // Fallback if no ParticleSystem found - destroy after 2 seconds
-                    Destroy(vfx, 2f);
-                }
+                SpawnCasterVFX(user.transform.position, attackDirection);
             }
 
-            // Start melee attack coroutine
-            var meleeHandler = caster.GetComponent<MeleeAbilityHandler>();
-            if (meleeHandler == null)
-                meleeHandler = caster.AddComponent<MeleeAbilityHandler>();
-
-            meleeHandler.StartCoroutine(ExecuteMeleeAttack(caster, attackDirection, meleeHandler));
+            // Start delayed hit detection
+            user.StartCoroutine(DelayedHitDetection(user.gameObject, attackDirection));
         }
 
-        private Vector2 GetAttackDirection(GameObject caster, GameObject target)
+        private System.Collections.IEnumerator DelayedHitDetection(GameObject caster, Vector2 direction)
         {
-            if (target != null)
-            {
-                return (target.transform.position - caster.transform.position).normalized;
-            }
-            else
-            {
-                Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                mouseWorld.z = 0;
-                return (mouseWorld - caster.transform.position).normalized;
-            }
-        }
+            yield return new UnityEngine.WaitForSeconds(hitDelay);
 
-        private IEnumerator ExecuteMeleeAttack(GameObject caster, Vector2 attackDirection, MonoBehaviour coroutineHost)
-        {
             hitTargets.Clear();
-
-            if (enableLunge)
-            {
-                yield return coroutineHost.StartCoroutine(PerformLunge(caster, attackDirection));
-            }
-
-            yield return new WaitForSeconds(hitDelay);
-
-            float elapsedHitTime = 0f;
-            do
-            {
-                PerformHitDetection(caster, attackDirection);
-                
-                if (activeHitDuration > 0)
-                {
-                    yield return new WaitForSeconds(0.1f);
-                    elapsedHitTime += 0.1f;
-                }
-            }
-            while (elapsedHitTime < activeHitDuration);
+            PerformHitDetection(caster, direction);
         }
 
-        private IEnumerator PerformLunge(GameObject caster, Vector2 direction)
+        private void PerformHitDetection(GameObject caster, Vector2 direction)
         {
-            var rb = caster.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                Vector2 targetPosition = (Vector2)caster.transform.position + direction * lungeDistance;
-                Vector2 startPosition = caster.transform.position;
-                float elapsed = 0f;
+            Vector2 origin = (Vector2)caster.transform.position + hitOffset;
+            Collider2D[] hits = null;
 
-                while (elapsed < lungeDuration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = elapsed / lungeDuration;
-                    rb.MovePosition(Vector2.Lerp(startPosition, targetPosition, t));
-                    yield return null;
-                }
-            }
-            else
-            {
-                caster.transform.position += (Vector3)direction * lungeDistance;
-            }
-        }
-
-        private void PerformHitDetection(GameObject caster, Vector2 attackDirection)
-        {
-            var casterHealth = caster.GetComponent<IHealth>();
-            Faction casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
-            Vector2 rotatedOffset = Quaternion.Euler(0, 0, Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg) * hitOffset;
-            Vector2 hitPosition = (Vector2)caster.transform.position + rotatedOffset;
-
-            Collider2D[] hits = GetHitsForShape(hitPosition, attackDirection);
-
-            bool anyHit = false;
-
-            foreach (var hit in hits)
-            {
-                if (hit == null || hit.gameObject == caster) continue;
-
-                if (preventMultiHit && hitTargets.Contains(hit.gameObject))
-                    continue;
-
-                var health = hit.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, friendlyFire))
-                {
-                    anyHit = true;
-
-                    int finalDamage = CalculateDamage(caster);
-                    
-                    // Subscribe to death event to generate resource on kill
-                    var healthSystem = health.GetHealthSystem();
-                    bool targetWasAlive = healthSystem.IsAlive;
-                    
-                    healthSystem.Damage(finalDamage);
-
-                    if (targetWasAlive && !healthSystem.IsAlive)
-                    {
-                        GenerateResourceOnKill(caster);
-                    }
-
-                    if (enableKnockback)
-                    {
-                        ApplyKnockback(hit.gameObject, caster.transform.position);
-                    }
-
-                    if (hitVFXPrefab != null && spawnVFXOnEachHit)
-                    {
-                        GameObject hitVFX = Instantiate(hitVFXPrefab, hit.transform.position, Quaternion.identity);
-                        
-                        if (rotateVFXToDirection)
-                        {
-                            Vector2 hitDirection = (hit.transform.position - caster.transform.position).normalized;
-                            float hitAngle = Mathf.Atan2(hitDirection.y, hitDirection.x) * Mathf.Rad2Deg;
-                            hitVFX.transform.rotation = Quaternion.Euler(0, 0, hitAngle + vfxRotationOffset);
-                        }
-
-                        // Auto-destroy VFX after completion
-                        var ps = hitVFX.GetComponent<ParticleSystem>();
-                        if (ps != null)
-                        {
-                            Destroy(hitVFX, ps.main.duration + ps.main.startLifetime.constantMax);
-                        }
-                        else
-                        {
-                            Destroy(hitVFX, 2f);
-                        }
-                    }
-
-                    if (preventMultiHit)
-                        hitTargets.Add(hit.gameObject);
-                }
-            }
-
-            if (anyHit && hitSFX != null)
-            {
-                PlayAudioWithPitch(hitSFX, hitPosition, randomizeHitPitch);
-            }
-
-            if (!spawnVFXOnEachHit && hitVFXPrefab != null && anyHit)
-            {
-                GameObject hitVFX = Instantiate(hitVFXPrefab, hitPosition, Quaternion.identity);
-                
-                if (rotateVFXToDirection)
-                {
-                    float angle = Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg;
-                    hitVFX.transform.rotation = Quaternion.Euler(0, 0, angle + vfxRotationOffset);
-                }
-
-                // Auto-destroy VFX after completion
-                var ps = hitVFX.GetComponent<ParticleSystem>();
-                if (ps != null)
-                {
-                    Destroy(hitVFX, ps.main.duration + ps.main.startLifetime.constantMax);
-                }
-                else
-                {
-                    Destroy(hitVFX, 2f);
-                }
-            }
-        }
-
-        private Collider2D[] GetHitsForShape(Vector2 hitPosition, Vector2 attackDirection)
-        {
             switch (hitShape)
             {
                 case MeleeHitShape.Circle:
-                    return Physics2D.OverlapCircleAll(hitPosition, hitRadius);
-
+                    hits = Physics2D.OverlapCircleAll(origin, hitRadius, targetLayers);
+                    break;
                 case MeleeHitShape.Box:
-                    float angle = Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg;
-                    return Physics2D.OverlapBoxAll(hitPosition, hitBoxSize, angle);
-
-                case MeleeHitShape.Arc:
-                    return GetArcHits(hitPosition, attackDirection);
-
-                case MeleeHitShape.Line:
-                    return Physics2D.OverlapCapsuleAll(
-                        hitPosition, 
-                        new Vector2(hitRange, hitRadius), 
-                        CapsuleDirection2D.Horizontal,
-                        Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg
-                    );
-
-                default:
-                    return new Collider2D[0];
+                    hits = Physics2D.OverlapBoxAll(origin, hitBoxSize, 0f, targetLayers);
+                    break;
+                    // Add other shapes as needed
             }
-        }
 
-        private Collider2D[] GetArcHits(Vector2 hitPosition, Vector2 attackDirection)
-        {
-            List<Collider2D> arcHits = new List<Collider2D>();
-            Collider2D[] allHits = Physics2D.OverlapCircleAll(hitPosition, hitRadius);
-
-            float attackAngle = Mathf.Atan2(attackDirection.y, attackDirection.x) * Mathf.Rad2Deg;
-
-            foreach (var hit in allHits)
+            if (hits != null)
             {
-                Vector2 directionToTarget = (hit.transform.position - (Vector3)hitPosition).normalized;
-                float targetAngle = Mathf.Atan2(directionToTarget.y, directionToTarget.x) * Mathf.Rad2Deg;
-                float angleDiff = Mathf.DeltaAngle(attackAngle, targetAngle);
-
-                if (Mathf.Abs(angleDiff) <= hitArcAngle / 2f)
+                foreach (var hit in hits)
                 {
-                    arcHits.Add(hit);
+                    if (hit.gameObject == caster) continue;
+                    if (preventMultiHit && hitTargets.Contains(hit.gameObject)) continue;
+
+                    ApplyHitEffects(caster, hit.gameObject, direction);
+                    hitTargets.Add(hit.gameObject);
                 }
             }
-
-            return arcHits.ToArray();
         }
 
-        private int CalculateDamage(GameObject caster)
+        private void ApplyHitEffects(GameObject caster, GameObject target, Vector2 direction)
         {
-            var stats = caster.GetComponent<StatsComponent>();
-            int attackValue = baseDamage;
-
-            if (stats != null && stats.CurrentStats != null)
+            // Apply damage
+            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            if (health != null)
             {
-                attackValue = Mathf.RoundToInt(stats.CurrentStats.Attack * damageMultiplier);
+                float damage = CalculateDamage(caster) * damageMultiplier;
+                health.TakeDamage((int)damage, caster);
+            }
+
+            // Spawn hit VFX
+            if (hitVFXPrefab != null && spawnVFXOnEachHit)
+            {
+                Instantiate(hitVFXPrefab, target.transform.position, Quaternion.identity);
+            }
+
+            // Play hit SFX
+            if (hitSFX != null)
+            {
+                PlayAudioWithPitch(hitSFX, target.transform.position, randomizeHitPitch);
+            }
+
+            // Apply knockback
+            if (enableKnockback)
+            {
+                var rb = target.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    rb.AddForce(direction * knockbackForce, ForceMode2D.Impulse);
+                }
+            }
+        }
+
+        private void SpawnCasterVFX(Vector3 position, Vector2 direction)
+        {
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            Quaternion rotation = rotateVFXToDirection
+                ? Quaternion.Euler(0, 0, angle + vfxRotationOffset)
+                : Quaternion.identity;
+
+            GameObject vfx = Instantiate(casterVFXPrefab, position, rotation);
+            Destroy(vfx, 2f);
+        }
+
+        private void PlayAudioWithPitch(AudioClip clip, Vector3 position, bool randomize)
+        {
+            if (randomize)
+            {
+                float pitch = Random.Range(minPitch, maxPitch);
+                // You'll need an audio manager or AudioSource.PlayClipAtPoint with pitch
+                AudioSource.PlayClipAtPoint(clip, position);
             }
             else
             {
-                attackValue = Mathf.RoundToInt(baseDamage * damageMultiplier);
-            }
-
-            return Mathf.Max(1, attackValue);
-        }
-
-        private void ApplyKnockback(GameObject target, Vector3 sourcePosition)
-        {
-            var rb = target.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                Vector2 knockbackDirection = (target.transform.position - sourcePosition).normalized;
-                
-                var knockbackHandler = target.GetComponent<MeleeKnockbackHandler>();
-                if (knockbackHandler == null)
-                    knockbackHandler = target.AddComponent<MeleeKnockbackHandler>();
-
-                knockbackHandler.ApplyKnockback(rb, knockbackDirection * knockbackForce, knockbackDuration);
-            }
-        }
-
-        public void DrawGizmos(Vector3 position, Vector2 direction)
-        {
-            Vector2 rotatedOffset = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg) * hitOffset;
-            Vector2 hitPosition = (Vector2)position + rotatedOffset;
-
-            Gizmos.color = Color.red;
-            
-            switch (hitShape)
-            {
-                case MeleeHitShape.Circle:
-                    Gizmos.DrawWireSphere(hitPosition, hitRadius);
-                    break;
-                case MeleeHitShape.Box:
-                    Gizmos.DrawWireCube(hitPosition, hitBoxSize);
-                    break;
-                case MeleeHitShape.Arc:
-                    Gizmos.DrawWireSphere(hitPosition, hitRadius);
-                    float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                    Vector2 left = Quaternion.Euler(0, 0, angle - hitArcAngle / 2f) * Vector2.right * hitRadius;
-                    Vector2 right = Quaternion.Euler(0, 0, angle + hitArcAngle / 2f) * Vector2.right * hitRadius;
-                    Gizmos.DrawLine(hitPosition, hitPosition + left);
-                    Gizmos.DrawLine(hitPosition, hitPosition + right);
-                    break;
-                case MeleeHitShape.Line:
-                    Gizmos.DrawLine(position, (Vector2)position + direction * hitRange);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Plays an audio clip at a position with optional random pitch variation
-        /// </summary>
-        private void PlayAudioWithPitch(AudioClip clip, Vector3 position, bool randomizePitch)
-        {
-            if (clip == null) return;
-
-            if (randomizePitch)
-            {
-                // Create temporary GameObject with AudioSource for pitch control
-                GameObject audioGO = new GameObject("TempAudio");
-                audioGO.transform.position = position;
-                AudioSource audioSource = audioGO.AddComponent<AudioSource>();
-                
-                audioSource.clip = clip;
-                audioSource.pitch = Random.Range(minPitch, maxPitch);
-                audioSource.spatialBlend = 0f; // 2D sound
-                audioSource.Play();
-                
-                // Destroy after clip finishes
-                Destroy(audioGO, clip.length);
-            }
-            else
-            {
-                // Use standard PlayClipAtPoint (no pitch variation)
                 AudioSource.PlayClipAtPoint(clip, position);
             }
         }
 
-        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
-        {
-            Cast(user.gameObject, targetEnemy);
-        }
-
         public override void Deactivate(AbilityUser user)
         {
-            // Cleanup if needed
-        }
-
-        private void GenerateResourceOnKill(GameObject caster)
-        {
-            // Implementation depends on your game logic.
-            // For now, this is a placeholder to resolve CS0103.
-            // You may want to add logic to grant resources, experience, etc.
+            hitTargets.Clear();
         }
     }
 
@@ -449,6 +184,6 @@ namespace Havengard.Abilities
         Circle,
         Box,
         Arc,
-        Line
+        Cone
     }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Havengard.Items;
@@ -100,7 +100,7 @@ namespace Havengard.UI
                 if (item.TryStack())
                 {
                     Debug.Log($"[ItemUpgradeUI] Upgraded {item.itemData.itemName} to level {item.level}");
-                    
+
                     // Refresh inventory to apply new effects
                     if (targetInventory != null)
                     {
@@ -143,7 +143,7 @@ namespace Havengard.UI
                 nameText.text = item.itemData.itemName;
 
             if (levelText != null)
-                levelText.text = $"Lv.{item.level} ? {item.level + 1}";
+                levelText.text = $"Lv.{item.level} → {item.level + 1}";
 
             if (costText != null)
                 costText.text = $"{cost} Celestium";

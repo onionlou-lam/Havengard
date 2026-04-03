@@ -49,7 +49,8 @@ namespace Havengard.UI
                 backgroundImage.color = itemData.rarityColor;
 
             // Position
-            tooltipPanel.transform.position = position + (Vector3)offset;
+            if (tooltipPanel != null)
+                tooltipPanel.transform.position = position + (Vector3)offset;
             tooltipPanel.SetActive(true);
         }
 

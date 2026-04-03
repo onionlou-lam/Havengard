@@ -7,20 +7,27 @@ namespace Havengard.Units
     {
         [Header("Melee")]
         [SerializeField] private AbilityBase attackAbility; // assign Cleave here
+        private AbilityUser abilityUser;
         private float lastAttackTime;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            abilityUser = GetComponent<AbilityUser>();
+        }
 
         protected override void PerformAttack(GameObject target)
         {
-            if (attackAbility == null) return;
+            if (abilityUser == null || attackAbility == null || target == null) return;
 
             // Cooldown gate
             if (Time.time < lastAttackTime + attackAbility.baseCooldown) return;
 
-            // CanCast gate
-            if (!attackAbility.CanCast(gameObject, target)) return;
-
             TriggerAttackAnim();
-            attackAbility.Cast(gameObject, target);
+            
+            // Use AbilityUser to activate the ability
+            Vector3 targetPos = target.transform.position;
+            attackAbility.Activate(abilityUser, targetPos, target);
 
             lastAttackTime = Time.time;
         }

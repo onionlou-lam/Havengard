@@ -1,4 +1,4 @@
-    using UnityEngine;
+using UnityEngine;
 using Havengard.Core.Character;
 using Havengard.Core.HealthSystem;
 using System.Collections;
@@ -25,7 +25,7 @@ namespace Havengard.Abilities
         private AudioClip deactivationSFX;
 
         // Stat snapshot for restoration
-        private Stats originalStats;
+        private HeroStats originalStats;
         private StatsComponent statsComponent;
 
         public BuffAbility SourceAbility => sourceAbility;
@@ -107,7 +107,7 @@ namespace Havengard.Abilities
         {
             if (modifiers == null || modifiers.Length == 0) return;
 
-            Stats currentStats = statsComponent.CurrentStats;
+            HeroStats currentStats = statsComponent.CurrentStats;
 
             foreach (BuffModifier mod in modifiers)
             {
@@ -147,7 +147,7 @@ namespace Havengard.Abilities
             Debug.Log($"[BuffInstance] Removed stat modifiers from {caster.name}");
         }
 
-        private void ApplySingleModifier(Stats stats, BuffModifier mod)
+        private void ApplySingleModifier(HeroStats stats, BuffModifier mod)
         {
             switch (mod.statType)
             {

@@ -143,7 +143,7 @@ namespace Havengard.Waves
             // Notify HUD: all waves complete
             if (hudButtons != null)
                 hudButtons.EndWavePhase();
-        } 
+        }
 
         private void HandleEnemySpawned(GameObject enemy)
         {

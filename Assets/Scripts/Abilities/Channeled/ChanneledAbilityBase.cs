@@ -1,47 +1,120 @@
-using Havengard.Abilities;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Havengard/Abilities/Channeled Ability")]
-public abstract class ChanneledAbilityBase : AbilityBase
+namespace Havengard.Abilities
 {
-    [Header("Channel Settings")]
-    [Tooltip("Time in seconds to reach full charge")]
-    [SerializeField] private float maxChargeTime = 2f;
-    [Tooltip("Minimum charge percent (0..1) required to allow release. If release is lower and allowPartialRelease is false, the channel will cancel.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float minReleasePercent = 0.05f;
-    [Tooltip("Allow releasing early and deal partial effect based on charge percent")]
-    [SerializeField] private bool allowPartialRelease = true;
-    [Tooltip("If true, prevents the caster from moving while channeling")]
-    [SerializeField] private bool preventMovement = true;
-
-    [Header("VFX/Beam (optional)")]
-    [Tooltip("Charging VFX prefab instantiated on the caster while charging. Should be scalable by localScale.")]
-    [SerializeField] private GameObject chargingVFXPrefab = null;
-    [Tooltip("Optional beam prefab (contains MagicBeamScript). If set, ChannelController willinstantiate it.")]
-    [SerializeField] private GameObject beamPrefab = null;
-
-    public float MaxChargeTime => Mathf.Max(0.0001f, maxChargeTime);
-    public float MinReleasePercent => Mathf.Clamp01(minReleasePercent);
-    public bool AllowPartialRelease => allowPartialRelease;
-    public bool PreventMovement => preventMovement;
-    public GameObject ChargingVFXPrefab => chargingVFXPrefab;
-    public GameObject BeamPrefab => beamPrefab;
-
-    // Called by ChannelController each frame while channeling (chargePercent in 0..1)
-    public virtual void OnChannelTick(GameObject caster, float chargePercent) { }
-
-    // Called when the channel is released (chargePercent in 0..1). Implement the final effect here.
-    public abstract void OnRelease(GameObject caster, GameObject target, float chargePercent);
-
-    // Called when channeling is cancelled (didn't meet release conditions or interrupted)
-    public virtual void OnChannelCancel(GameObject caster) { }
-
-    // Override Cast to use channeled ability logic
-    public override void Cast(GameObject caster, GameObject target)
+    public abstract class ChanneledAbilityBase : AbilityBase
     {
-        // Channeled abilities trigger through ChannelController
-        // This is a fallback for immediate full-power release
-        OnRelease(caster, target, 1f);
+        [Header("Channeling Settings")]
+        [SerializeField] protected float channelDuration = 3f;
+        [SerializeField] protected float tickRate = 0.2f;
+        [SerializeField] protected bool canMoveWhileChanneling = false;
+        [SerializeField] protected bool preventMovement = true;
+        [SerializeField] protected float minReleasePercent = 0.3f;
+        [SerializeField] protected bool allowPartialRelease = true;
+
+        [Header("VFX")]
+        [SerializeField] protected GameObject chargingVFXPrefab;
+        [SerializeField] protected GameObject beamPrefab;
+
+        protected bool isChanneling;
+        protected float channelStartTime;
+        protected float lastTickTime;
+
+        // Public properties for ChannelController
+        public float MaxChargeTime => channelDuration;
+        public bool PreventMovement => preventMovement;
+        public float MinReleasePercent => minReleasePercent;
+        public bool AllowPartialRelease => allowPartialRelease;
+        public GameObject ChargingVFXPrefab => chargingVFXPrefab;
+        public GameObject BeamPrefab => beamPrefab;
+
+        // For ChannelController compatibility
+        public virtual bool CanCast(GameObject caster, GameObject target)
+        {
+            if (caster == null) return false;
+
+            // Check resource cost
+            var resourceSystem = caster.GetComponent<ResourceSystem>();
+            if (resourceSystem != null && resourceCost > 0)
+            {
+                if (!resourceSystem.HasResource(resourceCost))
+                    return false;
+            }
+
+            return true;
+        }
+
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            if (user == null) return;
+
+            isChanneling = true;
+            channelStartTime = Time.time;
+            lastTickTime = Time.time;
+
+            Debug.Log($"[ChanneledAbilityBase] Started channeling {abilityName}");
+        }
+
+        // For ChannelController - different signature!
+        public virtual void OnChannelTick(GameObject caster, float chargePercent)
+        {
+            // Override in derived classes
+            // This is called from ChannelController.Update()
+        }
+
+        // For AbilityUser/other systems
+        public void UpdateChannel(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            if (!isChanneling) return;
+
+            float elapsed = Time.time - channelStartTime;
+
+            if (elapsed >= channelDuration)
+            {
+                StopChannel(user, targetPosition, targetEnemy);
+                return;
+            }
+
+            if (Time.time >= lastTickTime + tickRate)
+            {
+                OnChannelTick(user, targetPosition, targetEnemy);
+                lastTickTime = Time.time;
+            }
+        }
+
+        // For AbilityUser - original signature
+        protected virtual void OnChannelTick(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            // Override in derived classes
+        }
+
+        public void StopChannel(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        {
+            if (!isChanneling) return;
+
+            float channelTime = Time.time - channelStartTime;
+            isChanneling = false;
+
+            OnRelease(user.gameObject, targetEnemy, channelTime);
+            Deactivate(user);
+        }
+
+        public virtual void OnChannelCancel(GameObject caster)
+        {
+            isChanneling = false;
+        }
+
+        public override void Deactivate(AbilityUser user)
+        {
+            isChanneling = false;
+        }
+
+        protected virtual void OnRelease(GameObject caster, GameObject target, float channelTime)
+        {
+            // Override in derived classes
+        }
+
+        public bool IsChanneling => isChanneling;
+        public float ChannelProgress => isChanneling ? (Time.time - channelStartTime) / channelDuration : 0f;
     }
 }

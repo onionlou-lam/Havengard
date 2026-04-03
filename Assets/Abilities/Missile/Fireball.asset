@@ -13,16 +13,42 @@ MonoBehaviour:
   m_Name: Fireball
   m_EditorClassIdentifier: 
   abilityName: Fireball
-  cooldown: 1.5
-  resourceCost: 5
+  description: Launch a Fireball at the pointed direction dealing damage to the enemy
+    and splash damage to surrounding enemies.
   icon: {fileID: 21300000, guid: c2541016858bb6f429ef6083f5f95395, type: 3}
-  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 1
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 5
+  resourceType: 0
+  baseDamage: 10
+  damagePerLevel: 5
+  statusEffects:
+  - {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
+  lifestealPercent: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  targetingMode: 0
+  castVFX: {fileID: 0}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 0}
+  impactSFX: {fileID: 0}
   projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
     type: 3}
   projectileSpeed: 3
   directHitDamage: 50
   friendlyFire: 0
+  enableHoming: 0
+  homingStrength: 5
+  homingDelay: 0
+  autoTarget: 1
   enableSplash: 1
   splashRadius: 2.5
   splashDamage: 10
+  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
+  maxStatusStacks: 1

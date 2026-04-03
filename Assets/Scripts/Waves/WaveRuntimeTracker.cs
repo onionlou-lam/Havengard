@@ -8,43 +8,56 @@ namespace Havengard.Waves
         public int WaveIndex { get; private set; }
         public WaveDefinition Definition { get; private set; }
 
-        private readonly HashSet<GameObject> alive = new HashSet<GameObject>();
-        public int AliveCount => alive.Count;
+        private int totalToSpawn;
+        private int spawnedCount;
+        private HashSet<GameObject> aliveEnemies = new HashSet<GameObject>();
 
-        public bool AllSpawned { get; private set; }
-
-        public WaveRuntimeTracker(int waveIndex, WaveDefinition def)
+        // ADD THIS CONSTRUCTOR
+        public WaveRuntimeTracker(int waveIndex, WaveDefinition definition)
         {
             WaveIndex = waveIndex;
-            Definition = def;
+            Definition = definition;
+
+            totalToSpawn = 0;
+            if (definition != null && definition.groups != null)
+            {
+                foreach (var group in definition.groups)
+                {
+                    if (group != null && group.entries != null)
+                    {
+                        foreach (var entry in group.entries)
+                        {
+                            totalToSpawn += entry.count;
+                        }
+                    }
+                }
+            }
         }
 
         public void MarkSpawned(GameObject enemy)
         {
-            if (enemy != null) alive.Add(enemy);
+            spawnedCount++;
+            aliveEnemies.Add(enemy);
         }
 
         public void MarkDead(GameObject enemy)
         {
-            if (enemy != null) alive.Remove(enemy);
+            aliveEnemies.Remove(enemy);
         }
 
         public void MarkAllSpawned()
         {
-            AllSpawned = true;
+            // All spawning complete
         }
 
+        // ADD THIS METHOD
         public bool IsComplete()
         {
-            switch (Definition.completeCondition)
-            {
-                case WaveCompleteCondition.AllSpawnedOnly:
-                    return AllSpawned;
-
-                case WaveCompleteCondition.AllSpawnedAndAllDead:
-                default:
-                    return AllSpawned && alive.Count == 0;
-            }
+            return spawnedCount >= totalToSpawn && aliveEnemies.Count == 0;
         }
+
+        public int AliveCount => aliveEnemies.Count;
+        public int SpawnedCount => spawnedCount;
+        public int TotalToSpawn => totalToSpawn;
     }
 }

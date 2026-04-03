@@ -240,7 +240,8 @@ public class ChannelController : MonoBehaviour
             ?.Invoke(ability, new object[] { gameObject });
 
         // Call the ability release implementation
-        ability.OnRelease(gameObject, null, percent);
+        var method = ability.GetType().GetMethod("OnRelease", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+        method?.Invoke(ability, new object[] { gameObject, null, percent });
 
         // Cleanup visuals
         CleanUpChannel();

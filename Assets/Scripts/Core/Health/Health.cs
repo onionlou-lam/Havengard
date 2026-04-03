@@ -1,6 +1,6 @@
-using System;
 using UnityEngine;
 using Havengard.Units;
+using System;
 
 namespace Havengard.Core.HealthSystem
 {
@@ -49,7 +49,6 @@ namespace Havengard.Core.HealthSystem
 
             int maxHP = Mathf.Max(1, startingMaxHealth);
 
-            // Pull from stats if available (and already initialised)
             var statsComponent = GetComponent<Havengard.Core.Character.StatsComponent>();
             if (statsComponent != null && statsComponent.CurrentStats != null && statsComponent.CurrentStats.MaxHP > 0)
             {
@@ -109,14 +108,22 @@ namespace Havengard.Core.HealthSystem
         public int Damage(int amount) => EnsureAndGet().Damage(amount);
         public int Heal(int amount) => EnsureAndGet().Heal(amount);
 
+        // ADD THESE COMPATIBILITY METHODS for ability system
+        public void TakeDamage(int amount, GameObject source)
+        {
+            Damage(amount);
+        }
+
+        public void TakeDamage(int amount)
+        {
+            Damage(amount);
+        }
+
         // -------- helpers --------
         public void SetFaction(Faction newFaction) => faction = newFaction;
 
         public void SetStartingMaxHealth(int value) => startingMaxHealth = Mathf.Max(1, value);
 
-        /// <summary>
-        /// Call after stats are updated (e.g., HeroInstance init / level up).
-        /// </summary>
         public void SetMaxHealthFromStats(bool refill = true)
         {
             var statsComponent = GetComponent<Havengard.Core.Character.StatsComponent>();

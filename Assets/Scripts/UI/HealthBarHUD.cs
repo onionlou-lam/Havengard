@@ -172,8 +172,8 @@ public class HealthBarHUD : MonoBehaviour
     {
         if (healthText == null || healthSystem == null) return;
 
-        int current = healthSystem.GetHealth();
-        int max = healthSystem.GetMaxHealth();
+        int current = healthSystem.CurrentHealth;
+        int max = healthSystem.MaxHealth;
         healthText.text = $"{current} / {max}";
     }
 }

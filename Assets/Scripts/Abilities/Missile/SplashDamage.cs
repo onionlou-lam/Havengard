@@ -65,7 +65,14 @@ namespace Havengard.Abilities
                 var hitHealth = hitTarget.GetComponent<IHealth>();
                 if (hitHealth != null && FactionUtility.CanDamage(sourceFaction, hitHealth, friendlyFire))
                 {
-                    StatusEffectApplier.ApplyEffect(hitTarget, statusEffect, maxStatusStacks);
+                    var applier = hitTarget.GetComponent<StatusEffectApplier>();
+                    if (applier != null)
+                    {
+                        for (int i = 0; i < maxStatusStacks; i++)
+                        {
+                            applier.ApplyStatusEffect(statusEffect, caster);
+                        }
+                    }
                 }
             }
 
@@ -97,7 +104,14 @@ namespace Havengard.Abilities
                     // Apply status effect
                     if (statusEffect != null)
                     {
-                        StatusEffectApplier.ApplyEffect(col.gameObject, statusEffect, maxStatusStacks);
+                        var applier = col.GetComponent<StatusEffectApplier>();
+                        if (applier != null)
+                        {
+                            for (int i = 0; i < maxStatusStacks; i++)
+                            {
+                                applier.ApplyStatusEffect(statusEffect, caster);
+                            }
+                        }
                     }
                 }
             }

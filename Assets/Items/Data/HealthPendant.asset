@@ -23,6 +23,7 @@ MonoBehaviour:
   dropWeight: 100
   effects:
   - {fileID: 11400000, guid: bb9d34c3bbc4db64197e839fe4aa078a, type: 2}
+  pickupSprite: {fileID: 21300000, guid: 700bddfa657425146b94237dfbce096a, type: 3}
   rarityColor: {r: 1, g: 1, b: 1, a: 1}
   pickupVFX: {fileID: 187428, guid: a09f02425a8307640b16f6427069403a, type: 3}
   pickupSFX: {fileID: 8300000, guid: a7efcec7fdb97b844b88522de59cc35f, type: 3}

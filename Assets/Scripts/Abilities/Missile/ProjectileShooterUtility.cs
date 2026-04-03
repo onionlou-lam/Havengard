@@ -18,6 +18,7 @@ namespace Havengard.Combat
         [SerializeField] private GameObject projectilePrefab; // Prefab should have Projectile component with VFX/SFX configured
         [SerializeField] private float projectileSpeed = 10f;
         [SerializeField] private int projectileDamage = 15;
+        [SerializeField] private float projectileLifetime = 5f;
         [SerializeField] private float spawnOffset = 0.5f;
         [SerializeField] private bool friendlyFire = false;
         [SerializeField] private LayerMask wallMask;
@@ -95,11 +96,39 @@ namespace Havengard.Combat
             var proj = projGO.GetComponent<Projectile>();
             if (proj != null)
             {
-                // VFX/SFX are configured on the projectile prefab
-                proj.Initialize(dir, faction, friendlyFire, projectileDamage, projectileSpeed);
+                // Use generic Initialize with callback
+                proj.Initialize(
+                    dir,
+                    projectileSpeed,
+                    projectileLifetime,
+                    gameObject,
+                    (hit) => OnProjectileHit(projGO, hit)
+                );
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Called when our projectile hits something.
+        /// </summary>
+        protected virtual void OnProjectileHit(GameObject projectile, GameObject hit)
+        {
+            if (hit == null) return;
+
+            var iHealth = hit.GetComponent<IHealth>();
+            if (iHealth != null && FactionUtility.CanDamage(faction, iHealth, friendlyFire))
+            {
+                // Get the Health component to call TakeDamage
+                var health = hit.GetComponent<Health>();
+                if (health != null)
+                {
+                    health.TakeDamage(projectileDamage, gameObject);
+                }
+            }
+
+            // Destroy the projectile
+            Destroy(projectile);
         }
 
         /// <summary>

@@ -24,7 +24,10 @@ namespace Havengard.Abilities
             {
                 foreach (var effect in statusEffects)
                 {
-                    total += effect.GetLifestealPercent();
+                    if (effect.Data != null)
+                    {
+                        total += effect.Data.lifestealPercent;
+                    }
                 }
             }
 

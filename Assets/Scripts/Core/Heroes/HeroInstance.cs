@@ -45,7 +45,7 @@ namespace Havengard.Core.Heroes
         public EXPSystem ExpSystem => expSystem;
         public bool IsOnQuest => isOnQuest;
 
-        public Stats GetStats() => (statsComponent != null) ? statsComponent.CurrentStats : null;
+        public HeroStats GetStats() => (statsComponent != null) ? statsComponent.CurrentStats : null;
 
         private void Awake()
         {

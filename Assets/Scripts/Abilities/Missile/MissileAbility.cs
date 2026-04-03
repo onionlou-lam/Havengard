@@ -1,117 +1,160 @@
-using Havengard.Core.Character;
-using Havengard.Core.HealthSystem;
-using Havengard.Statuses;
-using Havengard.Units;
+using Havengard.Combat;
 using UnityEngine;
 
 namespace Havengard.Abilities
 {
-    [CreateAssetMenu(menuName = "Havengard/Abilities/Missile Ability")]
+    [CreateAssetMenu(menuName = "Havengard/Abilities/Missile/Projectile Ability")]
     public class MissileAbility : AbilityBase
     {
-        [Header("Projectile")]
+        [Header("Projectile Settings")]
         [SerializeField] private GameObject projectilePrefab;
-        [SerializeField] private float projectileSpeed = 10f;
-        [SerializeField] private int directHitDamage = 25;
-        [SerializeField] private bool friendlyFire = false;
-
-        [Header("Homing")]
-        [SerializeField] private bool enableHoming = false;
-        [Tooltip("How aggressively the projectile turns toward target (higher = sharper turns)")]
+        [SerializeField] private float projectileSpeed = 20f;
+        [SerializeField] private float projectileLifetime = 5f;
+        [SerializeField] private bool homing = false;
         [SerializeField] private float homingStrength = 5f;
-        [Tooltip("Delay in seconds before homing activates (0 = immediate)")]
-        [SerializeField] private float homingDelay = 0f;
-        [Tooltip("If true, will automatically find nearest valid target")]
-        [SerializeField] private bool autoTarget = true;
 
-        [Header("Splash / AoE")]
-        [SerializeField] private bool enableSplash = true;
-        [SerializeField] private float splashRadius = 2.5f;
-        [SerializeField] private int splashDamage = 10;
+        [Header("Visual Effects")]
+        [SerializeField] private float trailTime = 0.5f;
+        [SerializeField] private float projectileScale = 1f;
 
-        [Header("Status Effects")]
-        [SerializeField] private StatusEffectData statusEffect;
-        [SerializeField] private int maxStatusStacks = 1;
+        [Header("Area of Effect")]
+        [SerializeField] private bool hasAOE = false;
+        [SerializeField] private float aoeRadius = 3f;
+        [SerializeField] private float aoeDamageMultiplier = 0.5f;
 
-        // REMOVED 'override' - not in base class
-        public bool CanCast(GameObject caster, GameObject target)
+        [Header("Multishot")]
+        [SerializeField] private int projectileCount = 1;
+        [SerializeField] private float spreadAngle = 15f;
+
+        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
-            return projectilePrefab != null;
+            if (user == null) return;
+
+            Vector3 direction = targetEnemy != null
+                ? (targetEnemy.transform.position - user.transform.position).normalized
+                : (targetPosition - user.transform.position).normalized;
+
+            if (castVFX != null)
+            {
+                GameObject vfx = Instantiate(castVFX, user.transform.position, Quaternion.identity);
+                Destroy(vfx, 2f);
+            }
+
+            if (castSFX != null)
+            {
+                AudioSource.PlayClipAtPoint(castSFX, user.transform.position);
+            }
+
+            for (int i = 0; i < projectileCount; i++)
+            {
+                float angle = 0f;
+                if (projectileCount > 1)
+                {
+                    float angleStep = spreadAngle / (projectileCount - 1);
+                    angle = -spreadAngle / 2f + (angleStep * i);
+                }
+
+                Vector3 spreadDirection = Quaternion.Euler(0, 0, angle) * direction;
+                SpawnProjectile(user, user.transform.position, spreadDirection, targetEnemy);
+            }
         }
 
-        // REMOVED 'override' - not in base class
-        public void Cast(GameObject caster, GameObject target)
+        private void SpawnProjectile(AbilityUser user, Vector3 position, Vector3 direction, GameObject target)
         {
             if (projectilePrefab == null) return;
 
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = 0;
+            GameObject projectileObj = Instantiate(projectilePrefab, position, Quaternion.identity);
 
-            Vector2 dir = (mouseWorld - caster.transform.position).normalized;
-
-            var casterHealth = caster.GetComponent<IHealth>();
-            var casterFaction = casterHealth != null ? casterHealth.GetFaction() : Faction.Neutral;
-
-            // Use stats if present, else fall back to base damage
-            int attackPower = directHitDamage;
-            var stats = caster.GetComponent<StatsComponent>();
-            if (stats != null && stats.CurrentStats != null)
-                attackPower = Mathf.Max(0, stats.CurrentStats.Attack);
-
-            // Spawn projectile
-            var projGO = Instantiate(projectilePrefab, caster.transform.position, Quaternion.identity);
-
-            var projectile = projGO.GetComponent<Projectile>();
-            if (projectile == null)
+            if (projectileScale != 1f)
             {
-                Debug.LogError($"[MissileAbility] Projectile prefab '{projectilePrefab.name}' is missing Projectile component.");
-                Destroy(projGO);
-                return;
+                projectileObj.transform.localScale = Vector3.one * projectileScale;
             }
 
-            // Initialize projectile
-            projectile.Initialize(dir, casterFaction, friendlyFire, attackPower, projectileSpeed, caster);
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            projectileObj.transform.rotation = Quaternion.Euler(0, 0, angle);
 
-            // Enable homing if configured
-            if (enableHoming)
+            var projectile = projectileObj.GetComponent<Projectile>();
+            if (projectile != null)
             {
-                GameObject homingTarget = autoTarget ? null : target;
-                projectile.EnableHoming(homingStrength, homingDelay, homingTarget);
-            }
-
-            // Setup splash damage if enabled
-            if (enableSplash || statusEffect != null)
-            {
-                var splash = projGO.GetComponent<SplashDamage>();
-                if (splash == null) splash = projGO.AddComponent<SplashDamage>();
-
-                splash.Initialize(
-                    caster,
-                    enableSplash ? splashRadius : 0f,
-                    casterFaction,
-                    friendlyFire,
-                    enableSplash ? splashDamage : 0,
-                    statusEffect,
-                    maxStatusStacks
+                projectile.Initialize(
+                    direction,
+                    projectileSpeed,
+                    projectileLifetime,
+                    user.gameObject,
+                    (hit) => OnProjectileHit(projectileObj, hit, user)
                 );
 
-                // Wire up impact event
-                projectile.OnImpact += (impactPoint, collider) =>
+                Color damageColor = GetDamageTypeColor();
+                projectile.ConfigureVisuals(damageColor, trailTime);
+
+                if (homing && target != null)
                 {
-                    splash.HandleProjectileImpact(impactPoint, collider?.gameObject);
-                };
+                    projectile.SetHomingTarget(target.transform, homingStrength);
+                }
             }
         }
 
-        // ADD: Implement abstract methods from AbilityBase
-        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        protected virtual void OnProjectileHit(GameObject projectile, GameObject target, AbilityUser user)
         {
-            Cast(user.gameObject, targetEnemy);
+            if (target == null || user == null) return;
+
+            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            if (health != null)
+            {
+                float damage = CalculateDamage(user.gameObject);
+                health.TakeDamage((int)damage, user.gameObject);
+            }
+
+            if (hasAOE)
+            {
+                ApplyAOEDamage(target.transform.position, user.gameObject);
+            }
+
+            if (impactVFX != null)
+            {
+                GameObject vfx = Instantiate(impactVFX, projectile.transform.position, Quaternion.identity);
+                Destroy(vfx, 2f);
+            }
+
+            if (impactSFX != null)
+            {
+                AudioSource.PlayClipAtPoint(impactSFX, projectile.transform.position);
+            }
+
+            Destroy(projectile);
+        }
+
+        private void ApplyAOEDamage(Vector3 center, GameObject caster)
+        {
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, aoeRadius, targetLayers);
+
+            foreach (var hit in hits)
+            {
+                var health = hit.GetComponent<Havengard.Core.HealthSystem.Health>();
+                if (health != null)
+                {
+                    float aoeDamage = CalculateDamage(caster) * aoeDamageMultiplier;
+                    health.TakeDamage((int)aoeDamage, caster);
+                }
+            }
+        }
+
+        private Color GetDamageTypeColor()
+        {
+            return damageType switch
+            {
+                DamageType.Fire => new Color(1f, 0.3f, 0f),
+                DamageType.Frost => new Color(0.3f, 0.8f, 1f),
+                DamageType.Lightning => new Color(1f, 1f, 0.3f),
+                DamageType.Holy => new Color(1f, 0.9f, 0.3f),
+                DamageType.Physical => new Color(0.8f, 0.8f, 0.8f),
+                _ => Color.white
+            };
         }
 
         public override void Deactivate(AbilityUser user)
         {
-            // Projectiles handle their own cleanup
+            // Missiles don't need explicit deactivation
         }
     }
 }

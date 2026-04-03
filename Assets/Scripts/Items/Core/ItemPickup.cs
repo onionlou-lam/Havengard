@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Havengard.UI; // Add this
+using Havengard.UI;
 
 namespace Havengard.Items
 {
@@ -36,9 +36,13 @@ namespace Havengard.Items
             _itemData = data;
             itemLevel = level;
             
-            if (spriteRenderer != null && data != null && data.icon != null)
+            if (spriteRenderer != null && data != null)
             {
-                spriteRenderer.sprite = data.icon;
+                // Use pickupSprite if available, otherwise keep prefab's sprite
+                if (data.pickupSprite != null)
+                {
+                    spriteRenderer.sprite = data.pickupSprite;
+                }
                 spriteRenderer.color = data.rarityColor;
             }
             
@@ -46,7 +50,6 @@ namespace Havengard.Items
             {
                 GameObject vfx = Instantiate(data.pickupVFX, transform.position, Quaternion.identity);
                 
-                // Auto-destroy VFX after particle system completes
                 var ps = vfx.GetComponent<ParticleSystem>();
                 if (ps != null)
                 {
@@ -72,8 +75,9 @@ namespace Havengard.Items
 
         private void Update()
         {
+            // Bob animation - only affects Y position, X stays fixed to prevent overlap
             float newY = startPosition.y + Mathf.Sin(Time.time * _bobSpeed) * _bobHeight;
-            transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+            transform.position = new Vector3(startPosition.x, newY, transform.position.z);
             
             transform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime);
             
@@ -96,11 +100,16 @@ namespace Havengard.Items
                 float distance = Vector3.Distance(transform.position, playerTransform.position);
                 if (distance <= pickupRadius)
                 {
-                    transform.position = Vector3.MoveTowards(
+                    // Move towards player, but update startPosition to maintain spacing with other items
+                    Vector3 newPos = Vector3.MoveTowards(
                         transform.position, 
                         playerTransform.position, 
                         magnetSpeed * Time.deltaTime
                     );
+                    
+                    // Update both current and start position so bobbing follows
+                    startPosition = new Vector3(newPos.x, startPosition.y, newPos.z);
+                    transform.position = newPos;
                 }
                 else
                 {

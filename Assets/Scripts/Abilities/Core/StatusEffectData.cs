@@ -1,43 +1,30 @@
 ﻿using UnityEngine;
 
-namespace Havengard.Statuses
+namespace Havengard.Abilities
 {
-    [CreateAssetMenu(menuName = "Havengard/Statuses/Status Effect")]
+    [CreateAssetMenu(menuName = "Havengard/Abilities/Status Effect")]
     public class StatusEffectData : ScriptableObject
     {
-        [Header("Identity")]
-        public string effectName = "New Status";
+        public string effectName = "New Effect";
+        public Sprite icon;
 
         [Header("Duration")]
-        public float duration = 3f;
-
-        [Header("Stacking")]
-        public bool stackable = false;
-        [Min(1)] public int maxStacks = 1;
-        public bool refreshDurationOnReapply = true;
+        public float duration = 5f;
+        public bool isPermanent = false;
 
         [Header("Damage Over Time")]
-        public bool causesDamage = false;
-        public int tickDamage = 5;
         public float tickInterval = 1f;
+        public float damagePerTick = 5f;
 
-        [Header("Crowd Control")]
-        public bool causesStun = false;
-        public bool causesRoot = false;
-        public bool causesSilence = false;
-
-        [Header("Stat Modifiers (multipliers)")]
-        public float moveSpeedMultiplier = 1f;
-        public float attackSpeedMultiplier = 1f;
-        public float damageMultiplier = 1f;
-        public float defenseMultiplier = 1f;
+        [Header("Stat Modifiers")]
+        public bool modifiesMovementSpeed = false;
+        public float movementSpeedMultiplier = 1f;
 
         [Header("Lifesteal")]
-        [Tooltip("Percentage of damage dealt converted to healing (0.0 to 1.0). Example: 0.2 = 20% lifesteal")]
-        [Range(0f, 1f)] public float lifestealPercent = 0f;
+        public float lifestealPercent = 0f; // 0.0 to 1.0 (0% to 100%)
 
-        [Header("VFX / SFX")]
-        public GameObject attachVFX;
-        public AudioClip applySFX;
+        [Header("Visual")]
+        public GameObject vfxPrefab;
+        public Color tintColor = Color.white;
     }
 }

@@ -46,6 +46,7 @@ namespace Havengard.Items
         public List<ItemEffect> effects;
 
         [Header("Visual")]
+        public Sprite pickupSprite;  // ADD THIS - the in-game sprite without background
         public Color rarityColor = Color.white;
         public GameObject pickupVFX;
         public AudioClip pickupSFX;

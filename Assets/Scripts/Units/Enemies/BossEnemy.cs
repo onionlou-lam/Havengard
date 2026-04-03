@@ -30,11 +30,38 @@ namespace Havengard.Units
             GameObject proj = Instantiate(projectilePrefab, transform.position, rotation);
             if (proj.TryGetComponent<Projectile>(out var projectile))
             {
-                // VFX/SFX are configured on the prefab itself
-                projectile.Initialize(dir, GetMyFaction(), false, bossProjectileDamage, projectileSpeed);
+                // Use generic Initialize with callback
+                projectile.Initialize(
+                    dir,
+                    projectileSpeed,
+                    projectileLifetime,
+                    gameObject,
+                    (hit) => OnBossProjectileHit(proj, hit)
+                );
             }
 
             lastAttackTime = Time.time;
+        }
+
+        /// <summary>
+        /// Boss-specific projectile hit logic. Uses boss damage instead of base damage.
+        /// </summary>
+        protected virtual void OnBossProjectileHit(GameObject projectile, GameObject hit)
+        {
+            if (hit == null) return;
+
+            var iHealth = hit.GetComponent<IHealth>();
+            if (iHealth != null && FactionUtility.CanDamage(GetMyFaction(), iHealth, false))
+            {
+                var health = hit.GetComponent<Health>();
+                if (health != null)
+                {
+                    health.TakeDamage(bossProjectileDamage, gameObject);
+                }
+            }
+
+            // Destroy the projectile
+            Destroy(projectile);
         }
 
         protected override void HandleDeath()

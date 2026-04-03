@@ -3,22 +3,22 @@ using System;
 
 namespace Havengard.Resources
 {
-    /// <summary>
-    /// Shared gold pool for recruiting, upgrades, and economy.
-    /// Should be stored in a persistent GameObject (GameManager).
-    /// </summary>
     public class GoldSystem : MonoBehaviour
     {
         public static GoldSystem Instance { get; private set; }
 
         public event Action<int> OnGoldChanged;
 
-        [SerializeField] private int startingGold = 100;
+        [SerializeField] private int startingGold = 0;
         public int Current { get; private set; }
 
         private void Awake()
         {
-            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
             Instance = this;
             DontDestroyOnLoad(gameObject);
             Current = startingGold;

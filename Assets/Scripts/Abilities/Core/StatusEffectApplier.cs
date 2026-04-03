@@ -1,30 +1,61 @@
+using Havengard.Statuses;
+using System.Collections.Generic;
 using UnityEngine;
-using Havengard.Core.HealthSystem;
 
-namespace Havengard.Statuses
+namespace Havengard.Abilities
 {
-    public static class StatusEffectApplier
+    /// <summary>
+    /// Component that manages status effects on a game object
+    /// </summary>
+    public class StatusEffectApplier : MonoBehaviour
     {
-        /// <summary>
-        /// Applies an effect to a target gameObject (expects IHealth on the object).
-        /// If an instance exists, it refreshes or stacks (with optional stack cap).
-        /// </summary>
-        public static void ApplyEffect(GameObject target, StatusEffectData effect, int maxStacks = int.MaxValue)
+        private List<StatusEffectInstance> activeEffects = new List<StatusEffectInstance>();
+
+        private void Update()
         {
-            if (target == null || effect == null) return;
-
-            var health = target.GetComponent<IHealth>();
-            if (health == null) return;
-
-            var existing = target.GetComponent<StatusEffectInstance>();
-            if (existing != null)
+            // Update all active effects
+            for (int i = activeEffects.Count - 1; i >= 0; i--)
             {
-                existing.RefreshOrStack(effect, maxStacks);
-                return;
+                if (activeEffects[i].IsExpired())
+                {
+                    activeEffects.RemoveAt(i);
+                }
+                else
+                {
+                    activeEffects[i].Update(Time.deltaTime);
+                }
             }
-
-            var instance = target.AddComponent<StatusEffectInstance>();
-            instance.Apply(effect, health);
         }
+
+        /// <summary>
+        /// Apply a status effect to this game object
+        /// </summary>
+        public void ApplyStatusEffect(StatusEffectData data, GameObject source)
+        {
+            if (data == null) return;
+
+            var instance = new StatusEffectInstance(data, gameObject, source);
+            activeEffects.Add(instance);
+
+            Debug.Log($"[StatusEffectApplier] Applied {data.effectName} to {gameObject.name}");
+        }
+
+        /// <summary>
+        /// Remove all effects of a specific type
+        /// </summary>
+        public void RemoveEffect(string effectName)
+        {
+            activeEffects.RemoveAll(e => e.Data.effectName == effectName);
+        }
+
+        /// <summary>
+        /// Clear all active effects
+        /// </summary>
+        public void ClearAllEffects()
+        {
+            activeEffects.Clear();
+        }
+
+        public IReadOnlyList<StatusEffectInstance> ActiveEffects => activeEffects;
     }
 }

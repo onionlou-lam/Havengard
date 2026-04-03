@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using Havengard.Items;
-using Havengard.Core.Heroes;
+using Havengard.Stats;
 using Havengard.Resources;
 
 namespace Havengard.UI
@@ -79,13 +79,13 @@ namespace Havengard.UI
             // Setup button listeners
             if (upgradeItemButton != null)
                 upgradeItemButton.onClick.AddListener(OnUpgradeItemClicked);
-            
+
             if (levelUpButton != null)
                 levelUpButton.onClick.AddListener(OnLevelUpClicked);
-            
+
             if (buildButton != null)
                 buildButton.onClick.AddListener(OnBuildClicked);
-            
+
             if (startWaveButton != null)
                 startWaveButton.onClick.AddListener(OnStartWaveClicked);
 
@@ -297,7 +297,7 @@ namespace Havengard.UI
         private void OnUpgradeItemClicked()
         {
             Debug.Log("[WaveHUDButtons] Upgrade Item button clicked");
-            
+
             // Open item upgrade UI
             var upgradeUI = FindFirstObjectByType<ItemUpgradeUI>();
             if (upgradeUI != null)
@@ -313,7 +313,7 @@ namespace Havengard.UI
         private void OnLevelUpClicked()
         {
             Debug.Log("[WaveHUDButtons] Level Up button clicked");
-            
+
             // Open stat allocation UI
             var statUI = FindFirstObjectByType<StatAllocationUI>();
             if (statUI != null)
@@ -335,7 +335,7 @@ namespace Havengard.UI
         private void OnStartWaveClicked()
         {
             Debug.Log($"[WaveHUDButtons] Start Wave button clicked - Starting wave {nextWaveIndex}");
-            
+
             if (waveManager != null)
             {
                 // This will need to be adjusted based on your WaveManager API
