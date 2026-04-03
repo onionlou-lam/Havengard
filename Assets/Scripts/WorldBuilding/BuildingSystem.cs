@@ -1,52 +1,64 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class BuildingSystem : MonoBehaviour
 {
-    public static BuildingSystem current;
+    public static BuildingSystem _currentBuildingSystem;
 
     public GridLayout gridLayout;
-    private Grid grid;
+    private Grid _grid;
     [SerializeField] private Tilemap MainTilemap;
-    [SerializeField] private TileBase whiteTile;
+    [SerializeField] private TileBase buildableTile;
 
-    public GameObject prefab1;
-    public GameObject prefab2;
-    public GameObject frostTower;
+    [SerializeField] private GameObject[] placeableObjects;
+    private GameObject _selectedObject;
 
-    private PlaceableObject objectToPlace;
-    public bool isPlacingObject;
+    private PlaceableObject _objectToPlace;
+    private GameObject _objectPlacing;
+    private bool _isPlacingObject;
+    private Dictionary<Vector3Int, bool> _placedObjects = new Dictionary<Vector3Int, bool>();
 
     #region Unity methods
     private void Awake()
     {
-        current = this;
-        grid = gridLayout.gameObject.GetComponent<Grid>();
+        _currentBuildingSystem = this;
+        _grid = gridLayout.gameObject.GetComponent<Grid>();
+        _selectedObject = placeableObjects[0];
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKeyDown(KeyCode.F) && !_isPlacingObject)
         {
-            InitializeWithObject(frostTower);
-            isPlacingObject = true;
+            InitializeWithObject(_selectedObject);
+            _isPlacingObject = true;
         }
-        if (Input.GetKeyDown(KeyCode.V))
+        if (_isPlacingObject)
         {
-            InitializeWithObject(prefab2);
-        }
-        if(isPlacingObject)
-        {
+            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            // Attemt to place building
             if (Input.GetMouseButtonDown(0))
             {
-                isPlacingObject = false;
-                objectToPlace = null;
+                Vector3Int cellPosition = MainTilemap.WorldToCell(mousePosition);
+                TileBase tile = MainTilemap.GetTile(cellPosition);
+                
+                if (tile != null && !_placedObjects.ContainsKey(cellPosition))
+                {
+                    _isPlacingObject = false;
+                    _objectToPlace = null;
+                    _placedObjects[cellPosition] = true;
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Destroy(_objectPlacing);
+                _isPlacingObject = false;
             }
             else
             {
-                Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3 position = SnapCoordinateToGrid(mousePosition);
-                objectToPlace.transform.position = position;
+                _objectToPlace.transform.position = position - _objectToPlace.getBuildingCenter();
             }
         }
     }
@@ -58,7 +70,8 @@ public class BuildingSystem : MonoBehaviour
     public static Vector3 GetMouseWorldPosition()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit)) {
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
             Debug.Log(hit);
             return hit.point;
         };
@@ -68,7 +81,7 @@ public class BuildingSystem : MonoBehaviour
     public Vector3 SnapCoordinateToGrid(Vector3 position)
     {
         Vector3Int cellPos = gridLayout.WorldToCell(position);
-        position = grid.GetCellCenterWorld(cellPos);
+        position = _grid.GetCellCenterWorld(cellPos);
         return position;
     }
     #endregion
@@ -79,9 +92,10 @@ public class BuildingSystem : MonoBehaviour
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 position = SnapCoordinateToGrid(mousePosition);
-        GameObject obj = Instantiate(prefab, position, Quaternion.identity);
-        objectToPlace = obj.GetComponent<PlaceableObject>();
-        obj.AddComponent<ObjectDrag>();
+        _objectPlacing = Instantiate(prefab, position, Quaternion.identity);
+        _objectToPlace = _objectPlacing.GetComponent<PlaceableObject>();
+        _objectPlacing.transform.position += _objectToPlace.getBuildingCenter();
+        _objectPlacing.AddComponent<ObjectDrag>();
     }
     #endregion
 
