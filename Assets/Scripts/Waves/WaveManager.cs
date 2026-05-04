@@ -14,9 +14,11 @@ namespace Havengard.Waves
 
         [Header("Behaviour")]
         [SerializeField] private bool autoStartOnEnable = true;
+        [SerializeField] private bool usePreWavePhase = true;
 
         [Header("References")]
         [SerializeField] private WaveSpawner spawner;
+        [SerializeField] private PreWavePhase preWavePhase;
 
         [Tooltip("Optional receiver for Gold/EXP/Celestium wave rewards.")]
         [SerializeField] private MonoBehaviour rewardReceiverBehaviour;
@@ -29,6 +31,7 @@ namespace Havengard.Waves
         private int currentWaveIndex = -1;
         private WaveRuntimeTracker currentTracker;
         private Coroutine runRoutine;
+        private bool waitingForPreWavePhaseToEnd = false;
 
         public bool IsRunning => runRoutine != null;
         public int CurrentWaveIndex => currentWaveIndex;
@@ -44,6 +47,26 @@ namespace Havengard.Waves
 
             if (hudButtons == null)
                 hudButtons = FindFirstObjectByType<Havengard.UI.WaveHUDButtons>();
+
+            // Auto-find PreWavePhase if not assigned
+            if (preWavePhase == null)
+                preWavePhase = FindFirstObjectByType<PreWavePhase>();
+
+            // Subscribe to PreWavePhase events
+            if (preWavePhase != null)
+            {
+                preWavePhase.OnPhaseEnded.AddListener(OnPreWavePhaseEnded);
+                Debug.Log("[WaveManager] Subscribed to PreWavePhase events");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from events
+            if (preWavePhase != null)
+            {
+                preWavePhase.OnPhaseEnded.RemoveListener(OnPreWavePhaseEnded);
+            }
         }
 
         private void OnEnable()
@@ -70,6 +93,7 @@ namespace Havengard.Waves
             runRoutine = null;
             currentWaveIndex = -1;
             currentTracker = null;
+            waitingForPreWavePhaseToEnd = false;
         }
 
         private IEnumerator RunNight()
@@ -82,35 +106,58 @@ namespace Havengard.Waves
                 var wave = waveSet.waves[i];
                 if (wave == null) continue;
 
-                // Notify HUD: wave starting
-                if (hudButtons != null)
-                    hudButtons.StartWavePhase(i);
-
-                // Start condition
-                float delay = Mathf.Max(0f, wave.startDelay);
-
-                if (wave.startCondition == WaveStartCondition.TimerAfterPreviousStart)
+                // === PRE-WAVE PHASE ===
+                if (usePreWavePhase && preWavePhase != null)
                 {
-                    // Timer begins immediately (wave starts regardless of previous completion)
-                    if (delay > 0f) yield return new WaitForSeconds(delay);
+                    Debug.Log($"[WaveManager] Starting pre-wave phase for wave {i + 1}");
+                    
+                    // Start the pre-wave phase
+                    preWavePhase.StartPhase(i + 1);
+                    waitingForPreWavePhaseToEnd = true;
+
+                    // Wait until player clicks "Start Wave" button
+                    yield return new WaitUntil(() => !waitingForPreWavePhaseToEnd);
+                    
+                    Debug.Log($"[WaveManager] Pre-wave phase ended, starting wave {i + 1}");
                 }
                 else
                 {
-                    // Timer after previous completion
-                    if (i > 0)
-                    {
-                        // ensure previous wave tracker complete
-                        while (currentTracker != null && !currentTracker.IsComplete())
-                            yield return null;
-                    }
+                    // Fallback to old behavior if pre-wave phase is disabled
+                    // Notify HUD: wave starting
+                    if (hudButtons != null)
+                        hudButtons.StartWavePhase(i);
 
-                    if (delay > 0f) yield return new WaitForSeconds(delay);
+                    // Start condition
+                    float delay = Mathf.Max(0f, wave.startDelay);
+
+                    if (wave.startCondition == WaveStartCondition.TimerAfterPreviousStart)
+                    {
+                        // Timer begins immediately (wave starts regardless of previous completion)
+                        if (delay > 0f) yield return new WaitForSeconds(delay);
+                    }
+                    else
+                    {
+                        // Timer after previous completion
+                        if (i > 0)
+                        {
+                            // ensure previous wave tracker complete
+                            while (currentTracker != null && !currentTracker.IsComplete())
+                                yield return null;
+                        }
+
+                        if (delay > 0f) yield return new WaitForSeconds(delay);
+                    }
                 }
 
+                // === WAVE EXECUTION ===
                 currentWaveIndex = i;
                 currentTracker = new WaveRuntimeTracker(i, wave);
 
                 Debug.Log($"[WaveManager] Starting wave {i + 1}/{waveSet.waves.Length}: {wave.waveName}");
+
+                // Notify HUD: wave starting (if not using pre-wave phase)
+                if (!usePreWavePhase && hudButtons != null)
+                    hudButtons.StartWavePhase(i);
 
                 // Spawn wave (async)
                 yield return StartCoroutine(spawner.SpawnWave(wave, currentTracker, HandleEnemySpawned));
@@ -128,13 +175,6 @@ namespace Havengard.Waves
                 // Notify HUD: wave ended
                 if (hudButtons != null)
                     hudButtons.EndWavePhase();
-
-                // Wait for player to manually start next wave (or timeout)
-                // The HUD button will call StartNight() again when clicked
-                if (i < waveSet.waves.Length - 1)
-                {
-                    yield return new WaitUntil(() => !IsRunning);
-                }
             }
 
             Debug.Log("[WaveManager] Night complete (all waves finished).");
@@ -145,23 +185,44 @@ namespace Havengard.Waves
                 hudButtons.EndWavePhase();
         }
 
+        /// <summary>
+        /// Called when the pre-wave phase ends (player clicked "Start Wave")
+        /// </summary>
+        private void OnPreWavePhaseEnded()
+        {
+            Debug.Log("[WaveManager] Pre-wave phase ended callback received");
+            waitingForPreWavePhaseToEnd = false;
+        }
+
+        /// <summary>
+        /// Called when an enemy is spawned - registers it with the tracker and hooks up death event
+        /// </summary>
         private void HandleEnemySpawned(GameObject enemy)
         {
-            // We need to detect death to decrement alive count
-            // You already use Health + OnDeath for enemies.
+            if (currentTracker == null || enemy == null) return;
+
+            // Hook up the death event to track when enemies die
             var health = enemy.GetComponent<Havengard.Core.HealthSystem.Health>();
             if (health != null)
             {
-                health.OnDeath += () =>
-                {
-                    if (currentTracker != null)
-                        currentTracker.MarkDead(enemy);
-                };
+                health.OnDeath += () => HandleEnemyDeath(enemy);
+                Debug.Log($"[WaveManager] Registered death listener for enemy: {enemy.name}");
             }
             else
             {
-                // If no Health component, still allow wave to finish as "all spawned only"
-                Debug.LogWarning($"[WaveManager] Spawned enemy {enemy.name} has no Health component.");
+                Debug.LogWarning($"[WaveManager] Enemy {enemy.name} has no Health component!");
+            }
+        }
+
+        /// <summary>
+        /// Called when an enemy dies - notifies the tracker
+        /// </summary>
+        private void HandleEnemyDeath(GameObject enemy)
+        {
+            if (currentTracker != null && enemy != null)
+            {
+                currentTracker.MarkDead(enemy);
+                Debug.Log($"[WaveManager] Enemy died: {enemy.name}. Remaining: {currentTracker.AliveCount}/{currentTracker.SpawnedCount}");
             }
         }
     }

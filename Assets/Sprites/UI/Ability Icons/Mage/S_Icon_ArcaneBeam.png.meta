@@ -1,12 +1,5 @@
 fileFormatVersion: 2
-guid: 61255f63ba0124743bb75b268a781fe6
-AssetOrigin:
-  serializedVersion: 1
-  productId: 229460
-  packageName: 5800 Fantasy RPG Icons Pack
-  packageVersion: 1.4
-  assetPath: Assets/Fantasy RPG Icons Pack/RPG Buff skill icons/PNG/4.png
-  uploadId: 702879
+guid: 48285df0ae9eb844d9d3996159c35256
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}

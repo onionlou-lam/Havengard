@@ -907,7 +907,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilities:
   - {fileID: 11400000, guid: 5b6d7990bb113254aa5b18016a5a4385, type: 2}
-  resourceComponent: {fileID: 0}
+  resourceSystem: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
 --- !u!195 &5189658394711236089
@@ -960,6 +960,9 @@ MonoBehaviour:
   flashDuration: 0.2
   flashCount: 2
   agent: {fileID: 0}
+  unitName: Unit
+  faction: 2
+  maxHealth: 100
   attackAbility: {fileID: 11400000, guid: 5b6d7990bb113254aa5b18016a5a4385, type: 2}
 --- !u!114 &4871037729081599582
 MonoBehaviour:
@@ -1030,6 +1033,12 @@ MonoBehaviour:
   dropRadius: 1
   dropOnDeath: 1
   guaranteedDrops: []
+  minItemSpacing: 0.5
+  maxSpacingAttempts: 15
+  overlapCheckRadius: 0.3
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &7996834636956160356
 MonoBehaviour:
   m_ObjectHideFlags: 0

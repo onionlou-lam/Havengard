@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 441978}
   - component: {fileID: 12018526}
   m_Layer: 11
-  m_Name: FrostBeamLineRenderer
+  m_Name: PE_FrostBeamLineRenderer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

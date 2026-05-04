@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 860fef899a4e7904e95325cf910f6129, type: 3}
+  m_Name: ArcaneBeam
+  m_EditorClassIdentifier: 
+  abilityName: Arcane Beam
+  description: 
+  icon: {fileID: 21300000, guid: 48285df0ae9eb844d9d3996159c35256, type: 3}
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 2
+  resourceCost: 5
+  baseDamage: 80
+  damagePerLevel: 12
+  lifestealPercent: 0
+  range: 15
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 448
+  requiresTarget: 0
+  castVFX: {fileID: 158756, guid: 8396fce600232da4dbbf9a8c440e40ba, type: 3}
+  impactVFX: {fileID: 175948, guid: d6fd535eb4c308f45b5c78773315e81c, type: 3}
+  castSFX: {fileID: 8300000, guid: 73cc4036a5bfa204d83d13119b4ab44a, type: 3}
+  impactSFX: {fileID: 8300000, guid: e0cd8d02ee159ee4ab2be506b7a17c39, type: 3}
+  channelDuration: 3
+  tickRate: 0.3
+  canMoveWhileChanneling: 1
+  preventMovement: 1
+  minReleasePercent: 0.05
+  allowPartialRelease: 1
+  chargingVFXPrefab: {fileID: 159362, guid: 0d9b0e27a2944614abe85db3c25b3d74, type: 3}
+  beamPrefab: {fileID: 168570, guid: 1f7452042ec77d94ea7cece5cc4816fc, type: 3}
+  beamWidth: 1
+  beamMaxDistance: 30
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 1792
+  damagePerTickMultiplier: 0.4
+  rampDamageWithCharge: 1
+  minDamagePercent: 0.4
+  minTimeBetweenTicks: 0.4
+  frostSlowPercent: 1
+  fireBurnDamagePerTick: 0
+  lightningChainCount: 0
+  holyHealingBonus: 0

@@ -1,345 +1,165 @@
-﻿using Havengard.Abilities;
-using Havengard.Core.HealthSystem;
-using Havengard.Units;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.AI;
+using Havengard.Abilities;
 
-namespace Havengard.Player
+public class PlayerController2D : MonoBehaviour
 {
-    [RequireComponent(typeof(Rigidbody2D))]
-    [RequireComponent(typeof(NavMeshAgent))]
-    [DisallowMultipleComponent]
-    public class PlayerController2D : MonoBehaviour
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 5f;
+    private NavMeshAgent agent;
+    private Rigidbody2D rb;
+
+    [Header("Animation")]
+    private Animator animator;
+    
+    [Header("Abilities")]
+    private AbilityUser abilityUser;
+
+    [Header("Input")]
+    [SerializeField]
+    private KeyCode[] abilityKeys = new KeyCode[]
     {
-        [Header("Movement")]
-        [SerializeField] private float moveSpeed = 5f;
-        [SerializeField] private float stoppingDistance = 0.1f;
+        KeyCode.Alpha1,
+        KeyCode.Alpha2,
+        KeyCode.Alpha3,
+        KeyCode.Alpha4,
+        KeyCode.Alpha5
+    };
 
-        [Header("Animator")]
-        [SerializeField] private Animator animator;
+    private Camera mainCamera;
 
-        [Tooltip("If true, idle will keep the last facing direction instead of snapping to (0,0).")]
-        [SerializeField] private bool keepLastFacingOnIdle = true;
+    // Animation parameter hashes for performance - FIXED: Match blend tree parameters
+    private static readonly int Horizontal = Animator.StringToHash("Horizontal");
+    private static readonly int Vertical = Animator.StringToHash("Vertical");
+    private static readonly int Speed = Animator.StringToHash("Speed");
+    private static readonly int IsMoving = Animator.StringToHash("IsMoving");
 
-        [Header("Right-Click Ability")]
-        [SerializeField] private int indexRightClick = 0;
+    void Start()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        rb = GetComponent<Rigidbody2D>();
+        abilityUser = GetComponent<AbilityUser>();
+        animator = GetComponent<Animator>();
+        mainCamera = Camera.main;
 
-        [Header("Roll / Dodge")]
-        [SerializeField] private float rollDistance = 3f;
-        [SerializeField] private float rollDuration = 0.15f;
-        [SerializeField] private float rollCooldown = 0.75f;
-        [SerializeField] private bool rollTowardMouseIfIdle = true;
-
-        private Rigidbody2D rb;
-        private NavMeshAgent agent;
-        private AbilityUser abilityUser;
-        private ChannelController channelController;
-
-        private Vector2 clickMoveTarget;
-        private bool isClickMoving;
-        private bool isChannelingWithMovementLock; // Tracks if movement is locked due to channeling
-
-        private float lastRollTime = -999f;
-        private bool isRolling;
-        private Vector2 rollVelocity;
-
-        private Vector2 lastFacingDir = Vector2.down;
-
-        // Animator parameter hashes
-        private static readonly int AnimIsMoving = Animator.StringToHash("IsMoving");
-        private static readonly int AnimHorizontal = Animator.StringToHash("Horizontal");
-        private static readonly int AnimVertical = Animator.StringToHash("Vertical");
-        private static readonly int AnimIdleFrame = Animator.StringToHash("IdleFrame");
-
-        private void Awake()
+        if (agent != null)
         {
-            rb = GetComponent<Rigidbody2D>();
-            abilityUser = GetComponent<AbilityUser>();
-            channelController = GetComponent<ChannelController>();
-            agent = GetComponent<NavMeshAgent>();
-            if (animator == null) animator = GetComponent<Animator>();
-
-            // Rigidbody2D used for collisions; NavMeshAgent moves transform
-            rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.simulated = true;
-
-            // Configure NavMeshAgent for top-down 2D
             agent.updateRotation = false;
             agent.updateUpAxis = false;
-            agent.speed = moveSpeed;
-            agent.stoppingDistance = stoppingDistance;
-
-            clickMoveTarget = rb.position;
-        }
-
-        private void Update()
-        {
-            if (isRolling)
-            {
-                UpdateAnimatorFromVelocity(rollVelocity);
-                return;
-            }
-
-            // Don't process movement input if channeling with movement lock
-            if (!isChannelingWithMovementLock)
-            {
-                HandleMouseInput();
-                HandleRollInput();
-            }
-
-            HandleKeyboardAbilities();
-
-            // If we stopped click-moving, avoid constantly ResetPath every frame
-            if (!isClickMoving && agent.hasPath)
-                agent.ResetPath();
-
-            UpdateAnimatorFromNavMesh();
-        }
-
-        private void FixedUpdate()
-        {
-            if (isRolling)
-            {
-                rb.linearVelocity = rollVelocity;
-                return;
-            }
-
-            // NavMesh handles normal movement (only if not channeling with movement lock)
-            if (isClickMoving && !isChannelingWithMovementLock)
-            {
-                if (!agent.pathPending && agent.remainingDistance <= stoppingDistance)
-                {
-                    isClickMoving = false;
-                    if (agent.hasPath) agent.ResetPath();
-                }
-            }
-        }
-
-        // --- INPUT HANDLING ---
-
-        private void HandleMouseInput()
-        {
-            bool holdPosition = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-
-            if (Input.GetMouseButtonDown(0)) // Left click: move unless holding Shift to hold position
-            {
-                if (!holdPosition)
-                {
-                    var world = MouseWorldOnPlane();
-                    clickMoveTarget = new Vector2(world.x, world.y);
-                    isClickMoving = true;
-                    agent.SetDestination(clickMoveTarget);
-                }
-                else
-                {
-                    // Ensure we stay put if we were already moving
-                    isClickMoving = false;
-                    if (agent.hasPath) agent.ResetPath();
-                }
-            }
-
-            if (Input.GetMouseButtonDown(1)) // Right click: cast
-            {
-                AbilityBase rightClickAbility = abilityUser?.GetAbility(indexRightClick);
-                if (rightClickAbility != null)
-                {
-                    GameObject target = MouseTarget();
-                    if (target == null)
-                    {
-                        CastAbilityAtMouse(indexRightClick);
-                    }
-                    else
-                    {
-                        abilityUser.UseAbility(indexRightClick, target);
-                    }
-                }
-            }
-        }
-
-        private void HandleKeyboardAbilities()
-        {
-            // Q - Regular ability
-            if (Input.GetKeyDown(KeyCode.Q)) 
-                CastAbilityAtMouse(0);
             
-            // W - Regular ability
-            if (Input.GetKeyDown(KeyCode.W)) 
-                CastAbilityAtMouse(1);
-            
-            // E - Channeled ability (FrostBeam)
-            if (Input.GetKey(KeyCode.E))
+            // CRITICAL FIX: Let NavMeshAgent control position while Rigidbody2D stays kinematic
+            agent.updatePosition = true;
+        }
+
+        // CRITICAL FIX: Ensure Rigidbody2D is Kinematic when using NavMeshAgent
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Kinematic;
+        }
+    }
+
+    void Update()
+    {
+        HandleMovementInput();
+        HandleAbilityInput();
+        UpdateAnimations();
+    }
+
+    private void HandleMovementInput()
+    {
+        // Don't move while channeling
+        if (abilityUser != null && abilityUser.IsChanneling)
+        {
+            if (agent != null) agent.isStopped = true;
+            return;
+        }
+
+        if (agent != null) agent.isStopped = false;
+
+        // Right click to move
+        if (Input.GetMouseButton(1))
+        {
+            Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0f;
+
+            if (agent != null)
             {
-                // Hold to channel
-                if (!IsChanneling())
+                // CRITICAL FIX: Only set destination if path is valid
+                NavMeshPath path = new NavMeshPath();
+                if (agent.CalculatePath(mousePos, path) && path.status == NavMeshPathStatus.PathComplete)
                 {
-                    StartChanneledAbility();
+                    agent.SetDestination(mousePos);
+                }
+                // If path is partial or invalid, try to get as close as possible
+                else if (path.status == NavMeshPathStatus.PathPartial && path.corners.Length > 0)
+                {
+                    agent.SetDestination(path.corners[path.corners.Length - 1]);
                 }
             }
-            else
+        }
+    }
+
+    private void UpdateAnimations()
+    {
+        if (animator == null) return;
+
+        Vector2 velocity = Vector2.zero;
+
+        // Get velocity from NavMeshAgent if available
+        if (agent != null)
+        {
+            velocity = new Vector2(agent.velocity.x, agent.velocity.y);
+        }
+        // Otherwise get from Rigidbody2D
+        else if (rb != null)
+        {
+            velocity = rb.linearVelocity;
+        }
+
+        // Update animation parameters
+        float speed = velocity.magnitude;
+        bool isMoving = speed > 0.1f;
+
+        // FIXED: Normalize velocity for directional blend tree
+        Vector2 direction = velocity.normalized;
+
+        // Set animator parameters to match blend tree
+        animator.SetFloat(Horizontal, direction.x);
+        animator.SetFloat(Vertical, direction.y);
+        animator.SetFloat(Speed, speed);
+        animator.SetBool(IsMoving, isMoving);
+    }
+
+    private void HandleAbilityInput()
+    {
+        if (abilityUser == null) return;
+
+        Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorldPos.z = 0f;
+
+        // Check each ability key
+        for (int i = 0; i < abilityKeys.Length; i++)
+        {
+            // Key pressed - start ability (or start channeling)
+            if (Input.GetKeyDown(abilityKeys[i]))
             {
-                // Release to stop
-                if (IsChanneling())
+                abilityUser.UseAbility(i, mouseWorldPos);
+            }
+
+            // Key released - stop channeling
+            if (Input.GetKeyUp(abilityKeys[i]))
+            {
+                if (abilityUser.IsChanneling)
                 {
-                    StopChanneledAbility();
+                    abilityUser.StopChanneling();
                 }
             }
-            
-            // R - Regular ability
-            if (Input.GetKeyDown(KeyCode.R)) 
-                CastAbilityAtMouse(3);
         }
 
-        private void HandleRollInput()
+        // Cancel channeling with Escape
+        if (Input.GetKeyDown(KeyCode.Escape) && abilityUser.IsChanneling)
         {
-            if (!Input.GetKeyDown(KeyCode.Space)) return;
-            if (Time.time < lastRollTime + rollCooldown) return;
-
-            Vector2 dir = GetRollDirection();
-            if (dir.sqrMagnitude < 0.0001f) return;
-
-            StartCoroutine(RollRoutine(dir));
-        }
-
-        // --- CHANNELED ABILITY HELPERS ---
-
-        private bool IsChanneling()
-        {
-            // Use public property if available, otherwise use reflection
-            if (channelController != null)
-            {
-                return channelController.IsChanneling;
-            }
-            return false;
-        }
-
-        private void StartChanneledAbility()
-        {
-            if (channelController != null && channelController.ability != null)
-            {
-                channelController.StartChannel();
-                //Debug.Log("Started channeling FrostBeam");
-            }
-        }
-
-        private void StopChanneledAbility()
-        {
-            if (channelController != null)
-            {
-                channelController.StopChannel();
-                //Debug.Log("Stopped channeling FrostBeam");
-            }
-        }
-
-        // --- CHANNEL CALLBACKS (called via SendMessage from ChannelController) ---
-
-        private void OnChannelStarted()
-        {
-            isChannelingWithMovementLock = true;
-            isClickMoving = false;
-            //Debug.Log("Movement locked - channeling started");
-        }
-
-        private void OnChannelEnded()
-        {
-            isChannelingWithMovementLock = false;
-            //Debug.Log("Movement unlocked - channeling ended");
-        }
-
-        // --- HELPERS ---
-
-        private Vector3 MouseWorldOnPlane()
-        {
-            Vector3 world = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            world.z = 0f;
-            return world;
-        }
-
-        private GameObject MouseTarget()
-        {
-            Vector3 mouseWorldPos = MouseWorldOnPlane();
-            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
-            return hit.collider != null ? hit.collider.gameObject : null;
-        }
-
-        private void CastAbilityAtMouse(int index)
-        {
-            if (abilityUser == null) return;
-
-            Vector3 mouseWorldPos = MouseWorldOnPlane();
-            GameObject fakeTarget = new GameObject("CursorTarget");
-            fakeTarget.transform.position = mouseWorldPos;
-
-            abilityUser.UseAbility(index, fakeTarget);
-            Destroy(fakeTarget, 0.05f);
-        }
-
-        private Vector2 GetRollDirection()
-        {
-            if (isClickMoving)
-                return (clickMoveTarget - (Vector2)transform.position).normalized;
-
-            if (rollTowardMouseIfIdle)
-            {
-                Vector3 mw = MouseWorldOnPlane();
-                Vector2 dir = (new Vector2(mw.x, mw.y) - (Vector2)transform.position);
-                if (dir.sqrMagnitude > 0.001f) return dir.normalized;
-            }
-
-            // fallback to last facing
-            return lastFacingDir.sqrMagnitude > 0.001f ? lastFacingDir : Vector2.down;
-        }
-
-        private System.Collections.IEnumerator RollRoutine(Vector2 direction)
-        {
-            isRolling = true;
-            lastRollTime = Time.time;
-
-            // Stop navmesh movement while rolling
-            isClickMoving = false;
-            if (agent.hasPath) agent.ResetPath();
-
-            float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
-            rollVelocity = direction.normalized * speed;
-
-            float t = 0f;
-            while (t < rollDuration)
-            {
-                t += Time.deltaTime;
-                yield return null;
-            }
-
-            isRolling = false;
-            rb.linearVelocity = Vector2.zero;
-        }
-
-        private void UpdateAnimatorFromNavMesh()
-        {
-            Vector2 velocity = agent != null ? (Vector2)agent.desiredVelocity : Vector2.zero;
-            UpdateAnimatorFromVelocity(velocity);
-        }
-
-        private void UpdateAnimatorFromVelocity(Vector2 velocity)
-        {
-            bool moving = velocity.sqrMagnitude > 0.001f;
-            animator.SetBool(AnimIsMoving, moving);
-
-            if (moving)
-            {
-                Vector2 dir = velocity.normalized;
-                lastFacingDir = dir;
-
-                animator.SetFloat(AnimHorizontal, dir.x);
-                animator.SetFloat(AnimVertical, dir.y);
-            }
-            else
-            {
-                // keep last facing direction
-                animator.SetFloat(AnimHorizontal, lastFacingDir.x);
-                animator.SetFloat(AnimVertical, lastFacingDir.y);
-
-                // force "first frame"
-                animator.SetFloat(AnimIdleFrame, 0f);
-            }
+            abilityUser.CancelChanneling();
         }
     }
 }

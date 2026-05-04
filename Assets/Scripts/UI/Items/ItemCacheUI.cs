@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using Havengard.Items;
+using System;
 
 namespace Havengard.UI
 {
@@ -45,9 +46,43 @@ namespace Havengard.UI
         private List<ItemSlotUI> equippedItemSlots = new List<ItemSlotUI>();
         private List<ItemSlotUI> cachedItemSlots = new List<ItemSlotUI>();
         private ItemSlotUI selectedSlot;
+        private bool isInitialized = false;
+
+        /// <summary>
+        /// Event triggered when the user wants to close this UI and return to previous menu
+        /// </summary>
+        public event Action OnRequestClose;
+
+        // Add this property to ItemCacheUI class
+        public bool IsShowing => panel != null && panel.activeSelf;
+
+        private void Awake()
+        {
+            Debug.Log("[ItemCacheUI] Awake called");
+            // Initialize immediately if the GameObject is already active
+            Initialize();
+        }
 
         private void Start()
         {
+            Debug.Log("[ItemCacheUI] Start called");
+            // Ensure initialization happened
+            Initialize();
+        }
+
+        /// <summary>
+        /// Initialize the UI (called from Awake/Start or lazily on first Show)
+        /// </summary>
+        private void Initialize()
+        {
+            if (isInitialized)
+            {
+                Debug.Log("[ItemCacheUI] Already initialized, skipping");
+                return;
+            }
+
+            Debug.Log("[ItemCacheUI] Initializing...");
+
             // Find player inventory if not assigned
             if (playerInventory == null)
             {
@@ -55,21 +90,22 @@ namespace Havengard.UI
                 if (player != null)
                 {
                     playerInventory = player.GetComponent<ItemInventory>();
+                    Debug.Log($"[ItemCacheUI] Found player inventory: {playerInventory != null}");
                 }
             }
 
-            // Hook up buttons
+            // Hook up buttons - both close and back should return to pause menu
             if (closeButton != null)
-                closeButton.onClick.AddListener(Hide);
+                closeButton.onClick.AddListener(RequestClose);
 
             if (backButton != null)
-                backButton.onClick.AddListener(Hide);
+                backButton.onClick.AddListener(RequestClose);
 
             if (sortByRarityButton != null)
                 sortByRarityButton.onClick.AddListener(() => SortCache(SortType.Rarity));
 
             if (sortByTimeButton != null)
-                sortByTimeButton.onClick.AddListener(() => SortCache(SortType.Time));
+                sortByRarityButton.onClick.AddListener(() => SortCache(SortType.Time));
 
             if (sortByLevelButton != null)
                 sortByLevelButton.onClick.AddListener(() => SortCache(SortType.Level));
@@ -94,7 +130,15 @@ namespace Havengard.UI
                 ItemManager.Instance.OnCelestiumChanged += UpdateCelestiumDisplay;
             }
 
-            Hide();
+            // Ensure panel starts hidden
+            if (panel != null)
+            {
+                panel.SetActive(false);
+                Debug.Log("[ItemCacheUI] Panel hidden on initialization");
+            }
+
+            isInitialized = true;
+            Debug.Log("[ItemCacheUI] Initialization complete");
         }
 
         private void OnDestroy()
@@ -119,27 +163,60 @@ namespace Havengard.UI
 
         public void Show()
         {
-            panel.SetActive(true);
+            Debug.Log("[ItemCacheUI] Show called");
+            
+            // Ensure initialization has happened (lazy initialization)
+            if (!isInitialized)
+            {
+                Debug.Log("[ItemCacheUI] Not initialized yet, initializing now...");
+                Initialize();
+            }
+
+            if (panel != null)
+            {
+                panel.SetActive(true);
+                Debug.Log("[ItemCacheUI] Panel activated");
+            }
+            else
+            {
+                Debug.LogError("[ItemCacheUI] Panel reference is null!");
+            }
+
             RefreshDisplay();
         }
 
         public void Hide()
         {
-            panel.SetActive(false);
+            if (panel != null)
+                panel.SetActive(false);
+            
             if (tooltip != null)
                 tooltip.Hide();
+
+            Debug.Log("[ItemCacheUI] Hidden");
+        }
+
+        /// <summary>
+        /// Request to close this UI - triggers OnRequestClose event for parent menu to handle
+        /// </summary>
+        private void RequestClose()
+        {
+            Debug.Log("[ItemCacheUI] Close/Back button pressed - requesting close");
+            Hide();
+            OnRequestClose?.Invoke();
         }
 
         public void Toggle()
         {
             if (panel.activeSelf)
-                Hide();
+                RequestClose();
             else
                 Show();
         }
 
         private void RefreshDisplay()
         {
+            Debug.Log("[ItemCacheUI] RefreshDisplay called");
             RefreshEquippedItems();
             RefreshCachedItems();
             UpdateCelestiumDisplay(ItemManager.Instance?.Celestium ?? 0);

@@ -4757,9 +4757,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 5
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -9615,9 +9615,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1147017395
-  m_SortingLayer: 7
-  m_SortingOrder: 3
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 5
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -14609,9 +14609,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1147017395
-  m_SortingLayer: 7
-  m_SortingOrder: 3
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 5
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -14793,7 +14793,7 @@ Transform:
   m_GameObject: {fileID: 4028906330793846883}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -23.92953, y: -6.199315, z: 0.101953775}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -14875,11 +14875,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 114506030c43d4f43bd72debe0dec731, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lifetime: 5
-  hitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
-  wallHitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
-  impactDestroyDelay: 0.05
-  hitSFX: {fileID: 8300000, guid: 678e1ed4b5863b34aaa4bbcd4614706b, type: 3}
-  wallHitSFX: {fileID: 8300000, guid: 678e1ed4b5863b34aaa4bbcd4614706b, type: 3}
-  trail: {fileID: 9670996}
-  trailParticles: {fileID: 19816562}

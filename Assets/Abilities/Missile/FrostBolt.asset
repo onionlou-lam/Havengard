@@ -13,24 +13,36 @@ MonoBehaviour:
   m_Name: FrostBolt
   m_EditorClassIdentifier: 
   abilityName: Frost Bolt
-  cooldown: 1.5
-  resourceCost: 5
+  description: 
   icon: {fileID: 21300000, guid: 89d6fcf1b6e03be45b794182ea1e0de7, type: 3}
-  resourceGeneratedOnCast: 0
-  resourceGeneratedPerHit: 0
-  resourceGeneratedOnKill: 0
-  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 5
+  baseDamage: 10
+  damagePerLevel: 5
   lifestealPercent: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  castVFX: {fileID: 171178, guid: 9bb149b364c1df747af445fbc92bf82f, type: 3}
+  impactVFX: {fileID: 100010, guid: e92ac9ce273026a4ca5f316d45c57e63, type: 3}
+  castSFX: {fileID: 8300000, guid: 756d00bb5c6367b47ba9f64ecc01a9e2, type: 3}
+  impactSFX: {fileID: 8300000, guid: 95dff05f27e1cf0499be1782d3ce469b, type: 3}
   projectilePrefab: {fileID: 8421857012688822738, guid: a90d1d3621b5d384fa0043eea4a95c3d,
     type: 3}
   projectileSpeed: 3
-  directHitDamage: 25
-  friendlyFire: 0
-  enableHoming: 0
+  projectileLifetime: 5
+  homing: 0
   homingStrength: 5
-  homingDelay: 0
-  autoTarget: 1
-  enableSplash: 1
-  splashRadius: 2.5
-  splashDamage: 10
+  trailTime: 0.5
+  projectileScale: 1
+  hasAOE: 1
+  aoeRadius: 3
+  aoeDamageMultiplier: 0.2
+  projectileCount: 1
+  spreadAngle: 15

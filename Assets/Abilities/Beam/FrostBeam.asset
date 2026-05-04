@@ -13,40 +13,46 @@ MonoBehaviour:
   m_Name: FrostBeam
   m_EditorClassIdentifier: 
   abilityName: Frost Beam
-  cooldown: 1
-  resourceCost: 0
+  description: 
   icon: {fileID: 21300000, guid: 52ef71e949221674db9c550066576b1a, type: 3}
-  resourceGeneratedOnCast: 0
-  resourceGeneratedPerHit: 0
-  resourceGeneratedOnKill: 0
-  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 2
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 0
+  baseDamage: 60
+  damagePerLevel: 12
   lifestealPercent: 0
-  maxChargeTime: 1
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  requiresTarget: 1
+  castVFX: {fileID: 134198, guid: 3a857b88ce25ff54085d07fee4812e63, type: 3}
+  impactVFX: {fileID: 9054252438580636816, guid: 5d22c3514d92ff14d93dc40ba98cda6a,
+    type: 3}
+  castSFX: {fileID: 8300000, guid: 756d00bb5c6367b47ba9f64ecc01a9e2, type: 3}
+  impactSFX: {fileID: 8300000, guid: 6b2a40cfe2f476743b6ff32e19b75f0b, type: 3}
+  channelDuration: 3
+  tickRate: 0.5
+  canMoveWhileChanneling: 0
+  preventMovement: 1
   minReleasePercent: 0.05
   allowPartialRelease: 1
   chargingVFXPrefab: {fileID: 139782, guid: 98e6e1aeb945c85498e9140e679e60d1, type: 3}
   beamPrefab: {fileID: 8543387032684821566, guid: 703682d7d6993ea49a841d357519d252,
     type: 3}
-  baseDamagePerSecond: 10
-  damageScaling: 2
-  damageTickRate: 0.1
-  friendlyFire: 0
-  beamMaxRange: 25
+  beamWidth: 1
+  beamMaxDistance: 15
   hitLayers:
     serializedVersion: 2
-    m_Bits: 1280
-  enableFullChargeEffect: 0
-  fullChargeEffectType: 1
-  fullChargeRadius: 3
-  fullChargeVFXPrefab: {fileID: 139782, guid: 98e6e1aeb945c85498e9140e679e60d1, type: 3}
-  applyContinuousStatusEffects: 1
-  beamLoopSFX: {fileID: 8300000, guid: 472e3c06bedeb03448ab2fd27074ef84, type: 3}
-  fullChargeReleaseSFX: {fileID: 8300000, guid: 756d00bb5c6367b47ba9f64ecc01a9e2,
-    type: 3}
-  beamLoopVolume: 0.5
-  use2DMode: 1
-  maxBeamDistance: 100
-  beamBlockingLayers:
-    serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1792
+  damagePerTickMultiplier: 0.4
+  rampDamageWithCharge: 1
+  minDamagePercent: 0.3
+  minTimeBetweenTicks: 0.5
+  frostSlowPercent: 1
+  fireBurnDamagePerTick: 0
+  lightningChainCount: 0
+  holyHealingBonus: 0

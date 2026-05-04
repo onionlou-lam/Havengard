@@ -249,7 +249,7 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
   - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
-  resourceComponent: {fileID: 1865082179602180432}
+  resourceSystem: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
 --- !u!114 &2808568041207367182
@@ -287,6 +287,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ability: {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
   useManualControl: 1
+  use2DPhysics: 1
+  beamZPosition: 0
+  spawnDistance: 0.5
+  rotateCasterToBeam: 1
+  rotationTarget: {fileID: 0}
 --- !u!114 &5604034864961013460
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -329,6 +334,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxResource: 100
   currentResource: 0
+  regenRate: 5
+  regenDelay: 2
 --- !u!114 &750057627197447055
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,7 +400,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 47421343
   m_SortingLayer: 5
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_Sprite: {fileID: 271228395, guid: 221b0f1bb684595458ed8f18b969f88e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

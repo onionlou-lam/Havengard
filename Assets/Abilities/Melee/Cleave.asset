@@ -13,25 +13,35 @@ MonoBehaviour:
   m_Name: Cleave
   m_EditorClassIdentifier: 
   abilityName: Cleave
-  cooldown: 1
-  resourceCost: 0
+  description: 
   icon: {fileID: 21300000, guid: 41d1523219b2ada4680229e3c23cba86, type: 3}
-  resourceGeneratedOnCast: 0
-  resourceGeneratedPerHit: 0
-  resourceGeneratedOnKill: 0
-  statusEffect: {fileID: 0}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 0
+  baseDamage: 10
+  damagePerLevel: 5
   lifestealPercent: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 448
+  requiresTarget: 0
+  castVFX: {fileID: 5641636321807965521, guid: e063a767297c539448460149688210e1, type: 3}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 8300000, guid: 004cd40c96cd53c43add5d5f141b38fa, type: 3}
+  impactSFX: {fileID: 8300000, guid: 8747e361c4c78984abbd90e50b5f6596, type: 3}
   hitShape: 2
-  hitRadius: 1.5
+  hitRadius: 3
   hitBoxSize: {x: 2, y: 1.5}
   hitArcAngle: 120
-  hitRange: 2
+  hitRange: 3
   hitOffset: {x: 0, y: 0}
-  hitDelay: 0.2
+  hitDelay: 0.1
   activeHitDuration: 0
   damageMultiplier: 1
-  baseDamage: 10
   friendlyFire: 0
   preventMultiHit: 1
   enableKnockback: 1
@@ -42,7 +52,8 @@ MonoBehaviour:
   lungeDuration: 0.15
   hitVFXPrefab: {fileID: 5641636321807965521, guid: 893d1b34464143b4c897c96759f9bce2,
     type: 3}
-  casterVFXPrefab: {fileID: 0}
+  casterVFXPrefab: {fileID: 5641636321807965521, guid: 893d1b34464143b4c897c96759f9bce2,
+    type: 3}
   spawnVFXOnEachHit: 1
   rotateVFXToDirection: 1
   vfxRotationOffset: -90

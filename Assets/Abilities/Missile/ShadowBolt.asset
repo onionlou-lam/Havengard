@@ -13,19 +13,36 @@ MonoBehaviour:
   m_Name: ShadowBolt
   m_EditorClassIdentifier: 
   abilityName: Shadow Bolt
-  cooldown: 2
-  resourceCost: 5
+  description: 
   icon: {fileID: 282789477, guid: dcfcc2af57791cd43bae90773e70230f, type: 3}
-  statusEffect: {fileID: 0}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 5
+  baseDamage: 10
+  damagePerLevel: 5
+  lifestealPercent: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  castVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
+  impactVFX: {fileID: 100002, guid: f9406f0c2da6b2945b03702829fc77cc, type: 3}
+  castSFX: {fileID: 8300000, guid: 18a8e138ed9cec647bc24631e8d16b7e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
   projectilePrefab: {fileID: 4028906330793846883, guid: 37b478765712f244cbc2377ac06a4a2c,
     type: 3}
   projectileSpeed: 3
-  directHitDamage: 25
-  friendlyFire: 0
-  enableSplash: 1
-  splashRadius: 2.5
-  splashDamage: 10
-  hitVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
-  missVFX: {fileID: 0}
-  hitSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
+  projectileLifetime: 5
+  homing: 0
+  homingStrength: 5
+  trailTime: 0.5
+  projectileScale: 1
+  hasAOE: 0
+  aoeRadius: 3
+  aoeDamageMultiplier: 0.5
+  projectileCount: 1
+  spreadAngle: 15

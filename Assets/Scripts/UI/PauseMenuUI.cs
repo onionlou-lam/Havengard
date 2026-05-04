@@ -75,6 +75,13 @@ namespace Havengard.UI
                 Debug.Log($"[PauseMenuUI] Auto-found ItemCacheUI: {itemCacheUI != null}");
             }
 
+            // Subscribe to ItemCacheUI close event
+            if (itemCacheUI != null)
+            {
+                itemCacheUI.OnRequestClose += OnInventoryRequestClose;
+                Debug.Log("[PauseMenuUI] Subscribed to ItemCacheUI close event");
+            }
+
             // Start with menu hidden
             if (pausePanel != null)
             {
@@ -84,6 +91,15 @@ namespace Havengard.UI
             else
             {
                 Debug.LogError("[PauseMenuUI] Pause panel reference is NULL!");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from events
+            if (itemCacheUI != null)
+            {
+                itemCacheUI.OnRequestClose -= OnInventoryRequestClose;
             }
         }
 
@@ -103,17 +119,21 @@ namespace Havengard.UI
             // Allow ESC to close submenus or pause menu
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (itemCacheUI != null && itemCacheUI.gameObject.activeSelf)
+                // Check if inventory is open
+                if (itemCacheUI != null && itemCacheUI.gameObject.activeSelf && itemCacheUI.IsShowing)
                 {
+                    Debug.Log("[PauseMenuUI] ESC pressed - closing inventory");
                     itemCacheUI.Hide();
                     ShowPauseMenu();
                 }
                 else if (isPaused)
                 {
+                    Debug.Log("[PauseMenuUI] ESC pressed - resuming game");
                     Resume();
                 }
                 else
                 {
+                    Debug.Log("[PauseMenuUI] ESC pressed - pausing game");
                     Pause();
                 }
             }
@@ -156,7 +176,10 @@ namespace Havengard.UI
         private void ShowPauseMenu()
         {
             if (pausePanel != null)
+            {
                 pausePanel.SetActive(true);
+                Debug.Log("[PauseMenuUI] Pause menu shown");
+            }
         }
 
         /// <summary>
@@ -165,7 +188,10 @@ namespace Havengard.UI
         private void HidePauseMenu()
         {
             if (pausePanel != null)
+            {
                 pausePanel.SetActive(false);
+                Debug.Log("[PauseMenuUI] Pause menu hidden");
+            }
         }
 
         /// <summary>
@@ -188,6 +214,15 @@ namespace Havengard.UI
             {
                 Debug.LogWarning("[PauseMenu] ItemCacheUI reference is missing!");
             }
+        }
+
+        /// <summary>
+        /// Called when ItemCacheUI requests to be closed (back/close button clicked)
+        /// </summary>
+        private void OnInventoryRequestClose()
+        {
+            Debug.Log("[PauseMenuUI] Inventory requested close - returning to pause menu");
+            ShowPauseMenu();
         }
 
         /// <summary>

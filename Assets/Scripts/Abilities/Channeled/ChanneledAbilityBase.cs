@@ -22,6 +22,7 @@ namespace Havengard.Abilities
 
         // Public properties for ChannelController
         public float MaxChargeTime => channelDuration;
+        public float TickRate => tickRate;
         public bool PreventMovement => preventMovement;
         public float MinReleasePercent => minReleasePercent;
         public bool AllowPartialRelease => allowPartialRelease;

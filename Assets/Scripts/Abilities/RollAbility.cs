@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Havengard.Abilities
 {
@@ -7,42 +8,48 @@ namespace Havengard.Abilities
     {
         [SerializeField] private float rollDistance = 3f;
         [SerializeField] private float rollDuration = 0.15f;
+        [SerializeField] private float rollSpeed = 20f; // Fast movement during roll
 
-        // REMOVED 'override' - not in base class
         public bool CanCast(GameObject caster, GameObject target)
         {
             return caster != null;
         }
 
-        // REMOVED 'override' - not in base class
         public void Cast(GameObject caster, GameObject target)
         {
-            var rb = caster.GetComponent<Rigidbody2D>();
-            if (rb == null) return;
+            var agent = caster.GetComponent<NavMeshAgent>();
+            if (agent == null) return;
 
             Vector3 targetPos = target != null ? target.transform.position : caster.transform.position + caster.transform.right;
             Vector2 dir = (targetPos - caster.transform.position).normalized;
 
-            caster.GetComponent<MonoBehaviour>().StartCoroutine(RollRoutine(rb, dir));
+            caster.GetComponent<MonoBehaviour>().StartCoroutine(RollRoutine(agent, caster.transform, dir));
         }
 
-        private System.Collections.IEnumerator RollRoutine(Rigidbody2D rb, Vector2 dir)
+        private System.Collections.IEnumerator RollRoutine(NavMeshAgent agent, Transform casterTransform, Vector2 dir)
         {
-            float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
-            Vector2 velocity = dir.normalized * speed;
+            // Calculate roll destination
+            Vector3 rollDestination = casterTransform.position + (Vector3)(dir * rollDistance);
+            
+            // Store original speed
+            float originalSpeed = agent.speed;
+            
+            // Boost speed for roll
+            agent.speed = rollSpeed;
+            agent.SetDestination(rollDestination);
 
             float t = 0f;
-            while (t < rollDuration)
+            while (t < rollDuration && agent.remainingDistance > 0.1f)
             {
-                rb.linearVelocity = velocity;
                 t += Time.deltaTime;
                 yield return null;
             }
 
-            rb.linearVelocity = Vector2.zero;
+            // Restore original speed
+            agent.speed = originalSpeed;
+            agent.ResetPath(); // Stop movement after roll
         }
 
-        // ADD: Implement abstract methods from AbilityBase
         public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
             Cast(user.gameObject, targetEnemy);

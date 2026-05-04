@@ -13,21 +13,36 @@ MonoBehaviour:
   m_Name: SkeletonMageRanged
   m_EditorClassIdentifier: 
   abilityName: Skeleton Mage Attack
-  cooldown: 1.5
-  resourceCost: 0
+  description: 
   icon: {fileID: -1709175380, guid: 043bb196fc0a3314481aa09704da1b13, type: 3}
-  abilityType: 0
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 0
+  baseDamage: 10
+  damagePerLevel: 5
+  lifestealPercent: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  castVFX: {fileID: 0}
+  impactVFX: {fileID: 148672, guid: fd4f8cba0da262c418a148ec7830e119, type: 3}
+  castSFX: {fileID: 8300000, guid: 18a8e138ed9cec647bc24631e8d16b7e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
   projectilePrefab: {fileID: 4805287870985771033, guid: d6a3d77808ee01848a8d9b843bc0007c,
     type: 3}
-  projectileSpeed: 5.5
-  baseDamage: 10
-  useCasterAttack: 1
-  hasExplosion: 1
-  explosionRadius: 0
+  projectileSpeed: 2
+  projectileLifetime: 5
+  homing: 0
+  homingStrength: 5
+  trailTime: 0.5
+  projectileScale: 1
+  hasAOE: 0
+  aoeRadius: 3
   aoeDamageMultiplier: 1
-  aoeDamageBonus: 0
-  statusEffect: {fileID: 0}
-  impactHitVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
-  impactWallVFX: {fileID: 148672, guid: 79ff2d2e1cfe3f840b586d3f102d7685, type: 3}
-  impactSFX: {fileID: 8300000, guid: e0cd8d02ee159ee4ab2be506b7a17c39, type: 3}
-  friendlyFire: 0
+  projectileCount: 1
+  spreadAngle: 15

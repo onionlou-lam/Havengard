@@ -29,6 +29,21 @@ namespace Havengard.Waves
         public float RemainingTime => remainingTime;
         public bool UseTimeLimit => useTimeLimit;
 
+        private void Awake()
+        {
+            // Auto-find UI if not assigned
+            if (phaseUI == null)
+            {
+                phaseUI = GetComponentInChildren<PreWavePhaseUI>();
+                if (phaseUI == null)
+                {
+                    phaseUI = FindFirstObjectByType<PreWavePhaseUI>();
+                }
+            }
+
+            Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}");
+        }
+
         private void Update()
         {
             if (isPhaseActive && useTimeLimit && timeLimitSeconds > 0)
@@ -63,6 +78,10 @@ namespace Havengard.Waves
             if (phaseUI != null)
             {
                 phaseUI.ShowPhase(upcomingWaveNumber, useTimeLimit, timeLimitSeconds);
+            }
+            else
+            {
+                Debug.LogWarning("[PreWavePhase] No UI reference found!");
             }
 
             OnPhaseStarted?.Invoke();

@@ -85,7 +85,7 @@ namespace Havengard.Abilities
                 );
 
                 Color damageColor = GetDamageTypeColor();
-                projectile.ConfigureVisuals(damageColor, trailTime);
+                // projectile.ConfigureVisuals(damageColor, trailTime);
 
                 if (homing && target != null)
                 {

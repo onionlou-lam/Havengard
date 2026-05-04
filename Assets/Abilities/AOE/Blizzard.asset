@@ -13,12 +13,29 @@ MonoBehaviour:
   m_Name: Blizzard
   m_EditorClassIdentifier: 
   abilityName: Blizzard
-  cooldown: 1
-  resourceCost: 10
+  description: 
   icon: {fileID: 21300000, guid: df12bf7b7e18a214190327af4d3c0821, type: 3}
-  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 10
+  baseDamage: 10
+  damagePerLevel: 5
+  lifestealPercent: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  castVFX: {fileID: 109812, guid: 34931e23c8527334b94ba3448be23599, type: 3}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 0}
+  impactSFX: {fileID: 0}
   zonePrefab: {fileID: 2830277336758088524, guid: 357956a9e578c754fb82128f118c660c,
     type: 3}
   maximumRange: 15
   followsCaster: 0
+  statusEffect: {fileID: 11400000, guid: 548d9d7df0dc13f46aa69e6acd2dc695, type: 2}
+  maxStatusStacks: 1

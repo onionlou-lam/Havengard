@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -530198260215586156}
   m_Layer: 0
   m_Name: ItemPickup_HealthPendant
-  m_TagString: Untagged
+  m_TagString: Item
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -161,6 +161,14 @@ PrefabInstance:
     - target: {fileID: 140994, guid: 5905e20f5df2a724a9787894d0d977e1, type: 3}
       propertyPath: m_Name
       value: AuraSimpleLife
+      objectReference: {fileID: 0}
+    - target: {fileID: 140994, guid: 5905e20f5df2a724a9787894d0d977e1, type: 3}
+      propertyPath: m_TagString
+      value: FX
+      objectReference: {fileID: 0}
+    - target: {fileID: 147734, guid: 5905e20f5df2a724a9787894d0d977e1, type: 3}
+      propertyPath: m_TagString
+      value: FX
       objectReference: {fileID: 0}
     - target: {fileID: 439356, guid: 5905e20f5df2a724a9787894d0d977e1, type: 3}
       propertyPath: m_LocalScale.x

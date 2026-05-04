@@ -13,6 +13,7 @@ TagManager:
   - Projectile
   - Wall
   - Zone
+  - Item
   layers:
   - Default
   - TransparentFX

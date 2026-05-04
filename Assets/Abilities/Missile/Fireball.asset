@@ -21,34 +21,29 @@ MonoBehaviour:
   canHeal: 0
   healingRatio: 0
   baseCooldown: 1
-  resourceCost: 5
-  resourceType: 0
-  baseDamage: 10
+  resourceCost: 1
+  baseDamage: 20
   damagePerLevel: 5
-  statusEffects:
-  - {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
   lifestealPercent: 0
   range: 10
   targetLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   requiresTarget: 1
-  targetingMode: 0
   castVFX: {fileID: 0}
-  impactVFX: {fileID: 0}
-  castSFX: {fileID: 0}
-  impactSFX: {fileID: 0}
+  impactVFX: {fileID: 123764, guid: 3b27aad227ac92c4f9dd4ff950b4a74d, type: 3}
+  castSFX: {fileID: 8300000, guid: c50a81b498c81364788796ca5419a03e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
   projectilePrefab: {fileID: 8114323997476065967, guid: 5c237e5c3af540341ab293613b5eb1d9,
     type: 3}
   projectileSpeed: 3
-  directHitDamage: 50
-  friendlyFire: 0
-  enableHoming: 0
+  projectileLifetime: 5
+  homing: 0
   homingStrength: 5
-  homingDelay: 0
-  autoTarget: 1
-  enableSplash: 1
-  splashRadius: 2.5
-  splashDamage: 10
-  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
-  maxStatusStacks: 1
+  trailTime: 0.5
+  projectileScale: 1
+  hasAOE: 1
+  aoeRadius: 3
+  aoeDamageMultiplier: 0.5
+  projectileCount: 1
+  spreadAngle: 15

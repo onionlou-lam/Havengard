@@ -25,6 +25,16 @@ public class ChannelController : MonoBehaviour
     [Tooltip("If specified, only this transform will rotate. Leave empty to rotate the root GameObject")]
     public Transform rotationTarget;
 
+    [Header("Audio")]
+    [Tooltip("Play cast/impact SFX from ability (disable if beam prefab has its own audio)")]
+    public bool useAbilityAudio = true;
+    [Tooltip("Volume for cast sound (charge-up sound when starting channel)")]
+    [Range(0f, 3f)]
+    public float castSoundVolume = 1.5f;
+    [Tooltip("Volume for impact sound (release/explosion sound when beam fires)")]
+    [Range(0f, 3f)]
+    public float impactSoundVolume = 2.0f;
+
     private float chargeTimer;
     private bool isChanneling;
     private GameObject chargingVFXInstance;
@@ -33,18 +43,31 @@ public class ChannelController : MonoBehaviour
     private Camera mainCamera;
 
     private Vector3 originalChargeVFXScale = Vector3.one;
-    private Animator animator; // For reading facing direction
-    private NavMeshAgent navAgent; // For preventing movement
+    private Animator animator;
+    private NavMeshAgent navAgent;
 
     // Rotation tracking
     private Quaternion originalRotation;
     private bool wasRotatingBeforeChannel;
+
+    // Audio tracking
+    private bool hasPlayedCastSound = false;
+    private AudioSource audioSource;
 
     void Start()
     {
         mainCamera = Camera.main;
         animator = GetComponent<Animator>();
         navAgent = GetComponent<NavMeshAgent>();
+
+        // Get or create AudioSource for ability sounds
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null && useAbilityAudio)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0.5f; // 2D/3D blend
+        }
 
         // Store original rotation
         if (rotateCasterToBeam)
@@ -134,11 +157,31 @@ public class ChannelController : MonoBehaviour
         isChanneling = true;
         chargeTimer = 0f;
         wasRotatingBeforeChannel = true;
+        hasPlayedCastSound = false;
 
         // Prevent movement if configured
         if (ability.PreventMovement)
         {
             PreventMovement();
+        }
+
+        // Play cast sound
+        if (useAbilityAudio && !hasPlayedCastSound)
+        {
+            var abilityBase = ability as AbilityBase;
+            if (abilityBase != null && abilityBase.castSFX != null)
+            {
+                if (audioSource != null)
+                {
+                    audioSource.PlayOneShot(abilityBase.castSFX, castSoundVolume);
+                }
+                else
+                {
+                    AudioSource.PlayClipAtPoint(abilityBase.castSFX, transform.position, castSoundVolume);
+                }
+                hasPlayedCastSound = true;
+                Debug.Log($"[ChannelController] Played cast SFX: {abilityBase.castSFX.name} at volume {castSoundVolume}");
+            }
         }
 
         // Get facing direction and calculate spawn position
@@ -164,11 +207,21 @@ public class ChannelController : MonoBehaviour
         {
             beamInstance = Instantiate(ability.BeamPrefab, spawnPos, spawnRotation, transform);
 
-            // Set beam and all children to VFX layer (layer 31 for example, or use LayerMask.NameToLayer("VFX"))
+            // Set beam and all children to VFX layer
             int vfxLayer = LayerMask.NameToLayer("VFX");
             if (vfxLayer >= 0)
             {
                 SetLayerRecursively(beamInstance, vfxLayer);
+            }
+
+            // Disable any AudioSource on the beam prefab if using ability audio
+            if (useAbilityAudio)
+            {
+                var beamAudioSources = beamInstance.GetComponentsInChildren<AudioSource>();
+                foreach (var beamAudio in beamAudioSources)
+                {
+                    beamAudio.enabled = false;
+                }
             }
 
             beamScript = beamInstance.GetComponent<MagicArsenal.MagicBeamScript>();
@@ -203,6 +256,19 @@ public class ChannelController : MonoBehaviour
 
         float percent = Mathf.Clamp01(chargeTimer / ability.MaxChargeTime);
 
+        // Play impact sound on release (if beam hit something)
+        if (useAbilityAudio)
+        {
+            var abilityBase = ability as AbilityBase;
+            if (abilityBase != null && abilityBase.impactSFX != null)
+            {
+                // Play at mouse position or forward from caster
+                Vector3 impactPos = GetMouseWorldPoint();
+                AudioSource.PlayClipAtPoint(abilityBase.impactSFX, impactPos, impactSoundVolume);
+                Debug.Log($"[ChannelController] Played impact SFX: {abilityBase.impactSFX.name} at volume {impactSoundVolume}");
+            }
+        }
+
         // Restore movement if it was prevented
         if (ability.PreventMovement)
         {
@@ -234,7 +300,7 @@ public class ChannelController : MonoBehaviour
             return;
         }
 
-        // Generate resource on cast (before effect) - keep consistent with AbilityBase
+        // Generate resource on cast (before effect)
         (ability as AbilityBase)?.GetType()
             .GetMethod("GenerateResourceOnCast", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
             ?.Invoke(ability, new object[] { gameObject });
@@ -250,104 +316,58 @@ public class ChannelController : MonoBehaviour
 
     private void CleanUpChannel()
     {
-        if (chargingVFXInstance != null)
-            Destroy(chargingVFXInstance);
-        chargingVFXInstance = null;
-
-        if (beamScript != null)
+        if (chargingVFXInstance)
         {
-            beamScript.SetCharge(0f);
-            beamScript.Deactivate();
-            beamScript.externalControl = false;
+            Destroy(chargingVFXInstance);
+            chargingVFXInstance = null;
+        }
+
+        if (beamInstance)
+        {
+            Destroy(beamInstance);
+            beamInstance = null;
             beamScript = null;
         }
-
-        if (beamInstance != null)
-            Destroy(beamInstance);
-        beamInstance = null;
-
-        chargeTimer = 0f;
     }
 
-    // If an outside system needs to forcibly cancel the channel (stun, root, etc)
-    public void CancelChannel()
+    private Vector2 GetFacingDirection()
     {
-        if (!isChanneling) return;
-
-        // Restore movement if it was prevented
-        if (ability != null && ability.PreventMovement)
+        if (mainCamera != null)
         {
-            RestoreMovement();
+            Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 dir = (mousePos - transform.position).normalized;
+            return dir;
         }
 
-        // Restore rotation
-        if (rotateCasterToBeam)
-        {
-            RestoreCasterRotation();
-        }
-
-        CleanUpChannel();
-        ability.OnChannelCancel(gameObject);
-        isChanneling = false;
+        return Vector2.right;
     }
 
-    /// <summary>
-    /// Prevents movement by stopping NavMeshAgent and broadcasting to PlayerController
-    /// </summary>
-    private void PreventMovement()
+    private Vector3 GetMouseWorldPoint()
     {
-        // Stop NavMeshAgent movement
-        if (navAgent != null && navAgent.enabled)
-        {
-            if (navAgent.hasPath)
-            {
-                navAgent.ResetPath();
-            }
-            navAgent.isStopped = true;
-        }
+        if (mainCamera == null) return transform.position + Vector3.right * 10f;
 
-        // Notify PlayerController to stop click movement
-        SendMessage("OnChannelStarted", SendMessageOptions.DontRequireReceiver);
+        Vector3 mousePos = Input.mousePosition;
+        mousePos.z = Mathf.Abs(mainCamera.transform.position.z);
+        Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
+        worldPos.z = beamZPosition;
+        return worldPos;
     }
 
-    /// <summary>
-    /// Restores movement by re-enabling NavMeshAgent
-    /// </summary>
-    private void RestoreMovement()
-    {
-        // Re-enable NavMeshAgent movement
-        if (navAgent != null && navAgent.enabled)
-        {
-            navAgent.isStopped = false;
-        }
-
-        // Notify PlayerController that channeling ended
-        SendMessage("OnChannelEnded", SendMessageOptions.DontRequireReceiver);
-    }
-
-    /// <summary>
-    /// Rotates the caster sprite/GameObject to face the beam direction
-    /// </summary>
     private void RotateCasterToDirection(Vector2 direction)
     {
-        if (direction.sqrMagnitude < 0.01f) return;
-
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         Quaternion targetRotation = Quaternion.Euler(0, 0, angle);
 
         if (rotationTarget != null)
         {
-            rotationTarget.rotation = Quaternion.Slerp(rotationTarget.rotation, targetRotation, Time.deltaTime * 15f);
+            rotationTarget.rotation = targetRotation;
         }
         else
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 15f);
+            transform.rotation = targetRotation;
         }
     }
 
-    /// <summary>
-    /// Restores the caster's original rotation
-    /// </summary>
     private void RestoreCasterRotation()
     {
         if (rotationTarget != null)
@@ -360,65 +380,19 @@ public class ChannelController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Gets the facing direction from Animator parameters or falls back to mouse direction
-    /// </summary>
-    private Vector2 GetFacingDirection()
+    private void PreventMovement()
     {
-        if (animator != null)
+        if (navAgent != null)
         {
-            // Try to get facing direction from animator parameters
-            float horizontal = animator.GetFloat("Horizontal");
-            float vertical = animator.GetFloat("Vertical");
-
-            Vector2 facingDir = new Vector2(horizontal, vertical);
-
-            // If we have a valid direction from animator, use it
-            if (facingDir.sqrMagnitude > 0.01f)
-            {
-                return facingDir.normalized;
-            }
+            navAgent.isStopped = true;
         }
-
-        // Fallback: direction toward mouse
-        if (mainCamera != null)
-        {
-            Vector3 mouseWorld = GetMouseWorldPoint();
-            Vector2 dirToMouse = (mouseWorld - transform.position).normalized;
-
-            if (dirToMouse.sqrMagnitude > 0.01f)
-            {
-                return dirToMouse;
-            }
-        }
-
-        // Last resort: face right
-        return Vector2.right;
     }
 
-    // Helper to get mouse world point in 2D or 3D
-    private Vector3 GetMouseWorldPoint()
+    private void RestoreMovement()
     {
-        if (use2DPhysics)
+        if (navAgent != null)
         {
-            // For 2D: Simply convert screen to world
-            Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = beamZPosition; // Match beam Z depth
-            return mouseWorld;
-        }
-        else
-        {
-            // For 3D: Use raycast to find world point
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit))
-            {
-                return hit.point;
-            }
-            else
-            {
-                // No hit: point some distance along the ray
-                return ray.origin + ray.direction * 100f;
-            }
+            navAgent.isStopped = false;
         }
     }
 

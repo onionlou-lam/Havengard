@@ -12,24 +12,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fff87aca672d4184484f1302a011e1de, type: 3}
   m_Name: AttackMelee
   m_EditorClassIdentifier: 
-  abilityName: Melee Attack
-  cooldown: 1
-  resourceCost: 0
+  abilityName: Power Strike
+  description: 
   icon: {fileID: 21300000, guid: bcf8bc2bebc947546b5fbc45775ac400, type: 3}
-  statusEffect: {fileID: 0}
-  maxStatusStacks: 1
-  hitShape: 2
-  hitRadius: 1.5
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 0
+  baseDamage: 20
+  damagePerLevel: 5
+  lifestealPercent: 0
+  range: 5
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 448
+  requiresTarget: 0
+  castVFX: {fileID: 5641636321807965521, guid: a636c7d54886f1e478c4fb41d3827289, type: 3}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 8300000, guid: 445650d427d9dfb4d9e9ccadc618381c, type: 3}
+  impactSFX: {fileID: 0}
+  hitShape: 0
+  hitRadius: 2.5
   hitBoxSize: {x: 1.5, y: 1}
   hitArcAngle: 90
   hitRange: 2
   hitOffset: {x: 0, y: 0}
-  hitDelay: 0.2
+  hitDelay: 0.1
   activeHitDuration: 0
   damageMultiplier: 1
-  baseDamage: 5
   friendlyFire: 0
-  preventMultiHit: 0
+  preventMultiHit: 1
   enableKnockback: 0
   knockbackForce: 5
   knockbackDuration: 0.2
@@ -44,5 +58,9 @@ MonoBehaviour:
   rotateVFXToDirection: 1
   vfxRotationOffset: 0
   spawnCasterVFXAtHitPosition: 0
-  swingSFX: {fileID: 0}
+  swingSFX: {fileID: 8300000, guid: 8747e361c4c78984abbd90e50b5f6596, type: 3}
   hitSFX: {fileID: 0}
+  randomizeSwingPitch: 1
+  randomizeHitPitch: 0
+  minPitch: 0.85
+  maxPitch: 1.15

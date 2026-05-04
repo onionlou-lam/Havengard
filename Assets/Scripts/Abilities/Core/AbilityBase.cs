@@ -87,6 +87,20 @@ namespace Havengard.Abilities
             return baseDamageValue * healingRatio;
         }
 
+        private Color GetDamageTypeColor()
+        {
+            return damageType switch
+            {
+                DamageType.Fire => new Color(1f, 0.3f, 0f),
+                DamageType.Frost => new Color(0.3f, 0.8f, 1f),
+                DamageType.Lightning => new Color(1f, 1f, 0.3f),
+                DamageType.Holy => new Color(1f, 0.9f, 0.3f),
+                DamageType.Physical => new Color(0.8f, 0.8f, 0.8f),
+                DamageType.Arcane => new Color(0.7f, 0.3f, 1f),  // Purple
+                _ => Color.white
+            };
+        }
+
         public abstract void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy);
         public abstract void Deactivate(AbilityUser user);
     }

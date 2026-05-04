@@ -1,5 +1,6 @@
-﻿using UnityEngine;
-using System;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
@@ -21,6 +22,7 @@ namespace Havengard.Abilities
         private SpriteRenderer spriteRenderer;
         private float spawnTime;
         private bool hasHit;
+        private bool collisionEnabled;
 
         private void Awake()
         {
@@ -49,11 +51,21 @@ namespace Havengard.Abilities
 
             spawnTime = Time.time;
             hasHit = false;
+            collisionEnabled = false;
 
             if (rb != null)
             {
                 rb.linearVelocity = this.direction * this.speed;
             }
+
+            // Enable collision after a short delay
+            StartCoroutine(EnableCollisionAfterDelay(0.1f));
+        }
+
+        private IEnumerator EnableCollisionAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            collisionEnabled = true;
         }
 
         public void ConfigureVisuals(Color color, float trailTime = 0.5f)
@@ -126,6 +138,7 @@ namespace Havengard.Abilities
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
+            if (!collisionEnabled) return;
             if (hasHit) return;
             if (collision.gameObject == caster) return;
 

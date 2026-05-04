@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 496614}
   - component: {fileID: 19898716}
   - component: {fileID: 19990662}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Particles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4758,7 +4758,7 @@ GameObject:
   - component: {fileID: 10815376}
   - component: {fileID: 11483474}
   - component: {fileID: 6224688812631462137}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Point light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4896,9 +4896,9 @@ GameObject:
   - component: {fileID: 406284}
   - component: {fileID: 19984850}
   - component: {fileID: 19869318}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: PE_FrostBeamCharge
-  m_TagString: Untagged
+  m_TagString: FX
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4913,7 +4913,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 453394}
@@ -4964,8 +4964,8 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1147017395
-  m_SortingLayer: 7
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
   m_SortingOrder: 5
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -9727,7 +9727,7 @@ GameObject:
   - component: {fileID: 453394}
   - component: {fileID: 19841148}
   - component: {fileID: 19945594}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Rings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14500,7 +14500,7 @@ GameObject:
   - component: {fileID: 4311702936344267204}
   - component: {fileID: 2316924632419405534}
   - component: {fileID: 8979569661096849529}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Rings
   m_TagString: Untagged
   m_Icon: {fileID: 0}

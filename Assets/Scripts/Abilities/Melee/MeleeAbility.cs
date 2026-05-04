@@ -1,8 +1,8 @@
-using UnityEngine;
 using Havengard.Core.HealthSystem;
 using Havengard.Units;
 using Havengard.Combat;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
@@ -96,33 +96,119 @@ namespace Havengard.Abilities
                 case MeleeHitShape.Circle:
                     hits = Physics2D.OverlapCircleAll(origin, hitRadius, targetLayers);
                     break;
+
                 case MeleeHitShape.Box:
                     hits = Physics2D.OverlapBoxAll(origin, hitBoxSize, 0f, targetLayers);
                     break;
-                    // Add other shapes as needed
+
+                case MeleeHitShape.Arc:
+                    hits = PerformArcHitDetection(origin, direction);
+                    break;
+
+                case MeleeHitShape.Cone:
+                    hits = PerformConeHitDetection(origin, direction);
+                    break;
             }
 
-            if (hits != null)
+            Debug.Log($"[MeleeAbility] {abilityName} detected {(hits != null ? hits.Length : 0)} colliders at {origin}");
+
+            if (hits != null && hits.Length > 0)
             {
                 foreach (var hit in hits)
                 {
-                    if (hit.gameObject == caster) continue;
-                    if (preventMultiHit && hitTargets.Contains(hit.gameObject)) continue;
+                    if (hit == null)
+                    {
+                        Debug.LogWarning($"[MeleeAbility] Null hit in collision results");
+                        continue;
+                    }
 
+                    if (hit.gameObject == caster)
+                    {
+                        Debug.Log($"[MeleeAbility] Skipping caster {caster.name}");
+                        continue;
+                    }
+
+                    if (preventMultiHit && hitTargets.Contains(hit.gameObject))
+                    {
+                        Debug.Log($"[MeleeAbility] Already hit {hit.gameObject.name}, skipping");
+                        continue;
+                    }
+
+                    Debug.Log($"[MeleeAbility] Applying hit effects to {hit.gameObject.name}");
                     ApplyHitEffects(caster, hit.gameObject, direction);
                     hitTargets.Add(hit.gameObject);
                 }
             }
+            else
+            {
+                Debug.LogWarning($"[MeleeAbility] {abilityName} - No targets detected! Check targetLayers mask and enemy positions.");
+            }
+        }
+
+        /// <summary>
+        /// Detects colliders within an arc (forward-facing cone based on direction)
+        /// </summary>
+        private Collider2D[] PerformArcHitDetection(Vector2 origin, Vector2 direction)
+        {
+            // Get all colliders in range
+            Collider2D[] allHits = Physics2D.OverlapCircleAll(origin, hitRange, targetLayers);
+
+            // Filter by arc angle
+            List<Collider2D> arcHits = new List<Collider2D>();
+            float halfAngle = hitArcAngle / 2f;
+
+            foreach (var hit in allHits)
+            {
+                Vector2 toTarget = (Vector2)(hit.transform.position - (Vector3)origin);
+                float angleToTarget = Vector2.Angle(direction, toTarget);
+
+                // Check if within arc angle
+                if (angleToTarget <= halfAngle)
+                {
+                    arcHits.Add(hit);
+                }
+            }
+
+            return arcHits.ToArray();
+        }
+
+        /// <summary>
+        /// Detects colliders within a cone (similar to Arc but can use different logic)
+        /// </summary>
+        private Collider2D[] PerformConeHitDetection(Vector2 origin, Vector2 direction)
+        {
+            // For now, cone uses same logic as arc
+            // You can customize this later for different behavior
+            return PerformArcHitDetection(origin, direction);
         }
 
         private void ApplyHitEffects(GameObject caster, GameObject target, Vector2 direction)
         {
+            // Check faction filtering
+            var casterHealth = caster.GetComponent<IHealth>();
+            var targetHealth = target.GetComponent<IHealth>();
+
+            if (casterHealth != null && targetHealth != null)
+            {
+                bool canDamage = FactionUtility.CanDamage(casterHealth.GetFaction(), targetHealth, friendlyFire);
+                if (!canDamage)
+                {
+                    Debug.Log($"[MeleeAbility] Cannot damage {target.name} due to faction rules");
+                    return;
+                }
+            }
+
             // Apply damage
             var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
             if (health != null)
             {
                 float damage = CalculateDamage(caster) * damageMultiplier;
+                Debug.Log($"[MeleeAbility] Dealing {damage} damage to {target.name}");
                 health.TakeDamage((int)damage, caster);
+            }
+            else
+            {
+                Debug.LogWarning($"[MeleeAbility] Target {target.name} has no Health component!");
             }
 
             // Spawn hit VFX
@@ -177,6 +263,14 @@ namespace Havengard.Abilities
         {
             hitTargets.Clear();
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            // This won't work on ScriptableObjects, but keeping for reference
+            // You'd need to visualize this in the editor differently
+        }
+#endif
     }
 
     public enum MeleeHitShape

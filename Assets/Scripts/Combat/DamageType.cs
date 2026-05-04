@@ -6,6 +6,7 @@ namespace Havengard.Combat
         Fire,
         Frost,
         Lightning,
-        Holy
+        Holy,
+        Arcane
     }
 }
