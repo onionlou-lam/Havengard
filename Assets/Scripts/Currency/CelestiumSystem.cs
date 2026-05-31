@@ -15,6 +15,9 @@ namespace Havengard.Resources
 
         [SerializeField] private int startingCelestium = 0;
         public int Current { get; private set; }
+        
+        // ADD ALIAS FOR SAVE SYSTEM COMPATIBILITY
+        public int CurrentCelestium => Current;
 
         private void Awake()
         {
@@ -36,6 +39,17 @@ namespace Havengard.Resources
             Current -= amount;
             OnCelestiumChanged?.Invoke(Current);
             return true;
+        }
+        
+        // ADD THIS METHOD FOR SAVE SYSTEM
+        /// <summary>
+        /// Set celestium amount directly (for loading saves)
+        /// </summary>
+        public void SetCelestium(int amount)
+        {
+            Current = Mathf.Max(0, amount);
+            OnCelestiumChanged?.Invoke(Current);
+            Debug.Log($"[CelestiumSystem] Celestium set to: {Current}");
         }
     }
 }

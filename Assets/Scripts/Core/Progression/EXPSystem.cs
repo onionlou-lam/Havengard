@@ -85,5 +85,27 @@ namespace Havengard.Core.Progression
         {
             OnExpChanged?.Invoke();
         }
+
+        /// <summary>
+        /// Reset EXP and level (for loading saves)
+        /// </summary>
+        public void ResetEXP()
+        {
+            CurrentEXP = 0;
+            Level = 1;
+            RaiseChanged();
+            Debug.Log($"[ExpSystem] Reset {name} to level 1");
+        }
+        
+        /// <summary>
+        /// Set EXP and level directly (for loading saves)
+        /// </summary>
+        public void SetEXPAndLevel(int exp, int level)
+        {
+            CurrentEXP = exp;
+            Level = level;
+            RaiseChanged();
+            Debug.Log($"[ExpSystem] Set {name} to level {level} with {exp} EXP");
+        }
     }
 }

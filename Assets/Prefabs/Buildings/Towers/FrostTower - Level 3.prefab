@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6142951481776814986
+--- !u!1 &6904984113982090598
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,39 +8,39 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 9005853858599885926}
-  - component: {fileID: 6365730961468024446}
+  - component: {fileID: 2092936989888461650}
+  - component: {fileID: 4573337807600102676}
   m_Layer: 0
-  m_Name: Frost Tower - Level 2
+  m_Name: FrostTower - Level 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &9005853858599885926
+--- !u!4 &2092936989888461650
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6142951481776814986}
+  m_GameObject: {fileID: 6904984113982090598}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -11.43, y: -7.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2328483925235412691}
-  - {fileID: 1447404273049685197}
+  - {fileID: 4577106342490321988}
+  - {fileID: 1059936967507398581}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &6365730961468024446
+--- !u!212 &4573337807600102676
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6142951481776814986}
+  m_GameObject: {fileID: 6904984113982090598}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -78,7 +78,7 @@ SpriteRenderer:
   m_SortingLayerID: -1241304483
   m_SortingLayer: 3
   m_SortingOrder: 3
-  m_Sprite: {fileID: -1522931499, guid: 5a46be6a81a487c4c98755073553ba74, type: 3}
+  m_Sprite: {fileID: 1970880661, guid: 5a46be6a81a487c4c98755073553ba74, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -89,13 +89,13 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1001 &3581204325484583938
+--- !u!1001 &3103384586597359482
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 9005853858599885926}
+    m_TransformParent: {fileID: 2092936989888461650}
     m_Modifications:
     - target: {fileID: 2712513708526637263, guid: e59dc5512de207a498f1d723f264cd60,
         type: 3}
@@ -105,7 +105,7 @@ PrefabInstance:
     - target: {fileID: 2712513708526637263, guid: e59dc5512de207a498f1d723f264cd60,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.305
+      value: 0.26
       objectReference: {fileID: 0}
     - target: {fileID: 2712513708526637263, guid: e59dc5512de207a498f1d723f264cd60,
         type: 3}
@@ -150,7 +150,7 @@ PrefabInstance:
     - target: {fileID: 4184177655557293364, guid: e59dc5512de207a498f1d723f264cd60,
         type: 3}
       propertyPath: m_Intensity
-      value: 1.5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4445882675579589013, guid: e59dc5512de207a498f1d723f264cd60,
         type: 3}
@@ -162,35 +162,20 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e59dc5512de207a498f1d723f264cd60, type: 3}
---- !u!4 &1447404273049685197 stripped
+--- !u!4 &1059936967507398581 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2712513708526637263, guid: e59dc5512de207a498f1d723f264cd60,
     type: 3}
-  m_PrefabInstance: {fileID: 3581204325484583938}
+  m_PrefabInstance: {fileID: 3103384586597359482}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &5409369096507097207
+--- !u!1001 &6108212278082378464
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 9005853858599885926}
+    m_TransformParent: {fileID: 2092936989888461650}
     m_Modifications:
-    - target: {fileID: 2031642121175268704, guid: 2707c1b9b8a4e884fa87f2cd6217dd45,
-        type: 3}
-      propertyPath: m_SortingLayer
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031642121175268704, guid: 2707c1b9b8a4e884fa87f2cd6217dd45,
-        type: 3}
-      propertyPath: m_SortingOrder
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 2031642121175268704, guid: 2707c1b9b8a4e884fa87f2cd6217dd45,
-        type: 3}
-      propertyPath: m_SortingLayerID
-      value: -1241304483
-      objectReference: {fileID: 0}
     - target: {fileID: 2319529753678535337, guid: 2707c1b9b8a4e884fa87f2cd6217dd45,
         type: 3}
       propertyPath: m_SortingLayer
@@ -286,9 +271,9 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2707c1b9b8a4e884fa87f2cd6217dd45, type: 3}
---- !u!4 &2328483925235412691 stripped
+--- !u!4 &4577106342490321988 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7728633548014694052, guid: 2707c1b9b8a4e884fa87f2cd6217dd45,
     type: 3}
-  m_PrefabInstance: {fileID: 5409369096507097207}
+  m_PrefabInstance: {fileID: 6108212278082378464}
   m_PrefabAsset: {fileID: 0}

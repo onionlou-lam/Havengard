@@ -134,5 +134,31 @@ namespace Havengard.Core.HealthSystem
             EnsureInitialized();
             healthSystem.SetMaxHealth(newMax, refill);
         }
+        
+        // ADD THIS METHOD FOR SAVE SYSTEM
+        /// <summary>
+        /// Set health directly (for loading saves)
+        /// </summary>
+        public void SetHealth(int amount)
+        {
+            EnsureInitialized();
+            
+            int newHealth = Mathf.Clamp(amount, 0, healthSystem.MaxHealth);
+            
+            // Use internal HealthSystem to set health directly
+            // Since HealthSystem doesn't expose a direct setter, we'll heal to target
+            int currentHealth = healthSystem.CurrentHealth;
+            
+            if (newHealth > currentHealth)
+            {
+                healthSystem.Heal(newHealth - currentHealth);
+            }
+            else if (newHealth < currentHealth)
+            {
+                healthSystem.Damage(currentHealth - newHealth);
+            }
+            
+            Debug.Log($"[Health] Health set to: {newHealth}/{healthSystem.MaxHealth}");
+        }
     }
 }

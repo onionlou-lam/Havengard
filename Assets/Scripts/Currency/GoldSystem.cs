@@ -11,6 +11,9 @@ namespace Havengard.Resources
 
         [SerializeField] private int startingGold = 0;
         public int Current { get; private set; }
+        
+        // ADD ALIAS FOR SAVE SYSTEM COMPATIBILITY
+        public int CurrentGold => Current;
 
         private void Awake()
         {
@@ -36,6 +39,17 @@ namespace Havengard.Resources
             Current -= amount;
             OnGoldChanged?.Invoke(Current);
             return true;
+        }
+        
+        // ADD THIS METHOD FOR SAVE SYSTEM
+        /// <summary>
+        /// Set gold amount directly (for loading saves)
+        /// </summary>
+        public void SetGold(int amount)
+        {
+            Current = Mathf.Max(0, amount);
+            OnGoldChanged?.Invoke(Current);
+            Debug.Log($"[GoldSystem] Gold set to: {Current}");
         }
     }
 }

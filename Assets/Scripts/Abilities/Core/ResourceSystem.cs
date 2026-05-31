@@ -98,5 +98,16 @@ namespace Havengard.Abilities
         {
             return maxResource > 0 ? (float)currentResource / maxResource : 0f;
         }
+        
+        // ADD THIS METHOD FOR SAVE SYSTEM
+        /// <summary>
+        /// Set current resource directly (for loading saves)
+        /// </summary>
+        public void SetCurrentResource(int amount)
+        {
+            currentResource = Mathf.Clamp(amount, 0, maxResource);
+            OnResourceChanged?.Invoke(currentResource, maxResource);
+            Debug.Log($"[ResourceSystem] Resource set to: {currentResource}/{maxResource}");
+        }
     }
 }
