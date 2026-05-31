@@ -60,7 +60,7 @@ namespace Havengard.Core.Heroes
             if (statsComponent != null && statsComponent.CurrentStats == null)
                 statsComponent.SetCurrentStats(null);
 
-            Debug.Log($"[HeroInstance] Awake on {name}. HeroData={(heroData ? heroData.name : "NULL")} Class={(Class ? Class.name : "NULL")}");
+            //Debug.Log($"[HeroInstance] Awake on {name}. HeroData={(heroData ? heroData.name : "NULL")} Class={(Class ? Class.name : "NULL")}");
 
             if (heroData != null)
                 InitializeFromData(heroData, Class);
@@ -141,7 +141,7 @@ namespace Havengard.Core.Heroes
             // ----- 4) EXP table -----
             if (playerClassData.expToLevel != null && playerClassData.expToLevel.Length > 0)
             {
-                Debug.Log($"[HeroInstance] Initialising EXP table on {name} from PlayerClass {playerClassData.name}");
+                //Debug.Log($"[HeroInstance] Initialising EXP table on {name} from PlayerClass {playerClassData.name}");
                 expSystem.InitEXPTable(playerClassData.expToLevel);
             }
             else

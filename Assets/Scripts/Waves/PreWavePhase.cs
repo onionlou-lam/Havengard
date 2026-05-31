@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Havengard.Waves
@@ -9,9 +9,9 @@ namespace Havengard.Waves
     public class PreWavePhase : MonoBehaviour
     {
         [Header("Phase Settings")]
-        [SerializeField] private bool useTimeLimit = false;
+        [SerializeField] private bool useTimeLimit = true;
         [Tooltip("Time limit in seconds for the pre-wave phase (0 = infinite)")]
-        [SerializeField] private float timeLimitSeconds = 30f;
+        [SerializeField] private float timeLimitSeconds = 10f;
         
         [Header("UI References")]
         [SerializeField] private PreWavePhaseUI phaseUI;
@@ -23,7 +23,6 @@ namespace Havengard.Waves
 
         private bool isPhaseActive = false;
         private float remainingTime;
-        private bool autoStartEnabled = false;
 
         public bool IsPhaseActive => isPhaseActive;
         public float RemainingTime => remainingTime;
@@ -41,7 +40,7 @@ namespace Havengard.Waves
                 }
             }
 
-            Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}");
+            Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}, UseTimeLimit: {useTimeLimit}, TimeLimitSeconds: {timeLimitSeconds}");
         }
 
         private void Update()
@@ -50,6 +49,12 @@ namespace Havengard.Waves
             {
                 remainingTime -= Time.deltaTime;
                 OnTimerUpdated?.Invoke(remainingTime);
+
+                // Log every second for debugging
+                if (Mathf.FloorToInt(remainingTime) != Mathf.FloorToInt(remainingTime + Time.deltaTime))
+                {
+                    Debug.Log($"[PreWavePhase] Timer update: {Mathf.CeilToInt(remainingTime)}s remaining");
+                }
 
                 if (remainingTime <= 0f)
                 {
@@ -73,7 +78,7 @@ namespace Havengard.Waves
             isPhaseActive = true;
             remainingTime = timeLimitSeconds;
 
-            Debug.Log($"[PreWavePhase] Starting pre-wave phase for Wave {upcomingWaveNumber}");
+            //Debug.Log($"[PreWavePhase] Starting pre-wave phase for Wave {upcomingWaveNumber}. Time limit: {(useTimeLimit ? $"{timeLimitSeconds}s" : "OFF")}, RemainingTime initialized to: {remainingTime}s");
             
             if (phaseUI != null)
             {
@@ -100,24 +105,34 @@ namespace Havengard.Waves
 
             isPhaseActive = false;
             
-            Debug.Log("[PreWavePhase] Ending pre-wave phase, starting wave");
+            //Debug.Log("[PreWavePhase] Ending pre-wave phase, starting wave");
             
+            // Call OnWaveStarted instead of HidePhase - keeps wave number visible
             if (phaseUI != null)
             {
-                phaseUI.HidePhase();
+                phaseUI.OnWaveStarted(); // ← CHANGED from HidePhase()
             }
 
             OnPhaseEnded?.Invoke();
         }
 
         /// <summary>
-        /// Toggle time limit on/off
+        /// Toggle time limit on/off during the phase
         /// </summary>
         public void ToggleTimeLimit(bool enabled)
         {
             useTimeLimit = enabled;
-            Debug.Log($"[PreWavePhase] Time limit {(enabled ? "enabled" : "disabled")}");
             
+            //Debug.Log($"[PreWavePhase] Time limit toggled: {(enabled ? "ON" : "OFF")}");
+            
+            // Reset timer when enabling
+            if (enabled && isPhaseActive)
+            {
+                remainingTime = timeLimitSeconds;
+                Debug.Log($"[PreWavePhase] Timer reset to: {remainingTime}s");
+            }
+            
+            // Update UI immediately
             if (isPhaseActive && phaseUI != null)
             {
                 phaseUI.UpdateTimeLimitToggle(enabled);
@@ -129,11 +144,14 @@ namespace Havengard.Waves
         /// </summary>
         public void SetTimeLimit(float seconds)
         {
-            timeLimitSeconds = seconds;
-            if (isPhaseActive)
+            timeLimitSeconds = Mathf.Max(0f, seconds);
+            
+            if (isPhaseActive && useTimeLimit)
             {
-                remainingTime = seconds;
+                remainingTime = timeLimitSeconds;
             }
+            
+            //Debug.Log($"[PreWavePhase] Time limit set to: {timeLimitSeconds}s");
         }
 
         /// <summary>
@@ -141,7 +159,7 @@ namespace Havengard.Waves
         /// </summary>
         public void ManuallyStartWave()
         {
-            Debug.Log("[PreWavePhase] Player manually started wave");
+            //Debug.Log("[PreWavePhase] Player manually started wave");
             EndPhase();
         }
     }

@@ -29,28 +29,28 @@ namespace Havengard.UI
 
         private void Awake()
         {
-            Debug.Log("[PauseMenuUI] Awake called - script is active");
+            //Debug.Log("[PauseMenuUI] Awake called - script is active");
         }
 
         private void Start()
         {
-            Debug.Log("[PauseMenuUI] Start called");
+            //Debug.Log("[PauseMenuUI] Start called");
             
             // Hook up button listeners
             if (resumeButton != null)
             {
                 resumeButton.onClick.AddListener(Resume);
-                Debug.Log("[PauseMenuUI] Resume button hooked up");
+                //Debug.Log("[PauseMenuUI] Resume button hooked up");
             }
             else
             {
-                Debug.LogWarning("[PauseMenuUI] Resume button is NULL!");
+                //Debug.LogWarning("[PauseMenuUI] Resume button is NULL!");
             }
             
             if (inventoryButton != null)
             {
                 inventoryButton.onClick.AddListener(OpenInventory);
-                Debug.Log("[PauseMenuUI] Inventory button hooked up");
+                //Debug.Log("[PauseMenuUI] Inventory button hooked up");
             }
             
             if (characterButton != null)
@@ -72,25 +72,25 @@ namespace Havengard.UI
             if (itemCacheUI == null)
             {
                 itemCacheUI = FindFirstObjectByType<ItemCacheUI>();
-                Debug.Log($"[PauseMenuUI] Auto-found ItemCacheUI: {itemCacheUI != null}");
+                //Debug.Log($"[PauseMenuUI] Auto-found ItemCacheUI: {itemCacheUI != null}");
             }
 
             // Subscribe to ItemCacheUI close event
             if (itemCacheUI != null)
             {
                 itemCacheUI.OnRequestClose += OnInventoryRequestClose;
-                Debug.Log("[PauseMenuUI] Subscribed to ItemCacheUI close event");
+                //Debug.Log("[PauseMenuUI] Subscribed to ItemCacheUI close event");
             }
 
             // Start with menu hidden
             if (pausePanel != null)
             {
                 pausePanel.SetActive(false);
-                Debug.Log("[PauseMenuUI] Pause panel hidden on start");
+                //Debug.Log("[PauseMenuUI] Pause panel hidden on start");
             }
             else
             {
-                Debug.LogError("[PauseMenuUI] Pause panel reference is NULL!");
+                //Debug.LogError("[PauseMenuUI] Pause panel reference is NULL!");
             }
         }
 
@@ -260,7 +260,7 @@ namespace Havengard.UI
         /// </summary>
         private void ExitToMainMenu()
         {
-            Debug.Log("[PauseMenu] Exiting to Main Menu");
+            //Debug.Log("[PauseMenu] Exiting to Main Menu");
             
             // Reset time scale
             Time.timeScale = 1f;
@@ -274,7 +274,7 @@ namespace Havengard.UI
         /// </summary>
         private void ExitGame()
         {
-            Debug.Log("[PauseMenu] Exiting Game");
+            //Debug.Log("[PauseMenu] Exiting Game");
             
             #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;

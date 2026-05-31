@@ -77,6 +77,8 @@ namespace Havengard.Waves
                 var prefab = list[i];
                 if (prefab == null) continue;
 
+                Debug.Log($"[WaveSpawner] Spawning enemy: {prefab.name} from group: {group.groupName}"); // ADD THIS LINE
+
                 Transform zone = ChooseZone(group.zoneSelection);
                 Vector3 pos = zone != null ? zone.position : transform.position;
 

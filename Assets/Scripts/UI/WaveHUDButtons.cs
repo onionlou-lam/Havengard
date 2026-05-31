@@ -10,6 +10,7 @@ namespace Havengard.UI
 {
     /// <summary>
     /// Manages HUD buttons that appear between waves
+    /// NOTE: This is now secondary to PreWavePhaseUI
     /// </summary>
     public class WaveHUDButtons : MonoBehaviour
     {
@@ -32,10 +33,14 @@ namespace Havengard.UI
         [SerializeField] private TextMeshProUGUI startWaveTimerText;
         [SerializeField] private TextMeshProUGUI startWaveText;
 
+        [Header("Integration")]
+        [SerializeField] private bool disableWhenPreWavePhaseActive = true; // NEW: Hide when PreWavePhase is shown
+
         [Header("References")]
         [SerializeField] private ItemInventory playerInventory;
         [SerializeField] private PlayerStatAllocator statAllocator;
         [SerializeField] private Havengard.Waves.WaveManager waveManager;
+        [SerializeField] private Havengard.Waves.PreWavePhase preWavePhase; // NEW
 
         private bool shouldHighlightUpgrade;
         private bool shouldHighlightLevelUp;
@@ -76,6 +81,9 @@ namespace Havengard.UI
             if (waveManager == null)
                 waveManager = FindFirstObjectByType<Havengard.Waves.WaveManager>();
 
+            if (preWavePhase == null)
+                preWavePhase = FindFirstObjectByType<Havengard.Waves.PreWavePhase>();
+
             // Setup button listeners
             if (upgradeItemButton != null)
                 upgradeItemButton.onClick.AddListener(OnUpgradeItemClicked);
@@ -101,6 +109,9 @@ namespace Havengard.UI
 
             if (CelestiumSystem.Instance != null)
                 CelestiumSystem.Instance.OnCelestiumChanged += (_) => CheckHighlightConditions();
+
+            // Start hidden
+            HideButtons();
         }
 
         private void OnDestroy()
@@ -120,6 +131,17 @@ namespace Havengard.UI
 
         private void Update()
         {
+            // Hide these buttons if PreWavePhase is active
+            if (disableWhenPreWavePhaseActive && preWavePhase != null && preWavePhase.IsPhaseActive)
+            {
+                if (buttonPanel != null && buttonPanel.activeSelf)
+                {
+                    HideButtons();
+                    Debug.Log("[WaveHUDButtons] Hidden because PreWavePhase is active");
+                }
+                return;
+            }
+
             UpdateHighlights();
             UpdateStartWaveTimer();
         }
@@ -138,6 +160,14 @@ namespace Havengard.UI
         {
             inWavePhase = false;
             wavePhaseStartTime = Time.time;
+            
+            // Don't show if PreWavePhase is handling it
+            if (disableWhenPreWavePhaseActive && preWavePhase != null && preWavePhase.IsPhaseActive)
+            {
+                Debug.Log("[WaveHUDButtons] Wave ended but PreWavePhase is active - staying hidden");
+                return;
+            }
+
             ShowButtons();
             CheckHighlightConditions();
             Debug.Log("[WaveHUDButtons] Wave ended - buttons shown");
@@ -334,12 +364,16 @@ namespace Havengard.UI
 
         private void OnStartWaveClicked()
         {
-            Debug.Log($"[WaveHUDButtons] Start Wave button clicked - Starting wave {nextWaveIndex}");
+            Debug.Log($"[WaveHUDButtons] Start Wave button clicked");
 
-            if (waveManager != null)
+            // If PreWavePhase exists, trigger it to end
+            if (preWavePhase != null && preWavePhase.IsPhaseActive)
             {
-                // This will need to be adjusted based on your WaveManager API
-                // For now, just restart the night
+                preWavePhase.ManuallyStartWave();
+            }
+            else if (waveManager != null)
+            {
+                // Fallback: restart night
                 waveManager.StartNight();
                 StartWavePhase(nextWaveIndex);
             }
@@ -351,9 +385,8 @@ namespace Havengard.UI
 
         private int GetItemUpgradeCost(ItemInstance item)
         {
-            // Example: base cost * current level
-            int baseCost = 50;
-            return baseCost * item.level;
+            // Placeholder cost calculation
+            return 50 * (item.level + 1);
         }
 
         #endregion

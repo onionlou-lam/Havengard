@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &8543387032684821566
+--- !u!1 &188364
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2322932691680468119}
-  - component: {fileID: 3715294799996370988}
+  - component: {fileID: 423356}
+  - component: {fileID: -6170720886868344875}
   m_Layer: 9
-  m_Name: FrostBeam
+  m_Name: ShadowBeam_Prefab
   m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2322932691680468119
+--- !u!4 &423356
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8543387032684821566}
+  m_GameObject: {fileID: 188364}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,33 +32,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3715294799996370988
+--- !u!114 &-6170720886868344875
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8543387032684821566}
+  m_GameObject: {fileID: 188364}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede43347e5e422d4692b421d77e89d7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   beamLineRendererPrefab:
-  - {fileID: 168570, guid: 842502c039b9fa448a8d2db389c39bd9, type: 3}
+  - {fileID: 168570, guid: f8910e850e9dcdc44bb3454608bf7f64, type: 3}
   beamStartPrefab:
-  - {fileID: 134198, guid: 3a857b88ce25ff54085d07fee4812e63, type: 3}
+  - {fileID: 158942, guid: 7746042b76677fa4897bba11a2964416, type: 3}
   beamEndPrefab:
-  - {fileID: 113256, guid: 24ecca43a211bd946ac75392ca90747f, type: 3}
+  - {fileID: 114968, guid: 66daa82b181beef4d9465affcd97d06e, type: 3}
   beamEndOffset: 0
   textureScrollSpeed: 8
   textureLengthScale: 3
   minBeamWidth: 0.25
-  maxBeamWidth: 0.8
+  maxBeamWidth: 1
   minStartScale: 0.25
   maxStartScale: 0.8
   use2DMode: 1
-  maxBeamDistance: 25
+  maxBeamDistance: 40
   beamBlockingLayers:
     serializedVersion: 2
     m_Bits: 1280

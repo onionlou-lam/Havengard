@@ -111,11 +111,19 @@ namespace Havengard.Waves
                 {
                     Debug.Log($"[WaveManager] Starting pre-wave phase for wave {i + 1}");
                     
+                    // Configure pre-wave phase based on wave definition
+                    bool useTimer = wave.UsesTimer();
+                    float timerDuration = useTimer ? wave.startDelay : 0f;
+                    
+                    // Set timer settings before starting phase
+                    preWavePhase.SetTimeLimit(timerDuration);
+                    preWavePhase.ToggleTimeLimit(useTimer);
+                    
                     // Start the pre-wave phase
                     preWavePhase.StartPhase(i + 1);
                     waitingForPreWavePhaseToEnd = true;
 
-                    // Wait until player clicks "Start Wave" button
+                    // Wait until player clicks "Start Wave" button or timer expires
                     yield return new WaitUntil(() => !waitingForPreWavePhaseToEnd);
                     
                     Debug.Log($"[WaveManager] Pre-wave phase ended, starting wave {i + 1}");
@@ -135,7 +143,8 @@ namespace Havengard.Waves
                         // Timer begins immediately (wave starts regardless of previous completion)
                         if (delay > 0f) yield return new WaitForSeconds(delay);
                     }
-                    else
+                    else if (wave.startCondition == WaveStartCondition.TimerAfterPreviousComplete ||
+                             wave.startCondition == WaveStartCondition.ManualOrTimerAfterComplete)
                     {
                         // Timer after previous completion
                         if (i > 0)
@@ -146,6 +155,17 @@ namespace Havengard.Waves
                         }
 
                         if (delay > 0f) yield return new WaitForSeconds(delay);
+                    }
+                    else if (wave.startCondition == WaveStartCondition.ManualStartOnly)
+                    {
+                        // Wait for previous wave to complete, but no timer
+                        if (i > 0)
+                        {
+                            while (currentTracker != null && !currentTracker.IsComplete())
+                                yield return null;
+                        }
+                        // For ManualStartOnly without PreWavePhase, you'd need additional logic
+                        // to wait for a button press. This is why PreWavePhase is recommended.
                     }
                 }
 
@@ -167,6 +187,20 @@ namespace Havengard.Waves
                     yield return null;
 
                 Debug.Log($"[WaveManager] Completed wave {i + 1}: {wave.waveName}");
+
+                // === WAVE COMPLETED ===
+                // Notify PreWavePhaseUI that wave is complete
+                if (usePreWavePhase && preWavePhase != null)
+                {
+                    var phaseUI = preWavePhase.GetComponentInChildren<PreWavePhaseUI>();
+                    if (phaseUI == null)
+                        phaseUI = FindFirstObjectByType<PreWavePhaseUI>();
+                    
+                    if (phaseUI != null)
+                    {
+                        phaseUI.OnWaveCompleted();
+                    }
+                }
 
                 // Rewards
                 if (rewardReceiver != null)

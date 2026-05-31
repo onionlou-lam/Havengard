@@ -110,7 +110,7 @@ namespace Havengard.Abilities
                     break;
             }
 
-            Debug.Log($"[MeleeAbility] {abilityName} detected {(hits != null ? hits.Length : 0)} colliders at {origin}");
+            //Debug.Log($"[MeleeAbility] {abilityName} detected {(hits != null ? hits.Length : 0)} colliders at {origin}");
 
             if (hits != null && hits.Length > 0)
             {
@@ -203,7 +203,7 @@ namespace Havengard.Abilities
             if (health != null)
             {
                 float damage = CalculateDamage(caster) * damageMultiplier;
-                Debug.Log($"[MeleeAbility] Dealing {damage} damage to {target.name}");
+                //Debug.Log($"[MeleeAbility] Dealing {damage} damage to {target.name}");
                 health.TakeDamage((int)damage, caster);
             }
             else

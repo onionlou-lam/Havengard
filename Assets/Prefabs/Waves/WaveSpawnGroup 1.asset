@@ -18,9 +18,6 @@ MonoBehaviour:
   zoneSelection: 0
   spawnOrder: 0
   entries:
-  - enemyPrefab: {fileID: 5755621701607031728, guid: c10cd665f5ac74c44870f7acf67cd28c,
+  - enemyPrefab: {fileID: 8786204303330139697, guid: 8eeddc078123ee94f87286abfc09ddc9,
       type: 3}
-    count: 3
-  - enemyPrefab: {fileID: 5755621701607031728, guid: c10cd665f5ac74c44870f7acf67cd28c,
-      type: 3}
-    count: 3
+    count: 5

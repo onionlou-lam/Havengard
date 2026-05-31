@@ -45,7 +45,7 @@ namespace Havengard.UI
                 canvasRectTransform = targetCanvas.GetComponent<RectTransform>();
             }
 
-            Debug.Log($"[ItemPickupNumberSpawner] Initialized");
+            //Debug.Log($"[ItemPickupNumberSpawner] Initialized");
         }
 
         /// <summary>

@@ -10,46 +10,46 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 860fef899a4e7904e95325cf910f6129, type: 3}
-  m_Name: ArcaneBeam
+  m_Name: ShadowBeam
   m_EditorClassIdentifier: 
-  abilityName: Arcane Beam
-  description: 
-  icon: {fileID: 21300000, guid: 48285df0ae9eb844d9d3996159c35256, type: 3}
+  abilityName: Shadow Beam
+  description: A ray of death.
+  icon: {fileID: 21300000, guid: d86fa35be1c68054ea5db4bf9fc9872b, type: 3}
   maxLevel: 5
-  damageType: 5
+  damageType: 0
   canHeal: 0
   healingRatio: 0
-  baseCooldown: 2
-  resourceCost: 5
-  baseDamage: 80
-  damagePerLevel: 12
+  baseCooldown: 0
+  resourceCost: 1
+  baseDamage: 200
+  damagePerLevel: 200
   lifestealPercent: 0
   range: 15
   targetLayers:
     serializedVersion: 2
     m_Bits: 448
   requiresTarget: 0
-  castVFX: {fileID: 158756, guid: 8396fce600232da4dbbf9a8c440e40ba, type: 3}
-  impactVFX: {fileID: 175948, guid: d6fd535eb4c308f45b5c78773315e81c, type: 3}
-  castSFX: {fileID: 8300000, guid: 73cc4036a5bfa204d83d13119b4ab44a, type: 3}
-  impactSFX: {fileID: 8300000, guid: e0cd8d02ee159ee4ab2be506b7a17c39, type: 3}
-  channelDuration: 3
+  castVFX: {fileID: 158942, guid: 7746042b76677fa4897bba11a2964416, type: 3}
+  impactVFX: {fileID: 114968, guid: 66daa82b181beef4d9465affcd97d06e, type: 3}
+  castSFX: {fileID: 8300000, guid: 18a8e138ed9cec647bc24631e8d16b7e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
+  channelDuration: 5
   tickRate: 0.3
   canMoveWhileChanneling: 1
   preventMovement: 1
   minReleasePercent: 0.05
   allowPartialRelease: 1
-  chargingVFXPrefab: {fileID: 159362, guid: 0d9b0e27a2944614abe85db3c25b3d74, type: 3}
-  beamPrefab: {fileID: 168570, guid: 1f7452042ec77d94ea7cece5cc4816fc, type: 3}
-  beamWidth: 1
-  beamMaxDistance: 30
+  chargingVFXPrefab: {fileID: 194586, guid: a862ba583d75a834da6fe74054b4328b, type: 3}
+  beamPrefab: {fileID: 188364, guid: 17f899c4f15d4e94fae7d28bdd44f8ab, type: 3}
+  beamWidth: 2
+  beamMaxDistance: 40
   hitLayers:
     serializedVersion: 2
     m_Bits: 1792
   useBeamPulsing: 1
   pulseInfo: Configure pulse in beam prefab
   damagePerTickMultiplier: 0.4
-  rampDamageWithCharge: 1
+  rampDamageWithCharge: 0
   minDamagePercent: 0.4
   minTimeBetweenTicks: 0.4
   frostSlowPercent: 1

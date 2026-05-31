@@ -46,7 +46,7 @@ namespace Havengard.Core.Progression
             }
             else
             {
-                Debug.Log($"[ExpSystem] EXP table initialised on {name}. Length={expToLevel.Length}, first={expToLevel[0]}");
+                //Debug.Log($"[ExpSystem] EXP table initialised on {name}. Length={expToLevel.Length}, first={expToLevel[0]}");
             }
 
             RaiseChanged();

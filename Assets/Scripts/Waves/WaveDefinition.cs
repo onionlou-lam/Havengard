@@ -5,7 +5,9 @@ namespace Havengard.Waves
     public enum WaveStartCondition
     {
         TimerAfterPreviousStart,
-        TimerAfterPreviousComplete
+        TimerAfterPreviousComplete,
+        ManualStartOnly,              // NEW: Only button, no timer
+        ManualOrTimerAfterComplete    // NEW: Timer + button option
     }
 
     public enum WaveCompleteCondition
@@ -34,5 +36,24 @@ namespace Havengard.Waves
         public int rewardGold = 0;
         public int rewardExp = 0;
         public int rewardCelestium = 0;
+
+        /// <summary>
+        /// Returns true if this wave should use a timer (either auto-start or optional)
+        /// </summary>
+        public bool UsesTimer()
+        {
+            return startCondition == WaveStartCondition.TimerAfterPreviousStart ||
+                   startCondition == WaveStartCondition.TimerAfterPreviousComplete ||
+                   startCondition == WaveStartCondition.ManualOrTimerAfterComplete;
+        }
+
+        /// <summary>
+        /// Returns true if this wave can be manually started with a button
+        /// </summary>
+        public bool AllowsManualStart()
+        {
+            return startCondition == WaveStartCondition.ManualStartOnly ||
+                   startCondition == WaveStartCondition.ManualOrTimerAfterComplete;
+        }
     }
 }

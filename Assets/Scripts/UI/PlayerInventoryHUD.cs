@@ -104,7 +104,7 @@ namespace Havengard.UI
                 }
             }
 
-            Debug.Log($"[PlayerInventoryHUD] Initialized {itemSlotHUDs.Count} slots");
+            //Debug.Log($"[PlayerInventoryHUD] Initialized {itemSlotHUDs.Count} slots");
         }
 
         /// <summary>

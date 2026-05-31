@@ -191,7 +191,7 @@ namespace Havengard.Items
                 var tracker = pickupObj.AddComponent<ItemPositionTracker>();
                 tracker.Initialize(position);
                 
-                Debug.Log($"[ItemDropper] Successfully spawned {itemData.itemName} at {position}");
+                //Debug.Log($"[ItemDropper] Successfully spawned {itemData.itemName} at {position}");
             }
             else
             {

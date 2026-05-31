@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c6ec0befdb3599429b7d9a03e3bdb98, type: 3}
   m_Name: WaveSet 1
   m_EditorClassIdentifier: 
-  setName: Wave Set 1
+  setName: Wave Set (orig)
   waves:
   - {fileID: 11400000, guid: e8f0f18e3b292dc45965730c74881d7c, type: 2}
+  - {fileID: 11400000, guid: ac5a30d8db53a904188bbd17e2a8e54e, type: 2}

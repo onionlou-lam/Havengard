@@ -246,7 +246,7 @@ namespace Havengard.Abilities
             {
                 Vector3 impactPos = GetMouseWorldPoint();
                 AudioSource.PlayClipAtPoint(activeChanneledAbility.impactSFX, impactPos, impactSoundVolume);
-                Debug.Log($"[AbilityUser] Played impact SFX at volume {impactSoundVolume}");
+                //Debug.Log($"[AbilityUser] Played impact SFX at volume {impactSoundVolume}");
             }
 
             // Call release on ability

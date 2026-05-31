@@ -20,7 +20,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 010b655fd6a3f5e4fb98d6d5e9722383, type: 2}
   - {fileID: 11400000, guid: 97a294445cf771a4a8e43e25fd939a6c, type: 2}
   - {fileID: 11400000, guid: fb389f7355063a04aa5e5dcc54db4c5a, type: 2}
-  - {fileID: 11400000, guid: 6b4f0a8b8373c7e4e879090a649713e5, type: 2}
+  - {fileID: 11400000, guid: c14e0e8d45d22e24491e465038b062b2, type: 2}
   backstory: A mage who has practiced magic for over 20 years.
   overrideStats: 0
   overrideHP: 500
