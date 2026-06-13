@@ -14,6 +14,7 @@ TagManager:
   - Wall
   - Zone
   - Item
+  - Building
   layers:
   - Default
   - TransparentFX

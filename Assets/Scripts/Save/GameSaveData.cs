@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Havengard.Save
 {
@@ -17,6 +18,11 @@ namespace Havengard.Save
         // Currency
         public int gold;
         public int celestium;
+
+        // NEW: Player Position
+        public float playerPositionX;
+        public float playerPositionY;
+        public float playerPositionZ;
 
         // Heroes
         public List<HeroSaveData> heroes = new List<HeroSaveData>();
@@ -37,12 +43,22 @@ namespace Havengard.Save
         public int currentNight;
         public int highestWaveCompleted;
 
-        // Quest/Mission state (future phase)
-        // Will add MissionSaveData[] here later
-
         public GameSaveData()
         {
             saveDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        }
+
+        // NEW: Helper methods
+        public void SetPlayerPosition(Vector3 position)
+        {
+            playerPositionX = position.x;
+            playerPositionY = position.y;
+            playerPositionZ = position.z;
+        }
+
+        public Vector3 GetPlayerPosition()
+        {
+            return new Vector3(playerPositionX, playerPositionY, playerPositionZ);
         }
     }
 }

@@ -131,17 +131,63 @@ namespace Havengard.Core.Heroes
             resourceSystem.SetMaxResource(statsComponent.CurrentStats.MaxResource);
             resourceSystem.SetToMax();
 
-            // ----- 3) Abilities -----
-            var unlockedAbilities = new List<AbilityBase>();
-            if (data.startingAbilities != null && data.startingAbilities.Count > 0)
-                unlockedAbilities.AddRange(data.startingAbilities);
+            // ----- ABILITIES: NEW SKILL TREE APPROACH -----
+            
+            // IMPORTANT: Clear any old abilities from AbilityUser
+            var oldAbilities = abilityUser.GetAbilities();
+            if (oldAbilities != null)
+            {
+                oldAbilities.Clear();
+                abilityUser.RebuildCooldownArray();
+                Debug.Log($"[HeroInstance] Cleared {oldAbilities.Count} old abilities from {data.heroName}");
+            }
+            
+            // Initialize unlock tracking based on class skill tree size
+            if (playerClassData.classAbilities != null && playerClassData.classAbilities.Length > 0)
+            {
+                abilityUser.InitializeUnlockTracking(playerClassData.classAbilities.Length);
+                
+                // Unlock starting abilities based on NEW system
+                if (data.startingUnlockedIndices != null && data.startingUnlockedIndices.Length > 0)
+                {
+                    Debug.Log($"[HeroInstance] Unlocking {data.startingUnlockedIndices.Length} starting abilities for {data.heroName}");
+                    
+                    foreach (int index in data.startingUnlockedIndices)
+                    {
+                        if (index >= 0 && index < playerClassData.classAbilities.Length)
+                        {
+                            var classAbility = playerClassData.classAbilities[index];
+                            abilityUser.UnlockAbility(index, classAbility.ability);
+                            Debug.Log($"[HeroInstance] Unlocked starting ability: {classAbility.ability.abilityName}");
+                        }
+                    }
+                }
+                // FALLBACK: Support old system for backward compatibility
+                else if (data.startingAbilities != null && data.startingAbilities.Count > 0)
+                {
+                    Debug.LogWarning($"[HeroInstance] {data.heroName} using DEPRECATED startingAbilities. Please configure startingUnlockedIndices instead.");
+                    
+                    var unlockedAbilities = new List<AbilityBase>();
+                    unlockedAbilities.AddRange(data.startingAbilities);
+                    abilityUser.AssignAbilities(unlockedAbilities);
+                }
+                
+                // Grant bonus starting skill points
+                if (data.bonusStartingSkillPoints > 0 && expSystem != null)
+                {
+                    int currentTotal = expSystem.SkillPoints;
+                    expSystem.SetSkillPoints(currentTotal + data.bonusStartingSkillPoints, expSystem.SpentSkillPoints);
+                    Debug.Log($"[HeroInstance] Granted {data.bonusStartingSkillPoints} bonus skill points to {data.heroName}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[HeroInstance] {playerClassData.name} has no classAbilities configured!");
+            }
 
-            abilityUser.AssignAbilities(unlockedAbilities);
-
-            // ----- 4) EXP table -----
+            // ----- EXP TABLE -----
             if (playerClassData.expToLevel != null && playerClassData.expToLevel.Length > 0)
             {
-                //Debug.Log($"[HeroInstance] Initialising EXP table on {name} from PlayerClass {playerClassData.name}");
                 expSystem.InitEXPTable(playerClassData.expToLevel);
             }
             else
@@ -152,6 +198,41 @@ namespace Havengard.Core.Heroes
 
             expSystem.OnLevelUp -= HandleLevelUp;
             expSystem.OnLevelUp += HandleLevelUp;
+
+            // ----- SKILL TREE UI INITIALIZATION -----
+            // FIXED: Find SkillTreeController (not SkillTreePanel)
+            GameObject skillTreeControllerObj = GameObject.Find("SkillTreeController");
+            
+            // Fallback: Try searching within Canvas_Menus
+            if (skillTreeControllerObj == null)
+            {
+                GameObject canvasMenus = GameObject.Find("Canvas_Menus");
+                if (canvasMenus != null)
+                {
+                    Transform controllerTransform = canvasMenus.transform.Find("SkillTreeController");
+                    if (controllerTransform != null)
+                        skillTreeControllerObj = controllerTransform.gameObject;
+                }
+            }
+
+            if (skillTreeControllerObj != null)
+            {
+                var skillTreeUI = skillTreeControllerObj.GetComponent<Havengard.UI.SkillTree.SkillTreeUI>();
+                if (skillTreeUI != null)
+                {
+                    skillTreeUI.Initialize(abilityUser, expSystem, playerClassData);
+                    Debug.Log($"[HeroInstance] Initialized SkillTreeUI for {data.heroName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[HeroInstance] Found SkillTreeController but it has no SkillTreeUI component!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[HeroInstance] No SkillTreeController GameObject found in scene. Skill tree won't be available.");
+            }
+            // ----- END SKILL TREE UI INITIALIZATION -----
         }
 
         private void HandleLevelUp(int newLevel)
@@ -196,3 +277,4 @@ namespace Havengard.Core.Heroes
         }
     }
 }
+

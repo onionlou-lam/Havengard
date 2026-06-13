@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fff87aca672d4184484f1302a011e1de, type: 3}
+  m_Name: Whirlwind
+  m_EditorClassIdentifier: 
+  abilityName: Whirlwind
+  description: 
+  icon: {fileID: 21300000, guid: 1bcc90354bbd89b4cadfb49071cae0a1, type: 3}
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 10
+  baseDamage: 10
+  damagePerLevel: 5
+  lifestealPercent: 0
+  range: 5
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  requiresTarget: 0
+  castVFX: {fileID: 6526675813101996899, guid: c425f388aa06c234e8af315a1c9fce14, type: 3}
+  impactVFX: {fileID: 5641636321807965521, guid: 893d1b34464143b4c897c96759f9bce2,
+    type: 3}
+  castSFX: {fileID: 0}
+  impactSFX: {fileID: 0}
+  hitShape: 0
+  hitRadius: 1.5
+  hitBoxSize: {x: 2, y: 2}
+  hitArcAngle: 360
+  hitRange: 5
+  hitOffset: {x: 0, y: 0}
+  hitDelay: 0.3
+  activeHitDuration: 5
+  damageMultiplier: 1
+  friendlyFire: 0
+  preventMultiHit: 1
+  enableKnockback: 1
+  knockbackForce: 2
+  knockbackDuration: 0.2
+  enableLunge: 0
+  lungeDistance: 2
+  lungeDuration: 0.15
+  hitVFXPrefab: {fileID: 0}
+  casterVFXPrefab: {fileID: 0}
+  spawnVFXOnEachHit: 1
+  rotateVFXToDirection: 1
+  vfxRotationOffset: 0
+  spawnCasterVFXAtHitPosition: 0
+  swingSFX: {fileID: 8300000, guid: 0d9e183303a855347ba49f44a00b2519, type: 3}
+  hitSFX: {fileID: 8300000, guid: 004cd40c96cd53c43add5d5f141b38fa, type: 3}
+  randomizeSwingPitch: 0
+  randomizeHitPitch: 0
+  minPitch: 0.85
+  maxPitch: 1.15

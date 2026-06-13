@@ -62,6 +62,7 @@ namespace Havengard.UI
             {
                 abilityUser.OnAbilityUsed += HandleAbilityUsed;
                 abilityUser.OnAbilityCooldownStarted += HandleCooldownStarted;
+                abilityUser.OnAbilitiesChanged += RefreshAbilities; // ADD THIS
             }
         }
 
@@ -71,6 +72,7 @@ namespace Havengard.UI
             {
                 abilityUser.OnAbilityUsed -= HandleAbilityUsed;
                 abilityUser.OnAbilityCooldownStarted -= HandleCooldownStarted;
+                abilityUser.OnAbilitiesChanged -= RefreshAbilities; // ADD THIS
             }
         }
 

@@ -21,12 +21,16 @@ namespace Havengard.Save
         [Header("System References")]
         [Tooltip("Assign the player's ItemInventory component")]
         [SerializeField] private ItemInventory playerInventory;
-
+        
         [Tooltip("Assign the parent transform containing all placed buildings")]
         [SerializeField] private Transform buildingsParent;
-
+        
         [Tooltip("Assign the parent transform containing all hero instances")]
         [SerializeField] private Transform heroesParent;
+        
+        // NEW: Add this field
+        [Tooltip("Assign the player GameObject (or its transform)")]
+        [SerializeField] private Transform playerTransform;
 
         private float autoSaveTimer;
         private GameSaveData currentSaveData;
@@ -175,23 +179,49 @@ namespace Havengard.Save
         private GameSaveData CollectGameData()
         {
             GameSaveData saveData = new GameSaveData();
-
+            
             // Currency
             CollectCurrencyData(saveData);
-
+            
+            // Player Position (NEW)
+            CollectPlayerPosition(saveData);
+            
             // Heroes
             CollectHeroData(saveData);
-
+            
             // Inventory
             CollectInventoryData(saveData);
-
+            
             // Buildings
             CollectBuildingData(saveData);
-
-            // Progression (future - will implement in Phase 1)
-            // CollectProgressionData(saveData);
-
+            
             return saveData;
+        }
+        
+        /// <summary>
+        /// Collect player position
+        /// </summary>
+        private void CollectPlayerPosition(GameSaveData saveData)
+        {
+            if (playerTransform == null)
+            {
+                // Try to find player automatically
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                {
+                    playerTransform = player.transform;
+                }
+            }
+            
+            if (playerTransform != null)
+            {
+                saveData.SetPlayerPosition(playerTransform.position);
+                Debug.Log($"[SaveManager] Saved player position: {playerTransform.position}");
+            }
+            else
+            {
+                Debug.LogWarning("[SaveManager] Player transform not assigned - skipping position save");
+            }
         }
 
         /// <summary>
@@ -292,7 +322,7 @@ namespace Havengard.Save
         }
 
         /// <summary>
-        /// Collect building placement data
+        /// Collect building placement data - only saves direct children of buildingsParent
         /// </summary>
         private void CollectBuildingData(GameSaveData saveData)
         {
@@ -301,26 +331,37 @@ namespace Havengard.Save
                 Debug.LogWarning("[SaveManager] buildingsParent not assigned - skipping building save");
                 return;
             }
-
-            // Find all placed buildings
-            Transform[] buildings = buildingsParent.GetComponentsInChildren<Transform>();
-
-            foreach (Transform building in buildings)
+            
+            // Get only DIRECT children (not nested children like particle effects)
+            int childCount = buildingsParent.childCount;
+            
+            Debug.Log($"[SaveManager] Found {childCount} direct children of buildingsParent");
+            
+            for (int i = 0; i < childCount; i++)
             {
-                if (building == buildingsParent) continue; // Skip parent itself
-
-                // Use prefab name or a custom identifier component
+                Transform building = buildingsParent.GetChild(i);
+                
+                // Skip inactive objects
+                if (!building.gameObject.activeInHierarchy)
+                {
+                    Debug.Log($"[SaveManager] Skipping inactive: {building.name}");
+                    continue;
+                }
+                
+                // Get the prefab name (clean up Unity's (Clone) suffix)
                 string prefabName = building.name.Replace("(Clone)", "").Trim();
-
+                
                 BuildingSaveData buildingData = new BuildingSaveData(
                     prefabName,
                     building.position,
                     building.eulerAngles.y
                 );
-
+                
                 saveData.placedBuildings.Add(buildingData);
+                
+                Debug.Log($"[SaveManager] Saving building: {prefabName} at {building.position}");
             }
-
+            
             Debug.Log($"[SaveManager] Saved {saveData.placedBuildings.Count} buildings");
         }
 
@@ -334,10 +375,13 @@ namespace Havengard.Save
         private void ApplyGameData(GameSaveData saveData)
         {
             Debug.Log($"[SaveManager] Applying save data (Version: {saveData.saveVersion}, Date: {saveData.saveDate})");
-
+            
             // Currency
             ApplyCurrencyData(saveData);
-
+            
+            // Player Position (NEW)
+            ApplyPlayerPosition(saveData);
+            
             // Heroes
             ApplyHeroData(saveData);
 
@@ -346,9 +390,33 @@ namespace Havengard.Save
 
             // Buildings
             ApplyBuildingData(saveData);
-
-            // Progression (future - Phase 1)
-            // ApplyProgressionData(saveData);
+        }
+        
+        /// <summary>
+        /// Apply player position
+        /// </summary>
+        private void ApplyPlayerPosition(GameSaveData saveData)
+        {
+            if (playerTransform == null)
+            {
+                // Try to find player automatically
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                {
+                    playerTransform = player.transform;
+                }
+            }
+            
+            if (playerTransform != null)
+            {
+                Vector3 savedPosition = saveData.GetPlayerPosition();
+                playerTransform.position = savedPosition;
+                Debug.Log($"[SaveManager] Restored player position: {savedPosition}");
+            }
+            else
+            {
+                Debug.LogWarning("[SaveManager] Player transform not assigned - skipping position load");
+            }
         }
 
         /// <summary>

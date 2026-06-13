@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d3ec234347c4c446af7f1f41911daaa, type: 3}
+  m_Name: Class_Mage
+  m_EditorClassIdentifier: 
+  className: Mage
+  classIcon: {fileID: -237935084, guid: 27af6e58adc8aee4196626d4c075e6ec, type: 3}
+  baseHP: 100
+  baseAttack: 10
+  baseDefense: 5
+  baseResource: 50
+  baseAttackSpeed: 1
+  baseMoveSpeed: 3
+  baseCritChance: 0.1
+  baseCritMultiplier: 2
+  baseRollCooldown: 4
+  expToLevel: 64000000fa000000f4010000e8030000
+  hpGrowth: 10
+  attackGrowth: 2
+  defenseGrowth: 1
+  resourceGrowth: 5
+  classAbilities:
+  - ability: {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+    requiredLevel: 1
+    prerequisiteIndices: 
+    treePosition: {x: 0, y: 0}
+    skillPointCost: 0
+    customDescription: 
+  - ability: {fileID: 11400000, guid: 360e132f14d6f3149a8b19c40cf544e7, type: 2}
+    requiredLevel: 1
+    prerequisiteIndices: 00000000
+    treePosition: {x: 1, y: 0}
+    skillPointCost: 1
+    customDescription: 
+  - ability: {fileID: 11400000, guid: 231919b32f2b5f4478f9a65baab24a09, type: 2}
+    requiredLevel: 3
+    prerequisiteIndices: 0000000000000000
+    treePosition: {x: 0, y: 1}
+    skillPointCost: 1
+    customDescription: 
+  - ability: {fileID: 11400000, guid: f0ac2944117c7d245b475745eb3b15b6, type: 2}
+    requiredLevel: 3
+    prerequisiteIndices: 0100000002000000
+    treePosition: {x: 1, y: 1}
+    skillPointCost: 2
+    customDescription: 

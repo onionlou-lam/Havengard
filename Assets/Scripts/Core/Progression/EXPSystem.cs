@@ -10,8 +10,16 @@ namespace Havengard.Core.Progression
 
         private int[] expToLevel;
 
+        // NEW: Skill Points
+        public int SkillPoints { get; private set; }
+        public int SpentSkillPoints { get; private set; }
+        
+        public int AvailableSkillPoints => SkillPoints - SpentSkillPoints;
+
+        // Events
         public event Action OnExpChanged;
         public event Action<int> OnLevelUp;
+        public event Action<int> OnSkillPointsChanged; // NEW
 
         public int CurrentExp => CurrentEXP;
         public int CurrentLevel => Level;
@@ -44,17 +52,12 @@ namespace Havengard.Core.Progression
             {
                 Debug.LogWarning($"[ExpSystem] InitEXPTable on {name} called with null/empty array.");
             }
-            else
-            {
-                //Debug.Log($"[ExpSystem] EXP table initialised on {name}. Length={expToLevel.Length}, first={expToLevel[0]}");
-            }
 
             RaiseChanged();
         }
 
         public void AddEXP(int amount)
         {
-
             if (amount <= 0)
             {
                 Debug.Log($"[ExpSystem] Ignoring non-positive EXP {amount} on {name}");
@@ -74,16 +77,15 @@ namespace Havengard.Core.Progression
             {
                 CurrentEXP -= expToLevel[Level - 1];
                 Level++;
+                
+                // Grant skill point on level up
+                GrantSkillPoint();
+                
                 Debug.Log($"[ExpSystem] Level up! {name} is now level {Level}");
                 OnLevelUp?.Invoke(Level);
             }
 
             RaiseChanged();
-        }
-
-        private void RaiseChanged()
-        {
-            OnExpChanged?.Invoke();
         }
 
         /// <summary>
@@ -93,6 +95,8 @@ namespace Havengard.Core.Progression
         {
             CurrentEXP = 0;
             Level = 1;
+            SkillPoints = 0;
+            SpentSkillPoints = 0;
             RaiseChanged();
             Debug.Log($"[ExpSystem] Reset {name} to level 1");
         }
@@ -106,6 +110,60 @@ namespace Havengard.Core.Progression
             Level = level;
             RaiseChanged();
             Debug.Log($"[ExpSystem] Set {name} to level {level} with {exp} EXP");
+        }
+        
+        // NEW SKILL POINT METHODS
+        
+        /// <summary>
+        /// Grant a skill point (called on level up)
+        /// </summary>
+        private void GrantSkillPoint()
+        {
+            SkillPoints++;
+            OnSkillPointsChanged?.Invoke(AvailableSkillPoints);
+            Debug.Log($"[ExpSystem] {name} gained 1 skill point! Total: {SkillPoints}, Available: {AvailableSkillPoints}");
+        }
+        
+        /// <summary>
+        /// Spend skill points to unlock an ability
+        /// </summary>
+        public bool TrySpendSkillPoints(int amount)
+        {
+            if (AvailableSkillPoints < amount)
+            {
+                Debug.LogWarning($"[ExpSystem] {name} cannot spend {amount} skill points. Available: {AvailableSkillPoints}");
+                return false;
+            }
+            
+            SpentSkillPoints += amount;
+            OnSkillPointsChanged?.Invoke(AvailableSkillPoints);
+            Debug.Log($"[ExpSystem] {name} spent {amount} skill points. Available: {AvailableSkillPoints}");
+            return true;
+        }
+        
+        /// <summary>
+        /// Refund skill points (for respec functionality)
+        /// </summary>
+        public void RefundSkillPoints(int amount)
+        {
+            SpentSkillPoints = Mathf.Max(0, SpentSkillPoints - amount);
+            OnSkillPointsChanged?.Invoke(AvailableSkillPoints);
+            Debug.Log($"[ExpSystem] {name} refunded {amount} skill points. Available: {AvailableSkillPoints}");
+        }
+        
+        /// <summary>
+        /// Set skill points directly (for loading saves)
+        /// </summary>
+        public void SetSkillPoints(int total, int spent)
+        {
+            SkillPoints = total;
+            SpentSkillPoints = spent;
+            OnSkillPointsChanged?.Invoke(AvailableSkillPoints);
+        }
+
+        private void RaiseChanged()
+        {
+            OnExpChanged?.Invoke();
         }
     }
 }

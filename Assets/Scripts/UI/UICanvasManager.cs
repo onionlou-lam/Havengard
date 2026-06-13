@@ -20,6 +20,7 @@ namespace Havengard.UI
         [SerializeField] private GameObject inventoryPanel;
         [SerializeField] private GameObject itemCachePanel;
         [SerializeField] private GameObject preWavePhasePanel;
+        [SerializeField] private GameObject skillTreePanel; // NEW
 
         private void Awake()
         {
@@ -42,7 +43,7 @@ namespace Havengard.UI
 
             // Menus start hidden
             if (menusCanvas != null)
-                menusCanvas.enabled = true; // Canvas stays enabled, panels control visibility
+                menusCanvas.enabled = true;
 
             // Pre-wave starts hidden
             if (preWaveCanvas != null)
@@ -53,7 +54,13 @@ namespace Havengard.UI
                 tooltipsCanvas.enabled = true;
 
             // Hide all menu panels initially
-            HideAllMenuPanels();
+            // Note: SkillTreePanel is already inactive in scene and manages itself
+            if (pauseMenuPanel != null)
+                pauseMenuPanel.SetActive(false);
+            if (inventoryPanel != null)
+                inventoryPanel.SetActive(false);
+            if (itemCachePanel != null)
+                itemCachePanel.SetActive(false);
         }
 
         #region HUD Control
@@ -112,7 +119,22 @@ namespace Havengard.UI
                 itemCachePanel.SetActive(false);
         }
 
-        private void HideAllMenuPanels()
+        public void ShowSkillTree() // NEW
+        {
+            HideAllMenuPanels();
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(true);
+            Time.timeScale = 0f;
+        }
+
+        public void HideSkillTree() // NEW
+        {
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(false);
+            Time.timeScale = 1f;
+        }
+
+        public void HideAllMenuPanels() // UPDATED
         {
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
@@ -120,6 +142,7 @@ namespace Havengard.UI
                 inventoryPanel.SetActive(false);
             if (itemCachePanel != null)
                 itemCachePanel.SetActive(false);
+            // SkillTreePanel manages its own visibility via SkillTreeUI component
         }
         #endregion
 

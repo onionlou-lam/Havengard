@@ -24,6 +24,7 @@ namespace Havengard.Abilities
 
         public event Action<int, AbilityBase> OnAbilityUsed;
         public event Action<int, float> OnAbilityCooldownStarted;
+        public event Action OnAbilitiesChanged; // ADD THIS NEW EVENT
 
         [Header("Channeling Visual Settings")]
         [SerializeField] private float beamSpawnDistance = 0.5f;
@@ -62,6 +63,10 @@ namespace Havengard.Abilities
         private bool isFizzling = false;
 
         private Camera mainCamera;
+
+        [Header("Skill Tree Unlocks")]
+        [Tooltip("Tracks which abilities from PlayerClass are unlocked")]
+        [SerializeField] public bool[] unlockedAbilities;
 
         private void Awake()
         {
@@ -103,7 +108,7 @@ namespace Havengard.Abilities
             }
         }
 
-        private void RebuildCooldownArray()
+        public void RebuildCooldownArray()
         {
             nextReadyTimes = (abilities != null && abilities.Count > 0)
                 ? new float[abilities.Count]
@@ -622,6 +627,84 @@ namespace Havengard.Abilities
         public int GetAbilityCount()
         {
             return abilities != null ? abilities.Count : 0;
+        }
+
+        /// <summary>
+        /// Get array of unlocked abilities (indices match PlayerClass.classAbilities)
+        /// </summary>
+        public bool[] GetUnlockedAbilities()
+        {
+            return unlockedAbilities;
+        }
+
+        /// <summary>
+        /// Initialize unlock tracking based on PlayerClass
+        /// </summary>
+        public void InitializeUnlockTracking(int abilityCount)
+        {
+            if (unlockedAbilities == null || unlockedAbilities.Length != abilityCount)
+            {
+                unlockedAbilities = new bool[abilityCount];
+                Debug.Log($"[AbilityUser] Initialized unlock tracking for {abilityCount} abilities");
+            }
+        }
+
+        /// <summary>
+        /// Check if an ability is unlocked
+        /// </summary>
+        public bool IsAbilityUnlocked(int abilityIndex)
+        {
+            if (unlockedAbilities == null || abilityIndex < 0 || abilityIndex >= unlockedAbilities.Length)
+                return false;
+
+            return unlockedAbilities[abilityIndex];
+        }
+
+        /// <summary>
+        /// Unlock an ability in the skill tree
+        /// </summary>
+        public void UnlockAbility(int abilityIndex, AbilityBase ability)
+        {
+            if (unlockedAbilities == null || abilityIndex < 0 || abilityIndex >= unlockedAbilities.Length)
+            {
+                Debug.LogWarning($"[AbilityUser] Cannot unlock ability at invalid index {abilityIndex}");
+                return;
+            }
+
+            if (unlockedAbilities[abilityIndex])
+            {
+                Debug.LogWarning($"[AbilityUser] Ability at index {abilityIndex} already unlocked");
+                return;
+            }
+
+            unlockedAbilities[abilityIndex] = true;
+
+            if (ability != null && !abilities.Contains(ability))
+            {
+                abilities.Add(ability);
+                RebuildCooldownArray();
+                Debug.Log($"[AbilityUser] Unlocked ability: {ability.abilityName}");
+                
+                // FIRE EVENT
+                OnAbilitiesChanged?.Invoke(); // ADD THIS LINE
+            }
+        }
+
+        /// <summary>
+        /// Set unlocked abilities directly (for loading saves)
+        /// </summary>
+        public void SetUnlockedAbilities(bool[] unlocked)
+        {
+            unlockedAbilities = unlocked;
+            Debug.Log($"[AbilityUser] Set unlocked abilities: {unlocked?.Length ?? 0} total");
+        }
+        
+        /// <summary>
+        /// Get the list of currently assigned abilities
+        /// </summary>
+        public List<AbilityBase> GetAbilities()
+        {
+            return abilities;
         }
     }
 }
