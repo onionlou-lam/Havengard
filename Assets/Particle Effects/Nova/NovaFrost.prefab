@@ -11,9 +11,9 @@ GameObject:
   - component: {fileID: 428554}
   - component: {fileID: 19889700}
   - component: {fileID: 19940534}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: NovaFrost
-  m_TagString: Untagged
+  m_TagString: FX
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -551,7 +551,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    gravitySource: 0
+    gravitySource: 1
     maxNumParticles: 1000
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
@@ -4852,9 +4852,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 5
   m_RenderMode: 1
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -4898,7 +4898,7 @@ GameObject:
   - component: {fileID: 406952}
   - component: {fileID: 19808444}
   - component: {fileID: 19959956}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: CenterExplosion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9675,7 +9675,7 @@ GameObject:
   - component: {fileID: 435108}
   - component: {fileID: 19860514}
   - component: {fileID: 19973622}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Ring
   m_TagString: Untagged
   m_Icon: {fileID: 0}

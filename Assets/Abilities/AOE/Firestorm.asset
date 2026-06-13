@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   icon: {fileID: 21300000, guid: b24c661c5b270a248999f7e6dd335e8d, type: 3}
   maxLevel: 5
-  damageType: 0
+  damageType: 1
   canHeal: 0
   healingRatio: 0
   baseCooldown: 1
@@ -28,7 +28,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 0
-  requiresTarget: 1
+  requiresTarget: 0
   castVFX: {fileID: 0}
   impactVFX: {fileID: 0}
   castSFX: {fileID: 0}
