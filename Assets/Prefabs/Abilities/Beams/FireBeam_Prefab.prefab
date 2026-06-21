@@ -175,7 +175,7 @@ MonoBehaviour:
   minStartScale: 0.25
   maxStartScale: 0.8
   use2DMode: 1
-  maxBeamDistance: 40
+  maxBeamDistance: 8
   beamBlockingLayers:
     serializedVersion: 2
     m_Bits: 1280

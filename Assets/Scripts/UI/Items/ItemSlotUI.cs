@@ -69,23 +69,23 @@ namespace Havengard.UI
                     iconImage.enabled = false;
                     iconImage.sprite = null;
                 }
-                
+
                 if (levelText != null)
                 {
                     levelText.enabled = false;
                     levelText.text = "";
                 }
-                
+
                 if (rarityBorder != null)
                 {
                     rarityBorder.color = emptyColor;
                 }
-                
+
                 if (backgroundImage != null)
                 {
                     backgroundImage.color = emptyColor;
                 }
-                
+
                 if (emptyIndicator != null)
                 {
                     emptyIndicator.SetActive(true);
@@ -100,7 +100,7 @@ namespace Havengard.UI
                     {
                         iconImage.sprite = currentItem.itemData.icon;
                         iconImage.enabled = true;
-                        
+
                         // Ensure the image color is visible
                         Color imageColor = iconImage.color;
                         imageColor.a = 1f;
@@ -133,7 +133,7 @@ namespace Havengard.UI
                 {
                     emptyIndicator.SetActive(false);
                 }
-                
+
                 Debug.Log($"[ItemSlotUI] Updated visuals for {currentItem.itemData.itemName} - Icon: {currentItem.itemData.icon != null}");
             }
         }
@@ -154,11 +154,23 @@ namespace Havengard.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             OnSlotHoverEnter?.Invoke(this);
+
+            // Show tooltip via TooltipManager
+            if (!isEmpty && currentItem != null && TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.ShowItemTooltip(currentItem);
+            }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             OnSlotHoverExit?.Invoke(this);
+
+            // Hide tooltip via TooltipManager
+            if (TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.HideItemTooltip();
+            }
         }
 
         public void OnPointerClick(PointerEventData eventData)

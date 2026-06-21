@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Havengard.Abilities
 {
     /// <summary>
-    /// Attach this to a zone prefab.  Handles damage, VFX, and SFX.
+    /// Attach this to a zone prefab. Handles damage, VFX, and SFX.
     /// The prefab should have VFX as child GameObjects.
     /// </summary>
     public class ZoneEffect : MonoBehaviour
@@ -37,6 +37,7 @@ namespace Havengard.Abilities
         private StatusEffectData statusEffect;
         private int maxStatusStacks;
         private AudioSource audioSource;
+        private bool isDestroying = false;
 
         public void Initialize(GameObject caster, bool followsCaster, StatusEffectData statusEffect = null, int maxStatusStacks = 1)
         {
@@ -52,16 +53,22 @@ namespace Havengard.Abilities
             if (spawnVFX != null)
                 spawnVFX.Play();
 
-            // Play spawn SFX
+            // Play spawn SFX (one-shot, not looping)
             if (spawnSFX != null)
                 AudioSource.PlayClipAtPoint(spawnSFX, transform.position);
 
             // Setup looping audio
             if (loopSFX != null)
             {
-                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                }
+
                 audioSource.clip = loopSFX;
                 audioSource.loop = true;
+                audioSource.playOnAwake = false;
                 audioSource.spatialBlend = 0.5f; // 2D/3D mix
                 audioSource.Play();
             }
@@ -99,9 +106,15 @@ namespace Havengard.Abilities
                 yield return null;
             }
 
-            // Cleanup
-            if (audioSource != null)
+            // Proper cleanup before destruction
+            isDestroying = true;
+
+            if (audioSource != null && audioSource.isPlaying)
+            {
                 audioSource.Stop();
+                audioSource.loop = false;
+                audioSource.clip = null;
+            }
 
             Destroy(gameObject);
         }
@@ -134,6 +147,17 @@ namespace Havengard.Abilities
         {
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(transform.position, areaOfEffectRadius);
+        }
+
+        private void OnDestroy()
+        {
+            // Emergency cleanup if destroyed prematurely
+            if (!isDestroying && audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+                audioSource.loop = false;
+                audioSource.clip = null;
+            }
         }
     }
 }

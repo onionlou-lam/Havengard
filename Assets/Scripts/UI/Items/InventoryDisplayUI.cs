@@ -13,27 +13,24 @@ namespace Havengard.UI
     {
         [Header("Panel")]
         [SerializeField] private GameObject panel;
-        
+
         [Header("Equipped Items Section")]
         [SerializeField] private Transform equippedItemsParent;
         [SerializeField] private TextMeshProUGUI equippedCountText;
-        
+
         [Header("Cached Items Section")]
         [SerializeField] private Transform cachedItemsParent;
         [SerializeField] private TextMeshProUGUI cachedCountText;
         [SerializeField] private TextMeshProUGUI celestiumText;
-        
+
         [Header("Prefabs")]
         [SerializeField] private GameObject itemSlotPrefab;
-        
+
         [Header("Buttons")]
         [SerializeField] private Button closeButton;
         [SerializeField] private Button sortByRarityButton;
         [SerializeField] private Button sortByTimeButton;
         [SerializeField] private Button sortByLevelButton;
-
-        [Header("Tooltip")]
-        [SerializeField] private ItemTooltipUI tooltip;
 
         private ItemInventory playerInventory;
         private List<ItemSlotUI> equippedSlots = new List<ItemSlotUI>();
@@ -44,13 +41,13 @@ namespace Havengard.UI
             // Hook up buttons
             if (closeButton != null)
                 closeButton.onClick.AddListener(Hide);
-            
+
             if (sortByRarityButton != null)
                 sortByRarityButton.onClick.AddListener(() => SortCache(SortType.Rarity));
-            
+
             if (sortByTimeButton != null)
                 sortByTimeButton.onClick.AddListener(() => SortCache(SortType.Time));
-            
+
             if (sortByLevelButton != null)
                 sortByLevelButton.onClick.AddListener(() => SortCache(SortType.Level));
 
@@ -105,8 +102,7 @@ namespace Havengard.UI
         public void Hide()
         {
             panel.SetActive(false);
-            if (tooltip != null)
-                tooltip.Hide();
+            // Tooltip now managed by TooltipManager - will auto-hide when not hovering
         }
 
         public void Toggle()
@@ -141,7 +137,7 @@ namespace Havengard.UI
 
             // Get equipped items
             var equippedItems = playerInventory.GetAllItems();
-            
+
             foreach (var item in equippedItems)
             {
                 CreateEquippedSlot(item);
@@ -173,7 +169,7 @@ namespace Havengard.UI
 
             // Get cached items
             var cachedItems = ItemCache.Instance.CachedItems;
-            
+
             foreach (var item in cachedItems)
             {
                 CreateCachedSlot(item);
@@ -192,13 +188,12 @@ namespace Havengard.UI
         {
             GameObject slotObj = Instantiate(itemSlotPrefab, equippedItemsParent);
             ItemSlotUI slot = slotObj.GetComponent<ItemSlotUI>();
-            
+
             if (slot != null)
             {
                 slot.SetItem(item);
                 slot.OnSlotClicked += OnEquippedSlotClicked;
-                slot.OnSlotHoverEnter += OnSlotHoverEnter;
-                slot.OnSlotHoverExit += OnSlotHoverExit;
+                // Tooltip is now handled automatically by ItemSlotUI via TooltipManager
                 equippedSlots.Add(slot);
             }
         }
@@ -207,13 +202,12 @@ namespace Havengard.UI
         {
             GameObject slotObj = Instantiate(itemSlotPrefab, cachedItemsParent);
             ItemSlotUI slot = slotObj.GetComponent<ItemSlotUI>();
-            
+
             if (slot != null)
             {
                 slot.SetItem(item);
                 slot.OnSlotClicked += OnCachedSlotClicked;
-                slot.OnSlotHoverEnter += OnSlotHoverEnter;
-                slot.OnSlotHoverExit += OnSlotHoverExit;
+                // Tooltip is now handled automatically by ItemSlotUI via TooltipManager
                 cachedSlots.Add(slot);
             }
         }
@@ -228,22 +222,6 @@ namespace Havengard.UI
         {
             Debug.Log($"[InventoryDisplayUI] Cached item clicked: {slot.CurrentItem?.itemData.itemName}");
             // Could show options: Equip, Disenchant, etc.
-        }
-
-        private void OnSlotHoverEnter(ItemSlotUI slot)
-        {
-            if (tooltip != null && slot.CurrentItem != null)
-            {
-                tooltip.Show(slot.CurrentItem);
-            }
-        }
-
-        private void OnSlotHoverExit(ItemSlotUI slot)
-        {
-            if (tooltip != null)
-            {
-                tooltip.Hide();
-            }
         }
 
         private void OnEquippedInventoryChanged()

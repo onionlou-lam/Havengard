@@ -27,7 +27,6 @@ namespace Havengard.UI
 
         [Header("Common")]
         [SerializeField] private TextMeshProUGUI celestiumText;
-        [SerializeField] private ItemTooltipUI tooltip;
 
         [Header("Buttons")]
         [SerializeField] private Button closeButton;
@@ -164,7 +163,7 @@ namespace Havengard.UI
         public void Show()
         {
             Debug.Log("[ItemCacheUI] Show called");
-            
+
             // Ensure initialization has happened (lazy initialization)
             if (!isInitialized)
             {
@@ -189,10 +188,8 @@ namespace Havengard.UI
         {
             if (panel != null)
                 panel.SetActive(false);
-            
-            if (tooltip != null)
-                tooltip.Hide();
 
+            // Tooltip now managed by TooltipManager - will auto-hide when not hovering
             Debug.Log("[ItemCacheUI] Hidden");
         }
 
@@ -264,8 +261,7 @@ namespace Havengard.UI
                     }
 
                     slot.OnSlotClicked += OnEquippedSlotClicked;
-                    slot.OnSlotHoverEnter += OnSlotHoverEnter;
-                    slot.OnSlotHoverExit += OnSlotHoverExit;
+                    // Tooltip is now handled automatically by ItemSlotUI via TooltipManager
                     equippedItemSlots.Add(slot);
                 }
             }
@@ -322,8 +318,7 @@ namespace Havengard.UI
             {
                 slot.SetItem(item);
                 slot.OnSlotClicked += OnCachedSlotClicked;
-                slot.OnSlotHoverEnter += OnSlotHoverEnter;
-                slot.OnSlotHoverExit += OnSlotHoverExit;
+                // Tooltip is now handled automatically by ItemSlotUI via TooltipManager
                 cachedItemSlots.Add(slot);
             }
         }
@@ -342,22 +337,6 @@ namespace Havengard.UI
             selectedSlot = slot;
             Debug.Log($"[ItemCacheUI] Cached slot clicked: {slot.CurrentItem?.itemData.itemName}");
             ShowCachedItemOptions(slot.CurrentItem);
-        }
-
-        private void OnSlotHoverEnter(ItemSlotUI slot)
-        {
-            if (tooltip != null && slot.CurrentItem != null)
-            {
-                tooltip.Show(slot.CurrentItem);
-            }
-        }
-
-        private void OnSlotHoverExit(ItemSlotUI slot)
-        {
-            if (tooltip != null)
-            {
-                tooltip.Hide();
-            }
         }
 
         private void ShowEquippedItemOptions(ItemInstance item)
@@ -406,13 +385,6 @@ namespace Havengard.UI
             }
 
             RefreshCachedItems();
-        }
-
-        public void DisenchantSelectedItem()
-        {
-            if (selectedSlot == null || selectedSlot.CurrentItem == null) return;
-            int celestium = ItemCache.Instance.DisenchantItem(selectedSlot.CurrentItem);
-            Debug.Log($"[ItemCacheUI] Disenchanted for {celestium} Celestium");
         }
     }
 }

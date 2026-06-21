@@ -1,5 +1,6 @@
 using Havengard.Combat;
 using Havengard.Core.HealthSystem;
+using Havengard.Statuses;
 using Havengard.Units;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,28 +8,36 @@ using UnityEngine;
 
 namespace Havengard.Abilities
 {
-    /// <summary>
-    /// Orbital Explosion effect that pulls enemies towards center like a vortex,
-    /// then explodes dealing AOE damage with optional knockback.
-    /// Attach this component to the orbital explosion zone prefab.
-    /// </summary>
     public class OrbitalExplosionEffect : MonoBehaviour
     {
         private GameObject caster;
         private Faction casterFaction;
+
         private float vortexSpeed;
         private float vortexDuration;
         private float explosionRadius;
         private float explosionDamage;
+
         private bool enableKnockback;
         private float knockbackForce;
         private float knockbackDuration;
         private GameObject explosionVFXPrefab;
 
-        private HashSet<Rigidbody2D> affectedRigidbodies = new HashSet<Rigidbody2D>();
-        private bool isVortexActive = false;
+        // Vortex damage over time
+        private int vortexDamagePerTick;
+        private float vortexTickInterval;
+        private StatusEffectData vortexStatusEffect;
+        private int maxVortexStatusStacks;
 
-        [Header("VFX (Optional - Can be child objects)")]
+        // Scaling animation
+        private Vector3 startScale;
+        private Vector3 targetScale;
+        private float scaleDuration;
+        private AnimationCurve scaleCurve;
+
+        private readonly HashSet<Rigidbody2D> affectedRigidbodies = new();
+
+        [Header("VFX")]
         [SerializeField] private ParticleSystem vortexVFX;
         [SerializeField] private ParticleSystem explosionVFX;
 
@@ -37,6 +46,7 @@ namespace Havengard.Abilities
         [SerializeField] private AudioClip explosionSFX;
 
         private AudioSource audioSource;
+        private bool isDestroying = false;
 
         public void Initialize(
             GameObject caster,
@@ -48,8 +58,17 @@ namespace Havengard.Abilities
             bool enableKnockback,
             float knockbackForce,
             float knockbackDuration,
-            GameObject explosionVFXPrefab)
+            GameObject explosionVFXPrefab = null,
+            int vortexDamagePerTick = 0,
+            float vortexTickInterval = 0.5f,
+            StatusEffectData vortexStatusEffect = null,
+            int maxVortexStatusStacks = 1,
+            Vector3? startScale = null,
+            Vector3? targetScale = null,
+            float scaleDuration = 0f,
+            AnimationCurve scaleCurve = null)
         {
+            Debug.Log($"[OrbitalExplosion] Initialize called");
             this.caster = caster;
             this.casterFaction = casterFaction;
             this.vortexSpeed = vortexSpeed;
@@ -61,77 +80,203 @@ namespace Havengard.Abilities
             this.knockbackDuration = knockbackDuration;
             this.explosionVFXPrefab = explosionVFXPrefab;
 
-            // Play vortex VFX
+            // Vortex damage over time
+            this.vortexDamagePerTick = vortexDamagePerTick;
+            this.vortexTickInterval = vortexTickInterval;
+            this.vortexStatusEffect = vortexStatusEffect;
+            this.maxVortexStatusStacks = maxVortexStatusStacks;
+
+            // Scaling animation
+            this.startScale = startScale ?? Vector3.one;
+            this.targetScale = targetScale ?? Vector3.one;
+            this.scaleDuration = scaleDuration;
+            this.scaleCurve = scaleCurve ?? AnimationCurve.Linear(0, 0, 1, 1);
+
+            Debug.Log($"Vortex VFX assigned: {vortexVFX != null}");
+            Debug.Log($"Explosion VFX assigned: {explosionVFX != null}");
+            Debug.Log($"Explosion VFX Prefab assigned: {explosionVFXPrefab != null}");
+            Debug.Log($"Vortex SFX assigned: {vortexSFX != null}");
+            Debug.Log($"Explosion SFX assigned: {explosionSFX != null}");
+            Debug.Log($"Vortex Damage Per Tick: {vortexDamagePerTick}");
+
             if (vortexVFX != null)
                 vortexVFX.Play();
 
-            // Play vortex SFX
-            if (vortexSFX != null)
+            audioSource = GetComponent<AudioSource>();
+
+            if (audioSource == null)
             {
                 audioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f; // 2D audio
+
+            if (vortexSFX != null)
+            {
                 audioSource.clip = vortexSFX;
                 audioSource.loop = true;
-                audioSource.spatialBlend = 0.5f;
                 audioSource.Play();
+
+                Debug.Log("[OrbitalExplosion] Playing vortex SFX");
             }
 
             StartCoroutine(OrbitalExplosionRoutine());
+
+            // Start scaling animation if configured
+            if (scaleDuration > 0f && this.startScale != this.targetScale)
+            {
+                StartCoroutine(ScaleAnimation());
+            }
         }
 
         private IEnumerator OrbitalExplosionRoutine()
         {
-            isVortexActive = true;
             float elapsed = 0f;
+            float nextTickTime = 0f;
 
-            // Vortex phase - pull enemies towards center
             while (elapsed < vortexDuration)
             {
                 PullEnemiesToCenter();
+
+                // Apply vortex damage over time
+                if (vortexDamagePerTick > 0 && elapsed >= nextTickTime)
+                {
+                    nextTickTime = elapsed + vortexTickInterval;
+                    ApplyVortexDamage();
+                }
+
                 elapsed += Time.deltaTime;
+
                 yield return null;
             }
 
-            isVortexActive = false;
-
-            // Stop vortex audio
-            if (audioSource != null)
+            // Stop and cleanup audio properly before explosion
+            if (audioSource != null && audioSource.isPlaying)
+            {
                 audioSource.Stop();
+                audioSource.loop = false;
+                Debug.Log("[OrbitalExplosion] Stopped vortex SFX");
+            }
 
-            // Explosion phase
-            yield return new WaitForSeconds(0.1f); // Small delay before explosion
+            // Small delay before explosion
+            yield return new WaitForSeconds(0.1f);
+
             Explode();
 
-            // Cleanup
-            Destroy(gameObject, 2f); // Keep alive for VFX to finish
+            // Calculate destroy delay based on VFX duration
+            float destroyDelay = 2f;
+
+            if (explosionVFX != null)
+            {
+                destroyDelay = explosionVFX.main.duration + explosionVFX.main.startLifetime.constantMax + 0.5f;
+            }
+            else if (explosionVFXPrefab != null)
+            {
+                // If using prefab, check its particle system
+                ParticleSystem prefabPS = explosionVFXPrefab.GetComponent<ParticleSystem>();
+                if (prefabPS != null)
+                {
+                    destroyDelay = prefabPS.main.duration + prefabPS.main.startLifetime.constantMax + 0.5f;
+                }
+            }
+
+            Debug.Log($"[OrbitalExplosion] Destroying in {destroyDelay} seconds");
+
+            isDestroying = true;
+            yield return new WaitForSeconds(destroyDelay);
+
+            // Final cleanup
+            if (audioSource != null)
+            {
+                audioSource.Stop();
+                audioSource.clip = null;
+            }
+
+            Destroy(gameObject);
+        }
+
+        private IEnumerator ScaleAnimation()
+        {
+            float elapsed = 0f;
+            transform.localScale = startScale;
+
+            Debug.Log($"[OrbitalExplosion] Starting scale animation from {startScale} to {targetScale} over {scaleDuration}s");
+
+            while (elapsed < scaleDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / scaleDuration);
+                float curveValue = scaleCurve.Evaluate(t);
+
+                transform.localScale = Vector3.Lerp(startScale, targetScale, curveValue);
+
+                yield return null;
+            }
+
+            transform.localScale = targetScale;
+            Debug.Log($"[OrbitalExplosion] Scale animation complete");
         }
 
         private void PullEnemiesToCenter()
         {
-            // Find all enemies in explosion radius
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
 
-            foreach (var hit in hits)
+            foreach (Collider2D hit in hits)
             {
-                if (hit.gameObject == caster) continue;
+                if (hit.gameObject == caster)
+                    continue;
 
-                var health = hit.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, false))
+                IHealth health = hit.GetComponent<IHealth>();
+
+                if (health == null)
+                    continue;
+
+                if (!FactionUtility.CanDamage(casterFaction, health, false))
+                    continue;
+
+                Rigidbody2D rb = hit.GetComponent<Rigidbody2D>();
+
+                if (rb == null)
+                    continue;
+
+                affectedRigidbodies.Add(rb);
+
+                Vector2 direction = ((Vector2)transform.position - rb.position).normalized;
+
+                rb.linearVelocity += direction * vortexSpeed * Time.deltaTime;
+            }
+        }
+
+        private void ApplyVortexDamage()
+        {
+            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
+
+            foreach (Collider2D hit in hits)
+            {
+                if (hit.gameObject == caster)
+                    continue;
+
+                IHealth health = hit.GetComponent<IHealth>();
+
+                if (health == null)
+                    continue;
+
+                if (!FactionUtility.CanDamage(casterFaction, health, false))
+                    continue;
+
+                // Apply damage
+                health.GetHealthSystem()?.Damage(vortexDamagePerTick);
+
+                // Apply status effect if configured
+                if (vortexStatusEffect != null)
                 {
-                    var rb = hit.GetComponent<Rigidbody2D>();
-                    if (rb != null)
+                    StatusEffectApplier applier = hit.GetComponent<StatusEffectApplier>();
+                    if (applier != null)
                     {
-                        affectedRigidbodies.Add(rb);
-
-                        // Calculate direction towards center
-                        Vector2 direction = (Vector2)transform.position - rb.position;
-                        float distance = direction.magnitude;
-
-                        if (distance > 0.1f)
+                        for (int i = 0; i < maxVortexStatusStacks; i++)
                         {
-                            direction.Normalize();
-                            // Apply force towards center
-                            Vector2 pullForce = direction * vortexSpeed * Time.deltaTime;
-                            rb.AddForce(pullForce, ForceMode2D.Impulse);
+                            applier.ApplyStatusEffect(vortexStatusEffect, caster);
                         }
                     }
                 }
@@ -140,94 +285,98 @@ namespace Havengard.Abilities
 
         private void Explode()
         {
-            // Stop pulling enemies
-            foreach (var rb in affectedRigidbodies)
-            {
-                if (rb != null)
-                    rb.linearVelocity = Vector2.zero;
-            }
+            Debug.Log($"[OrbitalExplosion] EXPLODE fired at {transform.position}");
 
-            // Play explosion VFX from prefab if provided
+            // Stop vortex VFX
+            if (vortexVFX != null)
+                vortexVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            // Handle explosion VFX - prefab takes priority
             if (explosionVFXPrefab != null)
             {
-                Instantiate(explosionVFXPrefab, transform.position, Quaternion.identity);
+                GameObject vfxInstance = Instantiate(explosionVFXPrefab, transform.position, Quaternion.identity);
+                Debug.Log($"[OrbitalExplosion] Instantiated explosion VFX prefab: {vfxInstance.name}");
+
+                // Optionally parent it to this object so it gets cleaned up together
+                vfxInstance.transform.SetParent(transform);
             }
-            // Fallback to attached VFX
             else if (explosionVFX != null)
             {
-                explosionVFX.Play();
+                explosionVFX.gameObject.SetActive(true);
+                explosionVFX.Clear();
+                explosionVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                explosionVFX.Play(true);
+
+                Debug.Log("[OrbitalExplosion] Playing explosion VFX component");
             }
 
             // Play explosion SFX
-            if (explosionSFX != null)
+            if (audioSource != null && explosionSFX != null)
             {
-                AudioSource.PlayClipAtPoint(explosionSFX, transform.position);
+                audioSource.loop = false;
+                audioSource.PlayOneShot(explosionSFX);
+
+                Debug.Log("[OrbitalExplosion] Playing explosion SFX");
             }
 
-            // Apply damage and knockback to all enemies in radius
+            // Apply damage and knockback
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
 
-            foreach (var hit in hits)
+            foreach (Collider2D hit in hits)
             {
-                if (hit.gameObject == caster) continue;
+                if (hit.gameObject == caster)
+                    continue;
 
-                var health = hit.GetComponent<IHealth>();
-                if (health != null && FactionUtility.CanDamage(casterFaction, health, false))
-                {
-                    // Apply damage
-                    var healthSystem = health.GetHealthSystem();
-                    if (healthSystem != null)
-                    {
-                        healthSystem.Damage((int)explosionDamage);
-                    }
+                IHealth health = hit.GetComponent<IHealth>();
 
-                    // Apply knockback
-                    if (enableKnockback)
-                    {
-                        var rb = hit.GetComponent<Rigidbody2D>();
-                        if (rb != null)
-                        {
-                            Vector2 knockbackDirection = (rb.position - (Vector2)transform.position).normalized;
-                            ApplyKnockback(rb, knockbackDirection * knockbackForce, knockbackDuration);
-                        }
-                    }
-                }
+                if (health == null)
+                    continue;
+
+                if (!FactionUtility.CanDamage(casterFaction, health, false))
+                    continue;
+
+                health.GetHealthSystem()?.Damage(Mathf.RoundToInt(explosionDamage));
+
+                if (!enableKnockback)
+                    continue;
+
+                Rigidbody2D rb = hit.GetComponent<Rigidbody2D>();
+
+                if (rb == null)
+                    continue;
+
+                Vector2 direction = (rb.position - (Vector2)transform.position).normalized;
+
+                ApplyKnockback(rb, direction * knockbackForce, knockbackDuration);
             }
-
-            // Hide vortex VFX
-            if (vortexVFX != null)
-                vortexVFX.Stop();
         }
 
         private void ApplyKnockback(Rigidbody2D rb, Vector2 force, float duration)
         {
-            // Use the same knockback system as MeleeAbility
-            var knockbackHandler = rb.gameObject.GetComponent<MeleeKnockbackHandler>();
-            if (knockbackHandler == null)
+            MeleeKnockbackHandler handler = rb.GetComponent<MeleeKnockbackHandler>();
+
+            if (handler == null)
             {
-                knockbackHandler = rb.gameObject.AddComponent<MeleeKnockbackHandler>();
+                handler = rb.gameObject.AddComponent<MeleeKnockbackHandler>();
             }
 
-            knockbackHandler.ApplyKnockback(rb, force, duration);
+            handler.ApplyKnockback(rb, force, duration);
         }
 
         private void OnDrawGizmosSelected()
         {
-            // Draw vortex/explosion radius
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, explosionRadius);
         }
 
         private void OnDestroy()
         {
-            // Reset velocities when destroyed
-            if (isVortexActive)
+            // Emergency cleanup if destroyed prematurely
+            if (!isDestroying && audioSource != null && audioSource.isPlaying)
             {
-                foreach (var rb in affectedRigidbodies)
-                {
-                    if (rb != null)
-                        rb.linearVelocity = Vector2.zero;
-                }
+                audioSource.Stop();
+                audioSource.clip = null;
+                Debug.Log("[OrbitalExplosion] Emergency audio cleanup in OnDestroy");
             }
         }
     }

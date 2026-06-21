@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using Havengard.Abilities;
 
@@ -9,7 +10,7 @@ namespace Havengard.UI
     /// Represents a single ability slot in the ability bar.
     /// Displays icon, keybind, cooldown overlay, and countdown timer.
     /// </summary>
-    public class AbilitySlotUI : MonoBehaviour
+    public class AbilitySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [Header("References")]
         [SerializeField] private Image abilityIcon;
@@ -202,12 +203,21 @@ namespace Havengard.UI
             return ability;
         }
 
-        /// <summary>
-        /// Returns true if this slot is currently on cooldown.
-        /// </summary>
-        public bool IsOnCooldown()
+        // NEW: Tooltip Integration
+        public void OnPointerEnter(PointerEventData eventData)
         {
-            return isOnCooldown;
+            if (ability != null && TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.ShowAbilityTooltip(ability);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.HideAbilityTooltip();
+            }
         }
     }
 }

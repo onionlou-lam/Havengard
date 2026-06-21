@@ -12,37 +12,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14a542cb1d5c8614cb56443d9371ad89, type: 3}
   m_Name: OrbitalExplosion
   m_EditorClassIdentifier: 
-  abilityName: New Ability
-  description: 
-  icon: {fileID: 0}
+  abilityName: Orbital Explosion
+  description: Create an orbital flame vortex that pulls enemies in and then explodes
+    dealing huge damage.
+  icon: {fileID: 21300000, guid: 44a70ecc22c54244bb200e19706f99ee, type: 3}
   maxLevel: 5
-  damageType: 0
+  damageType: 1
   canHeal: 0
   healingRatio: 0
-  baseCooldown: 1
-  resourceCost: 10
-  baseDamage: 10
-  damagePerLevel: 5
+  baseCooldown: 5
+  resourceCost: 30
+  baseDamage: 20
+  damagePerLevel: 20
   lifestealPercent: 0
   range: 10
   targetLayers:
     serializedVersion: 2
-    m_Bits: 0
-  requiresTarget: 1
-  castVFX: {fileID: 0}
-  impactVFX: {fileID: 0}
-  castSFX: {fileID: 0}
-  impactSFX: {fileID: 0}
-  zonePrefab: {fileID: 0}
+    m_Bits: 4294967295
+  requiresTarget: 0
+  castVFX: {fileID: 157306, guid: 7cfa7c8111349fe44b06a87d64ab1dea, type: 3}
+  impactVFX: {fileID: 123764, guid: 3b27aad227ac92c4f9dd4ff950b4a74d, type: 3}
+  castSFX: {fileID: 8300000, guid: acda67df77654d84d93fc2bfd887c533, type: 3}
+  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
+  zonePrefab: {fileID: 6339331226152329462, guid: 9a59724be46a5fe4cbef874af5b07abf,
+    type: 3}
   maximumRange: 15
   followsCaster: 0
-  statusEffect: {fileID: 0}
-  maxStatusStacks: 1
+  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
+  maxStatusStacks: 3
   vortexSpeed: 5
-  vortexDuration: 2
-  explosionRadius: 8
+  vortexDuration: 4
+  explosionRadius: 4
   explosionDamageMultiplier: 2
+  vortexDamagePerTick: 2
+  vortexTickInterval: 0.5
+  vortexStatusEffect: {fileID: 0}
+  maxVortexStatusStacks: 1
   enableKnockback: 1
-  knockbackForce: 10
+  knockbackForce: 4
   knockbackDuration: 0.3
-  explosionVFXPrefab: {fileID: 0}
+  explosionVFXPrefab: {fileID: 123764, guid: 3b27aad227ac92c4f9dd4ff950b4a74d, type: 3}
+  startScale: {x: 1, y: 1, z: 1}
+  targetScale: {x: 1, y: 1, z: 1}
+  scaleDuration: 0
+  scaleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

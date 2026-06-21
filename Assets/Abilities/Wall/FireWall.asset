@@ -13,16 +13,28 @@ MonoBehaviour:
   m_Name: FireWall
   m_EditorClassIdentifier: 
   abilityName: Fire Wall
-  cooldown: 3
-  resourceCost: 10
+  description: 
   icon: {fileID: 21300000, guid: 572c6cc07e6f3c24aae87ffc610f48ac, type: 3}
-  resourceGeneratedOnCast: 0
-  resourceGeneratedPerHit: 0
-  resourceGeneratedOnKill: 0
-  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
-  maxStatusStacks: 1
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 10
+  baseDamage: 10
+  damagePerLevel: 5
   lifestealPercent: 0
-  wallPrefab: {fileID: 118624, guid: aa27626fcf97538449d0b7e2a5467132, type: 3}
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  castVFX: {fileID: 157306, guid: 7cfa7c8111349fe44b06a87d64ab1dea, type: 3}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 8300000, guid: c50a81b498c81364788796ca5419a03e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
+  wallPrefab: {fileID: 509400452397600885, guid: cf114e6ed8a755d4eb1d89a230392e32,
+    type: 3}
   maximumRange: 15
   wallDuration: 10
   behaviorType: 1
@@ -32,3 +44,5 @@ MonoBehaviour:
   damagePerTick: 5
   damageTickRate: 0.5
   friendlyFire: 0
+  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
+  maxStatusStacks: 1

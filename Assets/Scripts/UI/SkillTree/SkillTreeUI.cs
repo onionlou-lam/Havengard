@@ -253,7 +253,7 @@ namespace Havengard.UI.SkillTree
         public void ToggleSkillTree()
         {
             Debug.Log($"[SkillTreeUI] ★★★ ToggleSkillTree CALLED ★★★");
-            
+
             if (!isInitialized)
             {
                 Debug.LogWarning("[SkillTreeUI] Not initialized yet!");
@@ -268,7 +268,7 @@ namespace Havengard.UI.SkillTree
 
             bool isActive = skillTreePanel.activeSelf;
             Debug.Log($"[SkillTreeUI] Panel active before: {isActive}, will become: {!isActive}");
-            
+
             if (!isActive)
             {
                 if (UICanvasManager.Instance != null)

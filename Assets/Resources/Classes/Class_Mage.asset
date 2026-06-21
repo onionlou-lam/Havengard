@@ -34,7 +34,7 @@ MonoBehaviour:
     prerequisiteIndices: 
     treePosition: {x: 0, y: 0}
     skillPointCost: 0
-    customDescription: Fireball custom description
+    customDescription: 
   - ability: {fileID: 11400000, guid: 360e132f14d6f3149a8b19c40cf544e7, type: 2}
     requiredLevel: 1
     prerequisiteIndices: 00000000
@@ -47,15 +47,15 @@ MonoBehaviour:
     treePosition: {x: 0, y: 2}
     skillPointCost: 1
     customDescription: 
-  - ability: {fileID: 11400000, guid: 311868a8387cb244d96ea0c2f2e24439, type: 2}
-    requiredLevel: 3
-    prerequisiteIndices: 0100000002000000
-    treePosition: {x: 0, y: 3}
-    skillPointCost: 2
-    customDescription: 
   - ability: {fileID: 11400000, guid: 638d9eda011b5b54680d2fdd198e5f4b, type: 2}
     requiredLevel: 3
     prerequisiteIndices: 0100000002000000
     treePosition: {x: 1, y: 1}
+    skillPointCost: 2
+    customDescription: 
+  - ability: {fileID: 11400000, guid: 4eecb50c15b08a049a84c61daf220d47, type: 2}
+    requiredLevel: 3
+    prerequisiteIndices: 0100000002000000
+    treePosition: {x: 0, y: 3}
     skillPointCost: 2
     customDescription: 

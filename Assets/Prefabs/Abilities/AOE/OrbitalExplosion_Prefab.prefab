@@ -10,9 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4376609626984540212}
   - component: {fileID: 7004825438746784031}
-  - component: {fileID: 5495467344693179803}
   - component: {fileID: -5073465469821330636}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: OrbitalExplosion_Prefab
   m_TagString: Projectile
   m_Icon: {fileID: 0}
@@ -70,29 +69,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 3
---- !u!114 &5495467344693179803
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6339331226152329462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 630c89a92e22a1b4c81d3d2060217c64, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  areaOfEffectRadius: 3
-  duration: 5
-  delayBeforeEffect: 1
-  damagePerTick: 5
-  tickInterval: 0.5
-  friendlyFire: 0
-  spawnVFX: {fileID: 0}
-  activeVFX: {fileID: 0}
-  spawnSFX: {fileID: 8300000, guid: c50a81b498c81364788796ca5419a03e, type: 3}
-  loopSFX: {fileID: 8300000, guid: 3f776ba755ba71341bb3f527c8369c60, type: 3}
+  m_Radius: 1
 --- !u!114 &-5073465469821330636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -105,8 +82,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96cfd9042f86d104d82b58c66d25bb46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  vortexVFX: {fileID: 0}
-  explosionVFX: {fileID: 0}
+  vortexVFX: {fileID: 585789353094362158}
+  explosionVFX: {fileID: 19827454, guid: deddf22d4e65a7447b851e66ff6c334c, type: 3}
   vortexSFX: {fileID: 8300000, guid: 3e745e6fd479c33499fc189d05f624bc, type: 3}
   explosionSFX: {fileID: 8300000, guid: d3980ad18d795fc4da35b3557970df80, type: 3}
 --- !u!1001 &5769261183699359357
@@ -177,6 +154,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d5c46241d4eac8648ae7f9c62e5650b0, type: 3}
+--- !u!198 &585789353094362158 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 6355049849590424147, guid: d5c46241d4eac8648ae7f9c62e5650b0,
+    type: 3}
+  m_PrefabInstance: {fileID: 5769261183699359357}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &585789353109506720 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6355049849604660445, guid: d5c46241d4eac8648ae7f9c62e5650b0,

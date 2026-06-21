@@ -29,10 +29,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   requiresTarget: 0
-  castVFX: {fileID: 0}
+  castVFX: {fileID: 157306, guid: 7cfa7c8111349fe44b06a87d64ab1dea, type: 3}
   impactVFX: {fileID: 0}
-  castSFX: {fileID: 0}
-  impactSFX: {fileID: 0}
+  castSFX: {fileID: 8300000, guid: 552df20c23f68714db70e8f5a0800b16, type: 3}
+  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
   zonePrefab: {fileID: 2830277336758088524, guid: 11da26cc72149db47887e56e264e5538,
     type: 3}
   maximumRange: 15

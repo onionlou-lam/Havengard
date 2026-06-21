@@ -1,6 +1,6 @@
 using Havengard.Core;
-using UnityEngine;
 using Havengard.Statuses;
+using UnityEngine;
 
 namespace Havengard.Abilities
 {
@@ -8,7 +8,7 @@ namespace Havengard.Abilities
     public class ZoneAbility : AbilityBase
     {
         [Header("Zone Properties")]
-        [SerializeField] private GameObject zonePrefab; // Prefab contains all VFX
+        [SerializeField] protected GameObject zonePrefab;
         [SerializeField] private float maximumRange = 15f;
         [SerializeField] private bool followsCaster = false;
 
@@ -16,48 +16,58 @@ namespace Havengard.Abilities
         [SerializeField] private StatusEffectData statusEffect;
         [SerializeField] private int maxStatusStacks = 1;
 
-        // Changed from override to regular method
+        protected GameObject ZonePrefab => zonePrefab;
+        protected bool FollowsCaster => followsCaster;
+
         public bool CanCast(GameObject caster, GameObject target)
         {
             if (zonePrefab == null) return false;
 
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouseWorld.z = 0;
+
             return Vector3.Distance(caster.transform.position, mouseWorld) <= maximumRange;
         }
 
-        public void Cast(GameObject caster, GameObject target)
+        public virtual void Cast(GameObject caster, GameObject target)
         {
-            if (zonePrefab == null || !CanCast(caster, target)) return;
+            if (zonePrefab == null || !CanCast(caster, target))
+                return;
 
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouseWorld.z = 0;
-            Vector3 targetPosition = followsCaster ? caster.transform.position : mouseWorld;
 
-            GameObject zoneInstance = Instantiate(zonePrefab, targetPosition, Quaternion.identity);
+            Vector3 targetPosition =
+                followsCaster
+                ? caster.transform.position
+                : mouseWorld;
 
-            // Initialize the zone effect component
-            var zoneEffect = zoneInstance.GetComponent<ZoneEffect>();
+            GameObject zoneInstance =
+                Instantiate(zonePrefab, targetPosition, Quaternion.identity);
+
+            ZoneEffect zoneEffect =
+                zoneInstance.GetComponent<ZoneEffect>();
+
             if (zoneEffect != null)
             {
-                zoneEffect.Initialize(caster, followsCaster, statusEffect, maxStatusStacks);
-            }
-            else
-            {
-                Debug.LogError($"[ZoneAbility] Zone prefab '{zonePrefab.name}' is missing ZoneEffect component!");
-                Destroy(zoneInstance);
+                zoneEffect.Initialize(
+                    caster,
+                    followsCaster,
+                    statusEffect,
+                    maxStatusStacks);
             }
         }
 
-        public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
+        public override void Activate(
+            AbilityUser user,
+            Vector3 targetPosition,
+            GameObject targetEnemy)
         {
-            // Implementation for Activate, can be empty or call Cast if appropriate
             Cast(user.gameObject, targetEnemy);
         }
 
         public override void Deactivate(AbilityUser user)
         {
-            // Implementation for Deactivate, can be empty or handle zone cleanup if needed
         }
     }
 }

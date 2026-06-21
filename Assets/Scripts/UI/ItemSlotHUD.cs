@@ -171,23 +171,17 @@ namespace Havengard.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (currentItem != null)
+            if (currentItem != null && TooltipManager.Instance != null)
             {
-                var tooltip = FindObjectOfType<ItemTooltipUI>();
-                if (tooltip != null)
-                {
-                    var instance = new ItemInstance(currentItem, currentLevel);
-                    tooltip.Show(instance);
-                }
+                TooltipManager.Instance.ShowItemTooltip(currentItem, currentLevel);
             }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            var tooltip = FindObjectOfType<ItemTooltipUI>();
-            if (tooltip != null)
+            if (TooltipManager.Instance != null)
             {
-                tooltip.Hide();
+                TooltipManager.Instance.HideItemTooltip();
             }
         }
     }
