@@ -9,6 +9,7 @@ namespace Havengard.UI
     /// <summary>
     /// Centralized tooltip manager for all game objects.
     /// Displays tooltips at top-right of screen with proper positioning.
+    /// Intelligently handles different ability types and future modifiers.
     /// </summary>
     public class TooltipManager : MonoBehaviour
     {
@@ -27,12 +28,17 @@ namespace Havengard.UI
         [SerializeField] private Image itemRarityBorder;
 
         [Header("Ability Tooltip References")]
+        [SerializeField] private Image abilityIconImage;
         [SerializeField] private TextMeshProUGUI abilityNameText;
+        [SerializeField] private TextMeshProUGUI abilityTypeText;
         [SerializeField] private TextMeshProUGUI abilityDescriptionText;
         [SerializeField] private TextMeshProUGUI abilityCooldownText;
         [SerializeField] private TextMeshProUGUI abilityResourceCostText;
         [SerializeField] private TextMeshProUGUI abilityDamageText;
-        [SerializeField] private Image abilityIconImage;
+        [SerializeField] private TextMeshProUGUI abilityRangeText;
+        [SerializeField] private TextMeshProUGUI abilityDamageTypeText;
+        [SerializeField] private GameObject abilityModifiersSection;
+        [SerializeField] private TextMeshProUGUI abilityModifiersText;
 
         [Header("Position Settings")]
         [SerializeField] private Vector2 topRightOffset = new Vector2(-20f, -20f);
@@ -59,9 +65,6 @@ namespace Havengard.UI
         }
 
         #region Item Tooltips
-        /// <summary>
-        /// Show item tooltip at top-right of screen
-        /// </summary>
         public void ShowItemTooltip(ItemInstance item)
         {
             if (item == null || item.itemData == null)
@@ -72,7 +75,6 @@ namespace Havengard.UI
 
             HideAll();
 
-            // Set content
             if (itemNameText != null)
                 itemNameText.text = item.itemData.itemName;
 
@@ -91,15 +93,10 @@ namespace Havengard.UI
             if (itemRarityBorder != null)
                 itemRarityBorder.color = item.itemData.rarityColor;
 
-            // Position at top-right
             PositionTooltipTopRight(itemTooltipRect);
-
             itemTooltipPanel.SetActive(true);
         }
 
-        /// <summary>
-        /// Show item tooltip for ItemData (without level)
-        /// </summary>
         public void ShowItemTooltip(ItemData itemData, int level)
         {
             if (itemData == null)
@@ -120,7 +117,7 @@ namespace Havengard.UI
 
         #region Ability Tooltips
         /// <summary>
-        /// Show ability tooltip at top-right of screen
+        /// Show ability tooltip with intelligent formatting based on ability type
         /// </summary>
         public void ShowAbilityTooltip(AbilityBase ability)
         {
@@ -132,35 +129,213 @@ namespace Havengard.UI
 
             HideAll();
 
-            // Set content
-            if (abilityNameText != null)
-                abilityNameText.text = ability.abilityName;
-
-            if (abilityDescriptionText != null)
-                abilityDescriptionText.text = ability.description;
-
-            if (abilityCooldownText != null)
-                abilityCooldownText.text = $"Cooldown: {ability.baseCooldown}s";
-
-            if (abilityResourceCostText != null)
-                abilityResourceCostText.text = $"Cost: {ability.resourceCost}";
-
-            if (abilityDamageText != null)
-            {
-                float damage = ability.baseDamage + (ability.damagePerLevel * (ability.CurrentLevel - 1));
-                abilityDamageText.text = $"Damage: {damage:F0} ({ability.damageType})";
-            }
-
+            // Icon
             if (abilityIconImage != null && ability.icon != null)
             {
                 abilityIconImage.sprite = ability.icon;
                 abilityIconImage.enabled = true;
             }
 
-            // Position at top-right
-            PositionTooltipTopRight(abilityTooltipRect);
+            // Name
+            if (abilityNameText != null)
+                abilityNameText.text = ability.abilityName;
 
+            // Type (Channeled, Zone, Projectile, etc.)
+            if (abilityTypeText != null)
+                abilityTypeText.text = GetAbilityTypeLabel(ability);
+
+            // Description
+            if (abilityDescriptionText != null)
+                abilityDescriptionText.text = ability.description;
+
+            // Cooldown - MAX cooldown duration (not current remaining)
+            if (abilityCooldownText != null)
+            {
+                if (ability.baseCooldown > 0f)
+                    abilityCooldownText.text = $"Cooldown: {ability.baseCooldown:F1}s";
+                else
+                    abilityCooldownText.text = "Cooldown: None";
+            }
+
+            // Resource Cost
+            if (abilityResourceCostText != null)
+            {
+                if (ability.resourceCost > 0)
+                    abilityResourceCostText.text = $"Cost: {ability.resourceCost} Mana";
+                else
+                    abilityResourceCostText.text = "Cost: Free";
+            }
+
+            // Damage (with intelligent formatting based on ability type)
+            if (abilityDamageText != null)
+                abilityDamageText.text = GetDamageText(ability);
+
+            // Range
+            if (abilityRangeText != null)
+            {
+                if (ability.range > 0f)
+                    abilityRangeText.text = $"Range: {ability.range:F0} units";
+                else
+                    abilityRangeText.text = "";
+            }
+
+            // Damage Type with color
+            if (abilityDamageTypeText != null)
+            {
+                abilityDamageTypeText.text = $"<color=#{ColorUtility.ToHtmlStringRGB(GetDamageTypeColor(ability.damageType))}>{ability.damageType}</color>";
+            }
+
+            // Modifiers Section (for future sub-skills and item modifiers)
+            if (abilityModifiersSection != null && abilityModifiersText != null)
+            {
+                string modifiers = GetAbilityModifiers(ability);
+                if (!string.IsNullOrEmpty(modifiers))
+                {
+                    abilityModifiersSection.SetActive(true);
+                    abilityModifiersText.text = modifiers;
+                }
+                else
+                {
+                    abilityModifiersSection.SetActive(false);
+                }
+            }
+
+            PositionTooltipTopRight(abilityTooltipRect);
             abilityTooltipPanel.SetActive(true);
+        }
+
+        /// <summary>
+        /// Get ability type label based on inheritance
+        /// </summary>
+        private string GetAbilityTypeLabel(AbilityBase ability)
+        {
+            if (ability is ChanneledAbilityBase)
+                return "[Channeled]";
+            if (ability is ZoneAbility)
+                return "[Zone/AoE]";
+            if (ability.GetType().Name.Contains("Missile") || ability.GetType().Name.Contains("Projectile"))
+                return "[Projectile]";
+            if (ability.GetType().Name.Contains("Buff"))
+                return "[Buff]";
+            if (ability.GetType().Name.Contains("Dash") || ability.GetType().Name.Contains("Roll"))
+                return "[Mobility]";
+
+            return "[Instant]";
+        }
+
+        /// <summary>
+        /// Get intelligent damage text based on ability type
+        /// </summary>
+        private string GetDamageText(AbilityBase ability)
+        {
+            // Check if this is a channeled ability (has tick damage)
+            if (ability is ChanneledAbilityBase channeled)
+            {
+                float damage = ability.CalculateDamage(null, ability.CurrentLevel);
+                float tickRate = channeled.TickRate;
+                float duration = channeled.MaxChargeTime;
+
+                if (damage > 0f && tickRate > 0f)
+                {
+                    // Calculate damage per tick
+                    float damagePerTick = damage * tickRate;
+                    // Calculate total ticks
+                    int totalTicks = Mathf.FloorToInt(duration / tickRate);
+                    // Calculate total damage
+                    float totalDamage = damage * duration;
+
+                    return $"Damage: {damagePerTick:F0} per {tickRate:F1}s\n" +
+                           $"Total: {totalDamage:F0} over {duration:F1}s ({totalTicks} ticks)";
+                }
+            }
+
+            // Check if this is a zone ability (has DoT)
+            if (ability is ZoneAbility)
+            {
+                float damage = ability.CalculateDamage(null, ability.CurrentLevel);
+                if (damage > 0f)
+                {
+                    return $"Damage: {damage:F0} per tick\n(Damage over Time)";
+                }
+            }
+
+            // Standard instant/projectile damage
+            float standardDamage = ability.CalculateDamage(null, ability.CurrentLevel);
+
+            if (standardDamage > 0f)
+            {
+                // Show damage + level scaling
+                if (ability.CurrentLevel > 1 && ability.damagePerLevel > 0f)
+                {
+                    return $"Damage: {standardDamage:F0} (+{ability.damagePerLevel:F0} per level)";
+                }
+                else
+                {
+                    return $"Damage: {standardDamage:F0}";
+                }
+            }
+
+            // Check if this is a healing ability
+            if (ability.canHeal && ability.healingRatio > 0f)
+            {
+                float healing = ability.CalculateHealing(null, ability.CurrentLevel);
+                return $"Healing: {healing:F0} ({(ability.healingRatio * 100):F0}% conversion)";
+            }
+
+            // No damage (utility/movement ability)
+            return "Damage: None";
+        }
+
+        /// <summary>
+        /// Get modifiers text for future sub-skills and item effects
+        /// </summary>
+        private string GetAbilityModifiers(AbilityBase ability)
+        {
+            string modifiers = "";
+
+            // Lifesteal
+            if (ability.lifestealPercent > 0f)
+            {
+                modifiers += $"• Lifesteal: {(ability.lifestealPercent * 100):F0}%\n";
+            }
+
+            // Healing ratio (for Holy damage)
+            if (ability.canHeal && ability.healingRatio > 0f && ability.healingRatio < 1f)
+            {
+                modifiers += $"• Heals allies for {(ability.healingRatio * 100):F0}% of damage\n";
+            }
+
+            // TODO: Add sub-skill modifiers here when implemented
+            // Example:
+            // - Multi-shot: Fire 2 additional projectiles
+            // - Chain: Bounces to 3 nearby enemies
+            // - CDR: -20% cooldown
+            // - Explosive: Creates 5m radius explosion on impact
+
+            // TODO: Add item modifier effects here
+            // Example from AbilityModifierEffect:
+            // - Cooldown Reduction: -15%
+            // - Damage Increase: +25%
+            // - Range Increase: +30%
+
+            return modifiers.TrimEnd('\n');
+        }
+
+        /// <summary>
+        /// Get color for damage type
+        /// </summary>
+        private Color GetDamageTypeColor(Combat.DamageType damageType)
+        {
+            return damageType switch
+            {
+                Combat.DamageType.Fire => new Color(1f, 0.3f, 0f),
+                Combat.DamageType.Frost => new Color(0.3f, 0.8f, 1f),
+                Combat.DamageType.Lightning => new Color(1f, 1f, 0.3f),
+                Combat.DamageType.Holy => new Color(1f, 0.9f, 0.3f),
+                Combat.DamageType.Physical => new Color(0.8f, 0.8f, 0.8f),
+                Combat.DamageType.Arcane => new Color(0.7f, 0.3f, 1f),
+                _ => Color.white
+            };
         }
 
         public void HideAbilityTooltip()
@@ -171,9 +346,6 @@ namespace Havengard.UI
         #endregion
 
         #region Positioning
-        /// <summary>
-        /// Position tooltip at top-right of screen with padding
-        /// </summary>
         private void PositionTooltipTopRight(RectTransform tooltipRect)
         {
             if (tooltipRect == null || canvas == null) return;
@@ -181,11 +353,9 @@ namespace Havengard.UI
             RectTransform canvasRect = canvas.GetComponent<RectTransform>();
             if (canvasRect == null) return;
 
-            // Calculate top-right position
             float xPos = Screen.width + topRightOffset.x - tooltipRect.rect.width / 2;
             float yPos = Screen.height + topRightOffset.y - tooltipRect.rect.height / 2;
 
-            // Clamp to ensure it stays on screen
             xPos = Mathf.Clamp(xPos,
                 tooltipRect.rect.width / 2 + padding,
                 Screen.width - tooltipRect.rect.width / 2 - padding);

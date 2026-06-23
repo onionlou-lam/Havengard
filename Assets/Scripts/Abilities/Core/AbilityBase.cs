@@ -44,6 +44,10 @@ namespace Havengard.Abilities
         public AudioClip castSFX;
         public AudioClip impactSFX;
 
+        [Header("Sub-Skills / Modifiers (Future)")]
+        [Tooltip("Active sub-skills that modify this ability's behavior")]
+        public List<AbilitySubSkill> activeSubSkills = new List<AbilitySubSkill>();
+
         protected int currentLevel = 1;
 
         public int CurrentLevel
@@ -72,6 +76,15 @@ namespace Havengard.Abilities
                 }
             }
 
+            // Apply sub-skill modifiers
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.modifiesDamage)
+                {
+                    damage *= subSkill.damageMultiplier;
+                }
+            }
+
             return damage;
         }
 
@@ -87,6 +100,44 @@ namespace Havengard.Abilities
             return baseDamageValue * healingRatio;
         }
 
+        /// <summary>
+        /// Get effective cooldown with modifiers applied
+        /// </summary>
+        public virtual float GetEffectiveCooldown()
+        {
+            float cooldown = baseCooldown;
+
+            // Apply sub-skill cooldown reduction
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.modifiesCooldown)
+                {
+                    cooldown *= (1f - subSkill.cooldownReduction);
+                }
+            }
+
+            return Mathf.Max(0.1f, cooldown); // Minimum 0.1s cooldown
+        }
+
+        /// <summary>
+        /// Get effective resource cost with modifiers applied
+        /// </summary>
+        public virtual int GetEffectiveResourceCost()
+        {
+            float cost = resourceCost;
+
+            // Apply sub-skill cost reduction
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.modifiesCost)
+                {
+                    cost *= (1f - subSkill.costReduction);
+                }
+            }
+
+            return Mathf.Max(0, Mathf.RoundToInt(cost));
+        }
+
         private Color GetDamageTypeColor()
         {
             return damageType switch
@@ -96,7 +147,7 @@ namespace Havengard.Abilities
                 DamageType.Lightning => new Color(1f, 1f, 0.3f),
                 DamageType.Holy => new Color(1f, 0.9f, 0.3f),
                 DamageType.Physical => new Color(0.8f, 0.8f, 0.8f),
-                DamageType.Arcane => new Color(0.7f, 0.3f, 1f),  // Purple
+                DamageType.Arcane => new Color(0.7f, 0.3f, 1f),
                 _ => Color.white
             };
         }

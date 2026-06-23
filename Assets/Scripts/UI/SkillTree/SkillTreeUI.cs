@@ -1,19 +1,52 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using System.Collections.Generic;
-using Havengard.Abilities;
+﻿using Havengard.Abilities;
+using Havengard.Core;
 using Havengard.Core.Progression;
+using Havengard.UI.SkillTree;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
-namespace Havengard.UI.SkillTree
+namespace Havengard.UI
 {
+    /// <summary>
+    /// Enhanced skill tree UI with tabs, fixed info panel, and confirmation system.
+    /// Supports both specialization approaches:
+    /// 1. Main PlayerClass with 3 specializations defined
+    /// 2. Three separate PlayerClass ScriptableObjects assigned directly
+    /// </summary>
     public class SkillTreeUI : MonoBehaviour
     {
-        [Header("References")]
+        [Header("Main Panel")]
         [SerializeField] private GameObject skillTreePanel;
-        [SerializeField] private Transform nodeContainer;
-        [SerializeField] private SkillTreeTooltip tooltip;
-        [SerializeField] private SkillTreeConnectionRenderer connectionRenderer;
+
+        [Header("Specialization Tabs")]
+        [SerializeField] private Button tab1Button;
+        [SerializeField] private Button tab2Button;
+        [SerializeField] private Button tab3Button;
+        [SerializeField] private TextMeshProUGUI tab1Label;
+        [SerializeField] private TextMeshProUGUI tab2Label;
+        [SerializeField] private TextMeshProUGUI tab3Label;
+
+        [Header("Tab Content Containers")]
+        [SerializeField] private GameObject tab1Content;
+        [SerializeField] private GameObject tab2Content;
+        [SerializeField] private GameObject tab3Content;
+
+        [Header("Node Containers (per tab)")]
+        [SerializeField] private Transform nodeContainer1;
+        [SerializeField] private Transform nodeContainer2;
+        [SerializeField] private Transform nodeContainer3;
+
+        [Header("Fixed Info Panel")]
+        [SerializeField] private GameObject infoPanelObject;
+        [SerializeField] private TextMeshProUGUI infoAbilityNameText;
+        [SerializeField] private Image infoAbilityIcon;
+        [SerializeField] private TextMeshProUGUI infoDescriptionText;
+        [SerializeField] private TextMeshProUGUI infoRequirementsText;
+        [SerializeField] private TextMeshProUGUI infoStatusText;
+        [SerializeField] private Button confirmUnlockButton;
+        [SerializeField] private TextMeshProUGUI confirmButtonText;
 
         [Header("Node Prefab")]
         [SerializeField] private GameObject skillNodePrefab;
@@ -26,125 +59,157 @@ namespace Havengard.UI.SkillTree
         [SerializeField] private TextMeshProUGUI skillPointsText;
         [SerializeField] private TextMeshProUGUI playerLevelText;
 
+        [Header("Connection Renderers (per tab)")]
+        [SerializeField] private SkillTreeConnectionRenderer connectionRenderer1;
+        [SerializeField] private SkillTreeConnectionRenderer connectionRenderer2;
+        [SerializeField] private SkillTreeConnectionRenderer connectionRenderer3;
+
+        [Header("Tab Colors")]
+        [SerializeField] private Color activeTabColor = new Color(1f, 1f, 1f, 1f);
+        [SerializeField] private Color inactiveTabColor = new Color(0.6f, 0.6f, 0.6f, 1f);
+
         // Runtime data
         private AbilityUser playerAbilityUser;
         private EXPSystem playerEXPSystem;
-        private PlayerClass playerClass;
-        private List<SkillTreeNodeUI> spawnedNodes = new List<SkillTreeNodeUI>();
-        private bool isInitialized = false;
 
-        // CRITICAL: Static constructor runs FIRST
-        static SkillTreeUI()
-        {
-            Debug.Log("[SkillTreeUI] ★★★ STATIC CONSTRUCTOR CALLED ★★★");
-        }
+        private PlayerClass spec1Class;
+        private PlayerClass spec2Class;
+        private PlayerClass spec3Class;
+
+        private List<SkillTreeNodeUI> nodesTab1 = new List<SkillTreeNodeUI>();
+        private List<SkillTreeNodeUI> nodesTab2 = new List<SkillTreeNodeUI>();
+        private List<SkillTreeNodeUI> nodesTab3 = new List<SkillTreeNodeUI>();
+
+        private int currentTabIndex = 0;
+        private int lastAccessedTab = 0;
+
+        private SkillTreeNodeUI selectedNode;
+        private ClassAbility selectedAbility;
+        private int selectedAbilityIndex;
+        private PlayerClass selectedSpecialization;
+
+        private bool isInitialized = false;
 
         private void Awake()
         {
-            Debug.Log($"[SkillTreeUI] ★★★ AWAKE CALLED ★★★ enabled={enabled}, gameObject.activeInHierarchy={gameObject.activeInHierarchy}");
-        }
+            if (tab1Button != null) tab1Button.onClick.AddListener(() => SwitchToTab(0));
+            if (tab2Button != null) tab2Button.onClick.AddListener(() => SwitchToTab(1));
+            if (tab3Button != null) tab3Button.onClick.AddListener(() => SwitchToTab(2));
 
-        private void OnEnable()
-        {
-            Debug.Log("[SkillTreeUI] ★★★ OnEnable CALLED ★★★");
-        }
-
-        private void Start()
-        {
-            Debug.Log($"[SkillTreeUI] ★★★ START CALLED ★★★ enabled={enabled}");
-        }
-
-        private void OnDisable()
-        {
-            Debug.LogError("[SkillTreeUI] ★★★ OnDisable CALLED ★★★");
-            Debug.LogError("Stack trace:\n" + System.Environment.StackTrace);
-        }
-
-        private void LateUpdate()
-        {
-            // Force re-enable if disabled
-            if (!enabled)
+            if (confirmUnlockButton != null)
             {
-                Debug.LogError("[SkillTreeUI] Component disabled in LateUpdate! Re-enabling...");
-                enabled = true;
+                confirmUnlockButton.onClick.AddListener(ConfirmUnlockSelectedAbility);
             }
+
+            if (infoPanelObject != null)
+                infoPanelObject.SetActive(false);
+
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(false);
         }
 
         private void Update()
         {
-            /*// Debug every 60 frames
-            if (Time.frameCount % 60 == 0)
-            {
-                Debug.Log($"[SkillTreeUI] Update running... Frame {Time.frameCount}, enabled={enabled}, initialized={isInitialized}");
-            }
-            */
-            // Force re-enable if somehow disabled
-            if (!enabled)
-            {
-                Debug.LogError("[SkillTreeUI] Component was disabled in Update! Re-enabling...");
-                enabled = true;
-                return;
-            }
-
-            // Toggle skill tree with K key
             if (Input.GetKeyDown(KeyCode.K))
             {
-                Debug.Log($"[SkillTreeUI] ★★★★★ K KEY PRESSED ★★★★★");
-                Debug.Log($"  enabled: {enabled}");
-                Debug.Log($"  isInitialized: {isInitialized}");
-                Debug.Log($"  skillTreePanel: {(skillTreePanel != null ? skillTreePanel.name : "NULL")}");
-                Debug.Log($"  panel active: {(skillTreePanel != null ? skillTreePanel.activeSelf.ToString() : "N/A")}");
                 ToggleSkillTree();
             }
         }
 
-        public void Initialize(AbilityUser abilityUser, EXPSystem expSystem, PlayerClass playerClassData)
+        /// <summary>
+        /// Initialize with a main PlayerClass that contains specializations
+        /// </summary>
+        public void Initialize(AbilityUser abilityUser, EXPSystem expSystem, PlayerClass mainClass)
         {
-            Debug.Log($"[SkillTreeUI] ★★★ INITIALIZE CALLED ★★★ enabled={enabled}");
+            if (mainClass == null)
+            {
+                Debug.LogError("[SkillTreeUI] Cannot initialize with null PlayerClass");
+                return;
+            }
 
             playerAbilityUser = abilityUser;
             playerEXPSystem = expSystem;
-            playerClass = playerClassData;
 
-            if (playerClass == null || playerClass.classAbilities == null)
+            // Check if main class has specializations defined
+            if (mainClass.HasSpecializations())
             {
-                Debug.LogError("[SkillTreeUI] No PlayerClass or abilities assigned!");
-                return;
+                spec1Class = mainClass.GetSpecialization(0);
+                spec2Class = mainClass.GetSpecialization(1);
+                spec3Class = mainClass.GetSpecialization(2);
+                Debug.Log($"[SkillTreeUI] Initialized with specializations from {mainClass.className}");
+            }
+            else
+            {
+                // Use the main class for all tabs (fallback)
+                spec1Class = mainClass;
+                spec2Class = mainClass;
+                spec3Class = mainClass;
+                Debug.LogWarning($"[SkillTreeUI] {mainClass.className} has no specializations defined. Using main class for all tabs.");
             }
 
-            // Force enable
-            if (!enabled)
-            {
-                Debug.LogWarning("[SkillTreeUI] Component was disabled! Re-enabling...");
-                enabled = true;
-            }
-
-            BuildSkillTree();
+            SetupTabs();
+            BuildAllTabs();
             isInitialized = true;
 
-            Debug.Log($"[SkillTreeUI] ✅ Initialized! enabled={enabled}, isInitialized={isInitialized}");
+            Debug.Log("[SkillTreeUI] Initialized successfully");
         }
 
-        private void BuildSkillTree()
+        /// <summary>
+        /// Initialize with three separate PlayerClass specializations
+        /// </summary>
+        public void Initialize(AbilityUser abilityUser, EXPSystem expSystem, PlayerClass spec1, PlayerClass spec2, PlayerClass spec3)
         {
-            ClearNodes();
+            playerAbilityUser = abilityUser;
+            playerEXPSystem = expSystem;
 
-            if (playerClass.classAbilities.Length == 0)
+            spec1Class = spec1;
+            spec2Class = spec2;
+            spec3Class = spec3;
+
+            SetupTabs();
+            BuildAllTabs();
+            isInitialized = true;
+
+            Debug.Log("[SkillTreeUI] Initialized with 3 separate specializations");
+        }
+
+        private void SetupTabs()
+        {
+            if (tab1Label != null && spec1Class != null)
+                tab1Label.text = spec1Class.GetTabName();
+            if (tab2Label != null && spec2Class != null)
+                tab2Label.text = spec2Class.GetTabName();
+            if (tab3Label != null && spec3Class != null)
+                tab3Label.text = spec3Class.GetTabName();
+        }
+
+        private void BuildAllTabs()
+        {
+            BuildTabContent(0, spec1Class, nodeContainer1, connectionRenderer1, nodesTab1);
+            BuildTabContent(1, spec2Class, nodeContainer2, connectionRenderer2, nodesTab2);
+            BuildTabContent(2, spec3Class, nodeContainer3, connectionRenderer3, nodesTab3);
+        }
+
+        private void BuildTabContent(int tabIndex, PlayerClass playerClass, Transform container, SkillTreeConnectionRenderer renderer, List<SkillTreeNodeUI> nodeList)
+        {
+            if (playerClass == null || playerClass.classAbilities == null || container == null)
             {
-                Debug.LogWarning("[SkillTreeUI] No abilities in PlayerClass to display.");
+                Debug.LogWarning($"[SkillTreeUI] Tab {tabIndex} has missing data, skipping build");
                 return;
             }
+
+            foreach (SkillTreeNodeUI node in nodeList)
+            {
+                if (node != null) Destroy(node.gameObject);
+            }
+            nodeList.Clear();
 
             for (int i = 0; i < playerClass.classAbilities.Length; i++)
             {
                 ClassAbility classAbility = playerClass.classAbilities[i];
-                if (classAbility.ability == null)
-                {
-                    Debug.LogWarning($"[SkillTreeUI] Ability at index {i} is null, skipping.");
-                    continue;
-                }
+                if (classAbility.ability == null) continue;
 
-                GameObject nodeObj = Instantiate(skillNodePrefab, nodeContainer);
+                GameObject nodeObj = Instantiate(skillNodePrefab, container);
                 RectTransform rectTransform = nodeObj.GetComponent<RectTransform>();
 
                 Vector2 worldPos = new Vector2(
@@ -157,26 +222,82 @@ namespace Havengard.UI.SkillTree
                 if (nodeUI != null)
                 {
                     nodeUI.Initialize(i, classAbility, this);
-                    spawnedNodes.Add(nodeUI);
+                    nodeList.Add(nodeUI);
                 }
             }
 
-            if (connectionRenderer != null)
+            if (renderer != null)
             {
-                connectionRenderer.DrawConnections(spawnedNodes, playerClass.classAbilities);
+                renderer.DrawConnections(nodeList, playerClass.classAbilities);
             }
 
-            RefreshAllNodes();
+            Debug.Log($"[SkillTreeUI] Built tab {tabIndex} with {nodeList.Count} nodes");
         }
 
-        public void RefreshAllNodes()
+        private void SwitchToTab(int tabIndex)
         {
-            if (playerAbilityUser == null || playerEXPSystem == null)
-                return;
+            currentTabIndex = tabIndex;
+            lastAccessedTab = tabIndex;
+
+            if (tab1Content != null) tab1Content.SetActive(false);
+            if (tab2Content != null) tab2Content.SetActive(false);
+            if (tab3Content != null) tab3Content.SetActive(false);
+
+            switch (tabIndex)
+            {
+                case 0:
+                    if (tab1Content != null) tab1Content.SetActive(true);
+                    selectedSpecialization = spec1Class;
+                    break;
+                case 1:
+                    if (tab2Content != null) tab2Content.SetActive(true);
+                    selectedSpecialization = spec2Class;
+                    break;
+                case 2:
+                    if (tab3Content != null) tab3Content.SetActive(true);
+                    selectedSpecialization = spec3Class;
+                    break;
+            }
+
+            UpdateTabButtonVisuals();
+            ClearSelection();
+            RefreshCurrentTab();
+
+            Debug.Log($"[SkillTreeUI] Switched to tab {tabIndex}");
+        }
+
+        private void UpdateTabButtonVisuals()
+        {
+            if (tab1Button != null)
+            {
+                var colors = tab1Button.colors;
+                colors.normalColor = (currentTabIndex == 0) ? activeTabColor : inactiveTabColor;
+                tab1Button.colors = colors;
+            }
+
+            if (tab2Button != null)
+            {
+                var colors = tab2Button.colors;
+                colors.normalColor = (currentTabIndex == 1) ? activeTabColor : inactiveTabColor;
+                tab2Button.colors = colors;
+            }
+
+            if (tab3Button != null)
+            {
+                var colors = tab3Button.colors;
+                colors.normalColor = (currentTabIndex == 2) ? activeTabColor : inactiveTabColor;
+                tab3Button.colors = colors;
+            }
+        }
+
+        private void RefreshCurrentTab()
+        {
+            if (playerAbilityUser == null || playerEXPSystem == null) return;
 
             bool[] unlockedAbilities = playerAbilityUser.unlockedAbilities;
+            List<SkillTreeNodeUI> currentNodes = GetCurrentTabNodes();
 
-            foreach (SkillTreeNodeUI node in spawnedNodes)
+            foreach (SkillTreeNodeUI node in currentNodes)
             {
                 node.RefreshState(unlockedAbilities, playerEXPSystem.AvailableSkillPoints, playerEXPSystem.CurrentLevel);
             }
@@ -184,47 +305,179 @@ namespace Havengard.UI.SkillTree
             UpdatePlayerInfoDisplay();
         }
 
-        public void OnNodeClicked(int abilityIndex)
+        public void RefreshAllNodes()
         {
-            if (playerAbilityUser == null || playerEXPSystem == null || playerClass == null)
+            RefreshCurrentTab();
+        }
+
+        private List<SkillTreeNodeUI> GetCurrentTabNodes()
+        {
+            return currentTabIndex switch
+            {
+                0 => nodesTab1,
+                1 => nodesTab2,
+                2 => nodesTab3,
+                _ => nodesTab1
+            };
+        }
+
+        public void OnNodeClicked(int abilityIndex, SkillTreeNodeUI nodeUI)
+        {
+            if (selectedSpecialization == null || selectedSpecialization.classAbilities == null)
                 return;
 
-            ClassAbility classAbility = playerClass.classAbilities[abilityIndex];
+            if (abilityIndex < 0 || abilityIndex >= selectedSpecialization.classAbilities.Length)
+                return;
+
+            ClassAbility classAbility = selectedSpecialization.classAbilities[abilityIndex];
 
             if (playerAbilityUser.unlockedAbilities[abilityIndex])
             {
-                Debug.Log($"[SkillTreeUI] {classAbility.ability.abilityName} is already unlocked.");
+                ShowInfoPanel(classAbility, abilityIndex, nodeUI, true);
                 return;
             }
 
-            if (playerEXPSystem.CurrentLevel < classAbility.requiredLevel)
+            selectedNode = nodeUI;
+            selectedAbility = classAbility;
+            selectedAbilityIndex = abilityIndex;
+
+            ShowInfoPanel(classAbility, abilityIndex, nodeUI, false);
+        }
+
+        private void ShowInfoPanel(ClassAbility classAbility, int abilityIndex, SkillTreeNodeUI nodeUI, bool isAlreadyUnlocked)
+        {
+            if (infoPanelObject != null)
+                infoPanelObject.SetActive(true);
+
+            if (infoAbilityNameText != null)
+                infoAbilityNameText.text = classAbility.ability.abilityName;
+
+            if (infoAbilityIcon != null && classAbility.ability.icon != null)
             {
-                Debug.Log($"[SkillTreeUI] {classAbility.ability.abilityName} requires level {classAbility.requiredLevel}.");
-                return;
+                infoAbilityIcon.sprite = classAbility.ability.icon;
+                infoAbilityIcon.enabled = true;
             }
 
-            if (playerEXPSystem.AvailableSkillPoints < classAbility.skillPointCost)
+            if (infoDescriptionText != null)
+                infoDescriptionText.text = classAbility.GetDescription();
+
+            if (infoRequirementsText != null)
             {
-                Debug.Log($"[SkillTreeUI] Not enough skill points to unlock {classAbility.ability.abilityName}.");
-                return;
+                string reqText = "";
+                reqText += $"Required Level: {classAbility.requiredLevel}\n";
+                reqText += $"Skill Points: {classAbility.skillPointCost}";
+
+                if (classAbility.HasPrerequisites())
+                {
+                    reqText += "\n[Prerequisites Required]";
+                }
+
+                infoRequirementsText.text = reqText;
             }
 
-            if (!classAbility.ArePrerequisitesMet(playerAbilityUser.unlockedAbilities))
+            bool isUnlocked = playerAbilityUser.unlockedAbilities[abilityIndex];
+            bool meetsLevel = playerEXPSystem.CurrentLevel >= classAbility.requiredLevel;
+            bool hasPoints = playerEXPSystem.AvailableSkillPoints >= classAbility.skillPointCost;
+            bool prereqsMet = classAbility.ArePrerequisitesMet(playerAbilityUser.unlockedAbilities);
+            bool canUnlock = meetsLevel && hasPoints && prereqsMet && !isUnlocked;
+
+            if (infoStatusText != null)
             {
-                Debug.Log($"[SkillTreeUI] Prerequisites not met for {classAbility.ability.abilityName}.");
-                return;
+                if (isUnlocked)
+                {
+                    infoStatusText.text = "<color=green>[UNLOCKED]</color>";
+                }
+                else if (canUnlock)
+                {
+                    infoStatusText.text = "<color=yellow>[READY TO UNLOCK]</color>";
+                }
+                else if (!meetsLevel)
+                {
+                    infoStatusText.text = $"<color=red>[Requires Level {classAbility.requiredLevel}]</color>";
+                }
+                else if (!hasPoints)
+                {
+                    infoStatusText.text = "<color=red>[Not Enough Skill Points]</color>";
+                }
+                else if (!prereqsMet)
+                {
+                    infoStatusText.text = "<color=red>[Prerequisites Not Met]</color>";
+                }
+                else
+                {
+                    infoStatusText.text = "<color=red>[LOCKED]</color>";
+                }
             }
 
-            if (!playerEXPSystem.TrySpendSkillPoints(classAbility.skillPointCost))
+            if (confirmUnlockButton != null)
             {
-                Debug.LogError($"[SkillTreeUI] Failed to spend skill points for {classAbility.ability.abilityName}.");
+                confirmUnlockButton.gameObject.SetActive(!isUnlocked);
+                confirmUnlockButton.interactable = canUnlock;
+
+                if (confirmButtonText != null)
+                {
+                    confirmButtonText.text = canUnlock ? $"Unlock (-{classAbility.skillPointCost} SP)" : "Cannot Unlock";
+                }
+            }
+        }
+
+        private void ClearSelection()
+        {
+            selectedNode = null;
+            selectedAbility = null;
+            selectedAbilityIndex = -1;
+
+            if (infoPanelObject != null)
+                infoPanelObject.SetActive(false);
+        }
+
+        private void ConfirmUnlockSelectedAbility()
+        {
+            if (selectedAbility == null || selectedSpecialization == null)
+            {
+                Debug.LogWarning("[SkillTreeUI] No ability selected to unlock");
                 return;
             }
 
-            playerAbilityUser.UnlockAbility(abilityIndex, classAbility.ability);
-            RefreshAllNodes();
+            if (playerAbilityUser == null || playerEXPSystem == null)
+                return;
 
-            Debug.Log($"[SkillTreeUI] Unlocked {classAbility.ability.abilityName}! Skill Points Remaining: {playerEXPSystem.AvailableSkillPoints}");
+            if (playerAbilityUser.unlockedAbilities[selectedAbilityIndex])
+            {
+                Debug.Log($"[SkillTreeUI] {selectedAbility.ability.abilityName} is already unlocked.");
+                ClearSelection();
+                return;
+            }
+
+            if (playerEXPSystem.CurrentLevel < selectedAbility.requiredLevel)
+            {
+                Debug.Log($"[SkillTreeUI] Level requirement not met");
+                return;
+            }
+
+            if (playerEXPSystem.AvailableSkillPoints < selectedAbility.skillPointCost)
+            {
+                Debug.Log($"[SkillTreeUI] Not enough skill points");
+                return;
+            }
+
+            if (!selectedAbility.ArePrerequisitesMet(playerAbilityUser.unlockedAbilities))
+            {
+                Debug.Log($"[SkillTreeUI] Prerequisites not met");
+                return;
+            }
+
+            if (!playerEXPSystem.TrySpendSkillPoints(selectedAbility.skillPointCost))
+            {
+                Debug.LogError($"[SkillTreeUI] Failed to spend skill points");
+                return;
+            }
+
+            playerAbilityUser.UnlockAbility(selectedAbilityIndex, selectedAbility.ability);
+            RefreshCurrentTab();
+            ClearSelection();
+
+            Debug.Log($"[SkillTreeUI] ✅ Unlocked {selectedAbility.ability.abilityName}! Remaining SP: {playerEXPSystem.AvailableSkillPoints}");
         }
 
         private void UpdatePlayerInfoDisplay()
@@ -240,20 +493,8 @@ namespace Havengard.UI.SkillTree
             }
         }
 
-        private void ClearNodes()
-        {
-            foreach (SkillTreeNodeUI node in spawnedNodes)
-            {
-                if (node != null)
-                    Destroy(node.gameObject);
-            }
-            spawnedNodes.Clear();
-        }
-
         public void ToggleSkillTree()
         {
-            Debug.Log($"[SkillTreeUI] ★★★ ToggleSkillTree CALLED ★★★");
-
             if (!isInitialized)
             {
                 Debug.LogWarning("[SkillTreeUI] Not initialized yet!");
@@ -267,7 +508,6 @@ namespace Havengard.UI.SkillTree
             }
 
             bool isActive = skillTreePanel.activeSelf;
-            Debug.Log($"[SkillTreeUI] Panel active before: {isActive}, will become: {!isActive}");
 
             if (!isActive)
             {
@@ -275,41 +515,18 @@ namespace Havengard.UI.SkillTree
                 {
                     UICanvasManager.Instance.HideAllMenuPanels();
                 }
-            }
-            else
-            {
-                // CLOSING SKILL TREE - Hide tooltip
-                HideTooltip(); // ADD THIS LINE
-            }
 
-            skillTreePanel.SetActive(!isActive);
-
-            if (!isActive)
-            {
-                RefreshAllNodes();
+                skillTreePanel.SetActive(true);
+                SwitchToTab(lastAccessedTab);
                 Time.timeScale = 0f;
-                Debug.Log("[SkillTreeUI] ✅ SKILL TREE OPENED!");
+                Debug.Log($"[SkillTreeUI] ✅ Skill tree opened (Tab {lastAccessedTab})");
             }
             else
             {
+                ClearSelection();
+                skillTreePanel.SetActive(false);
                 Time.timeScale = 1f;
                 Debug.Log("[SkillTreeUI] Skill tree closed");
-            }
-        }
-
-        public void ShowTooltip(ClassAbility classAbility, Vector2 worldPosition, bool isUnlocked, bool canUnlock)
-        {
-            if (tooltip != null)
-            {
-                tooltip.ShowTooltip(classAbility, worldPosition, isUnlocked, canUnlock);
-            }
-        }
-
-        public void HideTooltip()
-        {
-            if (tooltip != null)
-            {
-                tooltip.HideTooltip();
             }
         }
     }

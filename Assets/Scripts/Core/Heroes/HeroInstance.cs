@@ -162,15 +162,6 @@ namespace Havengard.Core.Heroes
                         }
                     }
                 }
-                // FALLBACK: Support old system for backward compatibility
-                else if (data.startingAbilities != null && data.startingAbilities.Count > 0)
-                {
-                    Debug.LogWarning($"[HeroInstance] {data.heroName} using DEPRECATED startingAbilities. Please configure startingUnlockedIndices instead.");
-                    
-                    var unlockedAbilities = new List<AbilityBase>();
-                    unlockedAbilities.AddRange(data.startingAbilities);
-                    abilityUser.AssignAbilities(unlockedAbilities);
-                }
                 
                 // Grant bonus starting skill points
                 if (data.bonusStartingSkillPoints > 0 && expSystem != null)
@@ -217,7 +208,7 @@ namespace Havengard.Core.Heroes
 
             if (skillTreeControllerObj != null)
             {
-                var skillTreeUI = skillTreeControllerObj.GetComponent<Havengard.UI.SkillTree.SkillTreeUI>();
+                var skillTreeUI = skillTreeControllerObj.GetComponent<Havengard.UI.SkillTreeUI>();
                 if (skillTreeUI != null)
                 {
                     skillTreeUI.Initialize(abilityUser, expSystem, playerClassData);

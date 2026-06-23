@@ -17,10 +17,6 @@ namespace Havengard.Core.Heroes
         [Header("Class Reference")]
         public PlayerClass heroClass;   // Link to WarriorClass, MageClass, etc.
 
-        [Header("Starting Abilities - DEPRECATED")]
-        [Tooltip("OLD SYSTEM - Use startingUnlockedIndices instead")]
-        public List<AbilityBase> startingAbilities; // Keep for backward compatibility
-
         [Header("Starting Abilities - NEW SYSTEM")]
         [Tooltip("Indices of abilities from heroClass.classAbilities that are unlocked at start")]
         public int[] startingUnlockedIndices = new int[0]; // NEW!

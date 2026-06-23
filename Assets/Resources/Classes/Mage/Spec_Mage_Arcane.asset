@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d3ec234347c4c446af7f1f41911daaa, type: 3}
-  m_Name: Class_Mage
+  m_Name: Spec_Mage_Arcane
   m_EditorClassIdentifier: 
   className: Mage
-  classIcon: {fileID: -237935084, guid: 27af6e58adc8aee4196626d4c075e6ec, type: 3}
+  specializationName: Arcane
+  classIcon: {fileID: 21300000, guid: e6763eb614379dc4fa6fe93cf5bc263d, type: 3}
   baseHP: 100
   baseAttack: 10
   baseDefense: 5
@@ -29,7 +30,7 @@ MonoBehaviour:
   defenseGrowth: 1
   resourceGrowth: 5
   classAbilities:
-  - ability: {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
+  - ability: {fileID: 11400000, guid: fb389f7355063a04aa5e5dcc54db4c5a, type: 2}
     requiredLevel: 1
     prerequisiteIndices: 
     treePosition: {x: 0, y: 0}
@@ -59,3 +60,7 @@ MonoBehaviour:
     treePosition: {x: 0, y: 3}
     skillPointCost: 2
     customDescription: 
+  specializations:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}

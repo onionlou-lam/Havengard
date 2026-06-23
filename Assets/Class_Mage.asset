@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d3ec234347c4c446af7f1f41911daaa, type: 3}
+  m_Name: Class_Mage
+  m_EditorClassIdentifier: 
+  className: Mage
+  specializationName: Fire
+  classIcon: {fileID: -237935084, guid: 27af6e58adc8aee4196626d4c075e6ec, type: 3}
+  baseHP: 100
+  baseAttack: 10
+  baseDefense: 5
+  baseResource: 50
+  baseAttackSpeed: 1
+  baseMoveSpeed: 3
+  baseCritChance: 0.1
+  baseCritMultiplier: 2
+  baseRollCooldown: 4
+  expToLevel: 64000000fa000000f4010000e8030000
+  hpGrowth: 10
+  attackGrowth: 2
+  defenseGrowth: 1
+  resourceGrowth: 5
+  classAbilities: []
+  specializations:
+  - {fileID: 11400000, guid: ec321fdc374d0dc4296bf24a9a8bbf30, type: 2}
+  - {fileID: 11400000, guid: 9a9f2646e0fdc5a4788efb5c4a55eaf5, type: 2}
+  - {fileID: 11400000, guid: 3fae16924fa44904cbc8dd4a43fd37c9, type: 2}
