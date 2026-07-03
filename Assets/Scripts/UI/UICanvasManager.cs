@@ -20,7 +20,10 @@ namespace Havengard.UI
         [SerializeField] private GameObject inventoryPanel;
         [SerializeField] private GameObject itemCachePanel;
         [SerializeField] private GameObject preWavePhasePanel;
-        [SerializeField] private GameObject skillTreePanel; // NEW
+        [SerializeField] private GameObject skillTreePanel;
+
+        [Header("HUD Behavior")]
+        [SerializeField] private bool autoHideHUDWhenMenusOpen = true;
 
         private void Awake()
         {
@@ -31,7 +34,6 @@ namespace Havengard.UI
             }
             Instance = this;
 
-            // Initialize canvas states
             InitializeCanvases();
         }
 
@@ -54,7 +56,6 @@ namespace Havengard.UI
                 tooltipsCanvas.enabled = true;
 
             // Hide all menu panels initially
-            // Note: SkillTreePanel is already inactive in scene and manages itself
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
             if (inventoryPanel != null)
@@ -75,6 +76,11 @@ namespace Havengard.UI
             if (hudCanvas != null)
                 hudCanvas.enabled = false;
         }
+
+        public bool IsHUDVisible()
+        {
+            return hudCanvas != null && hudCanvas.enabled;
+        }
         #endregion
 
         #region Menu Control
@@ -83,6 +89,10 @@ namespace Havengard.UI
             HideAllMenuPanels();
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(true);
+
+            if (autoHideHUDWhenMenusOpen)
+                HideHUD();
+
             Time.timeScale = 0f;
         }
 
@@ -90,6 +100,10 @@ namespace Havengard.UI
         {
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
+
+            if (autoHideHUDWhenMenusOpen && !IsAnyMenuOpen())
+                ShowHUD();
+
             Time.timeScale = 1f;
         }
 
@@ -98,12 +112,41 @@ namespace Havengard.UI
             HideAllMenuPanels();
             if (inventoryPanel != null)
                 inventoryPanel.SetActive(true);
+
+            if (autoHideHUDWhenMenusOpen)
+                HideHUD();
         }
 
         public void HideInventory()
         {
             if (inventoryPanel != null)
                 inventoryPanel.SetActive(false);
+
+            if (autoHideHUDWhenMenusOpen && !IsAnyMenuOpen())
+                ShowHUD();
+        }
+
+        public void ShowSkillTree()
+        {
+            HideAllMenuPanels();
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(true);
+
+            if (autoHideHUDWhenMenusOpen)
+                HideHUD();
+
+            Time.timeScale = 0f; // Pause game
+        }
+
+        public void HideSkillTree()
+        {
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(false);
+
+            if (autoHideHUDWhenMenusOpen && !IsAnyMenuOpen())
+                ShowHUD();
+
+            Time.timeScale = 1f; // Resume game
         }
 
         public void ShowItemCache()
@@ -111,30 +154,21 @@ namespace Havengard.UI
             HideAllMenuPanels();
             if (itemCachePanel != null)
                 itemCachePanel.SetActive(true);
+
+            if (autoHideHUDWhenMenusOpen)
+                HideHUD();
         }
 
         public void HideItemCache()
         {
             if (itemCachePanel != null)
                 itemCachePanel.SetActive(false);
+
+            if (autoHideHUDWhenMenusOpen && !IsAnyMenuOpen())
+                ShowHUD();
         }
 
-        public void ShowSkillTree() // NEW
-        {
-            HideAllMenuPanels();
-            if (skillTreePanel != null)
-                skillTreePanel.SetActive(true);
-            Time.timeScale = 0f;
-        }
-
-        public void HideSkillTree() // NEW
-        {
-            if (skillTreePanel != null)
-                skillTreePanel.SetActive(false);
-            Time.timeScale = 1f;
-        }
-
-        public void HideAllMenuPanels() // UPDATED
+        private void HideAllMenuPanels()
         {
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
@@ -142,28 +176,32 @@ namespace Havengard.UI
                 inventoryPanel.SetActive(false);
             if (itemCachePanel != null)
                 itemCachePanel.SetActive(false);
-            // SkillTreePanel manages its own visibility via SkillTreeUI component
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(false);
+        }
+
+        private bool IsAnyMenuOpen()
+        {
+            return (pauseMenuPanel != null && pauseMenuPanel.activeSelf) ||
+                   (inventoryPanel != null && inventoryPanel.activeSelf) ||
+                   (itemCachePanel != null && itemCachePanel.activeSelf) ||
+                   (skillTreePanel != null && skillTreePanel.activeSelf);
         }
         #endregion
 
-        #region Pre-Wave Control
-        public void ShowPreWavePhase()
+        #region PreWave Control
+        public void ShowPreWaveUI()
         {
             if (preWavePhasePanel != null)
                 preWavePhasePanel.SetActive(true);
+
+            // HUD remains visible during pre-wave phase
         }
 
-        public void HidePreWavePhase()
+        public void HidePreWaveUI()
         {
             if (preWavePhasePanel != null)
                 preWavePhasePanel.SetActive(false);
-        }
-        #endregion
-
-        #region Tooltip Control
-        public Canvas GetTooltipCanvas()
-        {
-            return tooltipsCanvas;
         }
         #endregion
     }

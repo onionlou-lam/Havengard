@@ -289,7 +289,7 @@ namespace Havengard.Waves
 
             // Notify UICanvasManager
             if (UICanvasManager.Instance != null)
-                UICanvasManager.Instance.ShowPreWavePhase();
+                UICanvasManager.Instance.ShowPreWaveUI();
 
             // Update prep panel wave text
             if (waveNumberText != null)
@@ -445,7 +445,7 @@ namespace Havengard.Waves
             HideHUDElements();
 
             if (UICanvasManager.Instance != null)
-                UICanvasManager.Instance.HidePreWavePhase();
+                UICanvasManager.Instance.HidePreWaveUI();
         }
 
         private string FormatTime(float timeInSeconds)

@@ -258,7 +258,7 @@ namespace Havengard.Items
                 cacheUI?.Toggle();
             }
 
-            // for testing
+            /* for testing
             if (Input.GetKeyDown(KeyCode.T))
             {
                 Debug.Log("=== TESTING ITEM SYSTEM ===");
@@ -313,7 +313,7 @@ namespace Havengard.Items
                 {
                     Debug.LogWarning("NO InventoryUI FOUND!");
                 }
-            }
+            }*/
             
             // Press 'U' to show the InventoryUI
             if (Input.GetKeyDown(KeyCode.U))

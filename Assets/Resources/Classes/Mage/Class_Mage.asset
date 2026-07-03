@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Class_Mage
   m_EditorClassIdentifier: 
   className: Mage
-  specializationName: Fire
+  specializationName: 
   classIcon: {fileID: -237935084, guid: 27af6e58adc8aee4196626d4c075e6ec, type: 3}
   baseHP: 100
   baseAttack: 10
@@ -24,7 +24,7 @@ MonoBehaviour:
   baseCritChance: 0.1
   baseCritMultiplier: 2
   baseRollCooldown: 4
-  expToLevel: 64000000fa000000f4010000e8030000
+  expToLevel: 64000000c80000002c01000090010000f401000058020000bc0200002003000084030000e8030000
   hpGrowth: 10
   attackGrowth: 2
   defenseGrowth: 1

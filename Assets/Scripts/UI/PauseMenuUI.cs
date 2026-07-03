@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Havengard.Items;
 using Havengard.Save;
-using Havengard.UI.Notifications; // NEW
+using Havengard.UI.Notifications;
 
 namespace Havengard.UI
 {
@@ -15,7 +15,7 @@ namespace Havengard.UI
         [Header("Buttons")]
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button inventoryButton;
-        [SerializeField] private Button characterButton;
+        [SerializeField] private Button skillTreeButton; // Changed from characterButton
         [SerializeField] private Button followersButton;
         [SerializeField] private Button optionsButton;
         [SerializeField] private Button saveGameButton;
@@ -25,6 +25,7 @@ namespace Havengard.UI
 
         [Header("UI Panels")]
         [SerializeField] private ItemCacheUI itemCacheUI;
+        [SerializeField] private SkillTreeUI skillTreeUI; // Add SkillTree reference
 
         private bool isPaused = false;
 
@@ -37,8 +38,8 @@ namespace Havengard.UI
             if (inventoryButton != null)
                 inventoryButton.onClick.AddListener(OpenInventory);
 
-            if (characterButton != null)
-                characterButton.onClick.AddListener(OpenCharacter);
+            if (skillTreeButton != null) // Changed from characterButton
+                skillTreeButton.onClick.AddListener(OpenSkillTree); // Changed method
 
             if (followersButton != null)
                 followersButton.onClick.AddListener(OpenFollowers);
@@ -61,6 +62,9 @@ namespace Havengard.UI
             // Find references
             if (itemCacheUI == null)
                 itemCacheUI = FindFirstObjectByType<ItemCacheUI>();
+
+            if (skillTreeUI == null)
+                skillTreeUI = FindFirstObjectByType<SkillTreeUI>();
 
             // Subscribe to ItemCacheUI close event
             if (itemCacheUI != null)
@@ -111,9 +115,17 @@ namespace Havengard.UI
             }
         }
 
-        private void OpenCharacter()
+        private void OpenSkillTree() // New method
         {
-            Debug.Log("[PauseMenuUI] Character screen not implemented yet");
+            if (skillTreeUI != null)
+            {
+                pausePanel.SetActive(false);
+                skillTreeUI.ToggleSkillTree(); // Opens skill tree (already paused)
+            }
+            else
+            {
+                Debug.LogWarning("[PauseMenuUI] SkillTreeUI reference not found!");
+            }
         }
 
         private void OpenFollowers()
