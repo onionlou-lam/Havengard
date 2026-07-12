@@ -152,6 +152,17 @@ namespace Havengard.Abilities
             };
         }
 
+        /// <summary>
+        /// Setup method to assign a sub-skill modifier to this ability (for sub-skill abilities)
+        /// </summary>
+        public void AssignSubSkillModifier(AbilitySubSkill modifier)
+        {
+            if (modifier != null && !activeSubSkills.Contains(modifier))
+            {
+                activeSubSkills.Add(modifier);
+            }
+        }
+
         public abstract void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy);
         public abstract void Deactivate(AbilityUser user);
     }

@@ -68,6 +68,88 @@ namespace Havengard.Abilities
         [Tooltip("Tracks which abilities from PlayerClass are unlocked")]
         [SerializeField] public bool[] unlockedAbilities;
 
+        [Header("Sub-Skill Selections")]
+        [Tooltip("Tracks which sub-skill was selected for each ability")]
+        [SerializeField] public SubSkillSelection[] subSkillSelections;
+
+        #region Sub-Skill Management
+
+        /// <summary>
+        /// Initialize sub-skill tracking based on PlayerClass
+        /// </summary>
+        public void InitializeSubSkillTracking(int abilityCount)
+        {
+            if (subSkillSelections == null || subSkillSelections.Length != abilityCount)
+            {
+                subSkillSelections = new SubSkillSelection[abilityCount];
+                for (int i = 0; i < abilityCount; i++)
+                {
+                    subSkillSelections[i] = new SubSkillSelection(i);
+                }
+                Debug.Log($"[AbilityUser] Initialized sub-skill tracking for {abilityCount} abilities");
+            }
+        }
+
+        /// <summary>
+        /// Check if a sub-skill has been unlocked for an ability
+        /// </summary>
+        public bool IsSubSkillUnlocked(int abilityIndex)
+        {
+            if (subSkillSelections == null || abilityIndex < 0 || abilityIndex >= subSkillSelections.Length)
+                return false;
+
+            return subSkillSelections[abilityIndex].HasSelection();
+        }
+
+        /// <summary>
+        /// Get the selected sub-skill index for an ability (-1 if none)
+        /// </summary>
+        public int GetSelectedSubSkillIndex(int abilityIndex)
+        {
+            if (subSkillSelections == null || abilityIndex < 0 || abilityIndex >= subSkillSelections.Length)
+                return -1;
+
+            return subSkillSelections[abilityIndex].subSkillIndex;
+        }
+
+        /// <summary>
+        /// Unlock a sub-skill for an ability
+        /// </summary>
+        public void UnlockSubSkill(int abilityIndex, int subSkillIndex, AbilitySubSkill subSkill)
+        {
+            if (subSkillSelections == null || abilityIndex < 0 || abilityIndex >= subSkillSelections.Length)
+            {
+                Debug.LogWarning($"[AbilityUser] Cannot unlock sub-skill at invalid index {abilityIndex}");
+                return;
+            }
+
+            if (subSkillSelections[abilityIndex].HasSelection())
+            {
+                Debug.LogWarning($"[AbilityUser] Sub-skill already unlocked for ability {abilityIndex}");
+                return;
+            }
+
+            // Track selection
+            SubSkillSelection selection = subSkillSelections[abilityIndex];
+            selection.subSkillIndex = subSkillIndex;
+            subSkillSelections[abilityIndex] = selection;
+
+            Debug.Log($"[AbilityUser] Unlocked sub-skill {subSkillIndex} for ability {abilityIndex}");
+
+            OnAbilitiesChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Set sub-skill selections directly (for loading saves)
+        /// </summary>
+        public void SetSubSkillSelections(SubSkillSelection[] selections)
+        {
+            subSkillSelections = selections;
+            Debug.Log($"[AbilityUser] Set sub-skill selections: {selections?.Length ?? 0} total");
+        }
+
+        #endregion
+
         private void Awake()
         {
             if (resourceSystem == null)

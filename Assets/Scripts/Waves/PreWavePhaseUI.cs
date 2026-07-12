@@ -169,9 +169,6 @@ namespace Havengard.Waves
             //Debug.Log("[PreWavePhaseUI] Start complete - all UI hidden");
         }
 
-        /// <summary>
-        /// Hide all HUD children elements
-        /// </summary>
         private void HideHUDElements()
         {
             if (hudWaveNumberText != null)
@@ -579,12 +576,10 @@ namespace Havengard.Waves
 
         private void Update()
         {
-            if (isPrepPhaseActive && preWavePhase != null)
+            // Close pre-wave panel with Escape (but keep HUD visible)
+            if (Input.GetKeyDown(KeyCode.Escape) && !isMinimized && isPrepPhaseActive && phasePanel != null && phasePanel.activeSelf)
             {
-                if (preWavePhase.UseTimeLimit && preWavePhase.IsPhaseActive)
-                {
-                    UpdateTimer(preWavePhase.RemainingTime);
-                }
+                ClosePanel();
             }
         }
     }

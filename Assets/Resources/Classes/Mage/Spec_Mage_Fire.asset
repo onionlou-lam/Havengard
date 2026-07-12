@@ -24,7 +24,7 @@ MonoBehaviour:
   baseCritChance: 0.1
   baseCritMultiplier: 2
   baseRollCooldown: 4
-  expToLevel: 64000000fa000000f401000058020000bc020000
+  expToLevel: 64000000c80000002c01000090010000f401000058020000bc0200002003000084030000e8030000
   hpGrowth: 10
   attackGrowth: 2
   defenseGrowth: 1
@@ -33,44 +33,72 @@ MonoBehaviour:
   - ability: {fileID: 11400000, guid: 350fa39e13615be468c115c68ab0e762, type: 2}
     requiredLevel: 1
     prerequisiteIndices: 
-    treePosition: {x: 2.5, y: -2}
+    treePosition: {x: 0, y: -2}
     skillPointCost: 0
+    subSkills:
+    - subSkillModifier: {fileID: 11400000, guid: 9c483554ec0b9fc4a93fac93c71b4291,
+        type: 2}
+      positionOffset: {x: -1, y: 0.5}
+      requiredLevel: 3
+      skillPointCost: 0
+      customIcon: {fileID: 0}
+      customDescription: 
+    - subSkillModifier: {fileID: 11400000, guid: d1a7f154891f34b4a955a84e34c34a67,
+        type: 2}
+      positionOffset: {x: 1, y: 0.5}
+      requiredLevel: 3
+      skillPointCost: 0
+      customIcon: {fileID: 0}
+      customDescription: 
     customDescription: 
   - ability: {fileID: 11400000, guid: 0a8fa21059580f449b7093001b9e9dc5, type: 2}
     requiredLevel: 3
     prerequisiteIndices: 00000000
-    treePosition: {x: 2.5, y: -1}
+    treePosition: {x: 0, y: -1}
     skillPointCost: 1
+    subSkills: []
     customDescription: 
   - ability: {fileID: 11400000, guid: 360e132f14d6f3149a8b19c40cf544e7, type: 2}
     requiredLevel: 3
     prerequisiteIndices: 01000000
-    treePosition: {x: 1, y: -0.5}
+    treePosition: {x: -1, y: -0.5}
     skillPointCost: 1
+    subSkills: []
     customDescription: 
   - ability: {fileID: 11400000, guid: 638d9eda011b5b54680d2fdd198e5f4b, type: 2}
     requiredLevel: 3
     prerequisiteIndices: 01000000
-    treePosition: {x: 4, y: -0.5}
+    treePosition: {x: 1, y: -0.5}
     skillPointCost: 2
+    subSkills: []
     customDescription: 
   - ability: {fileID: 11400000, guid: 231919b32f2b5f4478f9a65baab24a09, type: 2}
     requiredLevel: 3
     prerequisiteIndices: 01000000
-    treePosition: {x: 2.5, y: 0}
+    treePosition: {x: 0, y: 0}
     skillPointCost: 1
+    subSkills: []
     customDescription: 
   - ability: {fileID: 11400000, guid: 93b3ba05c857b5347813c407fb5e28de, type: 2}
     requiredLevel: 3
     prerequisiteIndices: 04000000
-    treePosition: {x: 2.5, y: 1}
+    treePosition: {x: 0, y: 1}
     skillPointCost: 2
+    subSkills: []
     customDescription: 
   - ability: {fileID: 11400000, guid: 4eecb50c15b08a049a84c61daf220d47, type: 2}
     requiredLevel: 5
     prerequisiteIndices: 05000000
-    treePosition: {x: 2.5, y: 2}
+    treePosition: {x: 0, y: 2}
     skillPointCost: 2
+    subSkills: []
+    customDescription: 
+  - ability: {fileID: 11400000, guid: 4eecb50c15b08a049a84c61daf220d47, type: 2}
+    requiredLevel: 5
+    prerequisiteIndices: 05000000
+    treePosition: {x: 0, y: 2}
+    skillPointCost: 2
+    subSkills: []
     customDescription: 
   specializations:
   - {fileID: 11400000, guid: ec321fdc374d0dc4296bf24a9a8bbf30, type: 2}

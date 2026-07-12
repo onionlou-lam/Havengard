@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 using Havengard.Abilities;
 using System.Collections;
 
 namespace Havengard.UI
 {
     /// <summary>
-    /// Handles the visual behaviour of a skill node with VFX/SFX feedback.
+    /// Handles the visual behaviour of a main skill node with VFX/SFX feedback.
     /// </summary>
     public class SkillTreeNodeUI : MonoBehaviour,
         IPointerClickHandler,

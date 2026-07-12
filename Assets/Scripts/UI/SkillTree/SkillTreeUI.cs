@@ -1,12 +1,10 @@
-﻿using Havengard.Abilities;
-using Havengard.Core;
+﻿using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using Havengard.Abilities;
 using Havengard.Core.Progression;
-using Havengard.UI.SkillTree;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace Havengard.UI
 {
@@ -48,6 +46,9 @@ namespace Havengard.UI
 
         [Header("Node Prefab")]
         [SerializeField] private GameObject skillNodePrefab;
+
+        [Header("Sub-Skill Nodes")]
+        [SerializeField] private GameObject subSkillNodePrefab;
 
         [Header("Layout Settings")]
         [SerializeField] private Vector2 nodeSpacing = new Vector2(120f, 100f);
@@ -91,6 +92,10 @@ namespace Havengard.UI
         private List<SkillTreeNodeUI> nodesTab2 = new List<SkillTreeNodeUI>();
         private List<SkillTreeNodeUI> nodesTab3 = new List<SkillTreeNodeUI>();
 
+        private List<SubSkillNodeUI> subSkillNodesTab1 = new List<SubSkillNodeUI>();
+        private List<SubSkillNodeUI> subSkillNodesTab2 = new List<SubSkillNodeUI>();
+        private List<SubSkillNodeUI> subSkillNodesTab3 = new List<SubSkillNodeUI>();
+
         private int currentTabIndex = 0;
         private int lastAccessedTab = 0;
 
@@ -98,6 +103,12 @@ namespace Havengard.UI
         private ClassAbility selectedAbility;
         private int selectedAbilityIndex;
         private PlayerClass selectedSpecialization;
+
+        // Sub-skill selection
+        private SubSkillNodeUI selectedSubSkillNode;
+        private SubSkillNodeData selectedSubSkillData;
+        private int selectedSubSkillParentIndex;
+        private int selectedSubSkillOptionIndex;
 
         private bool isInitialized = false;
 
@@ -148,6 +159,12 @@ namespace Havengard.UI
             {
                 ToggleSkillTree();
             }
+
+            // Close skill tree with Escape
+            if (Input.GetKeyDown(KeyCode.Escape) && skillTreePanel.activeSelf)
+            {
+                ToggleSkillTree();
+            }
         }
 
         //-----------------------------------------------------
@@ -180,6 +197,18 @@ namespace Havengard.UI
 
             SetupTabs();
             BuildAllTabs();
+
+            // Initialize sub-skill tracking for each specialization
+            int totalAbilities = 0;
+            if (spec1Class?.classAbilities != null) totalAbilities = Mathf.Max(totalAbilities, spec1Class.classAbilities.Length);
+            if (spec2Class?.classAbilities != null) totalAbilities = Mathf.Max(totalAbilities, spec2Class.classAbilities.Length);
+            if (spec3Class?.classAbilities != null) totalAbilities = Mathf.Max(totalAbilities, spec3Class.classAbilities.Length);
+
+            if (totalAbilities > 0)
+            {
+                playerAbilityUser.InitializeSubSkillTracking(totalAbilities);
+            }
+
             isInitialized = true;
 
             Debug.Log("[SkillTreeUI] Initialized successfully");
@@ -235,6 +264,15 @@ namespace Havengard.UI
                 return;
             }
 
+            // Get corresponding sub-skill list
+            List<SubSkillNodeUI> subSkillList = tabIndex switch
+            {
+                0 => subSkillNodesTab1,
+                1 => subSkillNodesTab2,
+                2 => subSkillNodesTab3,
+                _ => subSkillNodesTab1
+            };
+
             // Clear existing nodes
             foreach (SkillTreeNodeUI node in nodeList)
             {
@@ -242,9 +280,15 @@ namespace Havengard.UI
             }
             nodeList.Clear();
 
+            foreach (SubSkillNodeUI subNode in subSkillList)
+            {
+                if (subNode != null) Destroy(subNode.gameObject);
+            }
+            subSkillList.Clear();
+
             Debug.Log($"[SkillTreeUI] Building Tab {tabIndex} with {playerClass.classAbilities.Length} abilities");
 
-            // Create nodes
+            // Create main ability nodes
             for (int i = 0; i < playerClass.classAbilities.Length; i++)
             {
                 ClassAbility classAbility = playerClass.classAbilities[i];
@@ -254,9 +298,8 @@ namespace Havengard.UI
                     continue;
                 }
 
-                // Instantiate node prefab
+                // Instantiate main node
                 GameObject nodeObj = Instantiate(skillNodePrefab, container);
-
                 if (nodeObj == null)
                 {
                     Debug.LogError($"[SkillTreeUI] Tab {tabIndex}, failed to instantiate node prefab!");
@@ -264,7 +307,6 @@ namespace Havengard.UI
                 }
 
                 RectTransform rectTransform = nodeObj.GetComponent<RectTransform>();
-
                 Vector2 worldPos = new Vector2(
                     gridOffset.x + classAbility.treePosition.x * nodeSpacing.x,
                     gridOffset.y - classAbility.treePosition.y * nodeSpacing.y
@@ -274,33 +316,49 @@ namespace Havengard.UI
                 SkillTreeNodeUI nodeUI = nodeObj.GetComponent<SkillTreeNodeUI>();
                 if (nodeUI != null)
                 {
-                    nodeUI.Initialize(i, classAbility, this, particleManager); // Add particleManager parameter
+                    nodeUI.Initialize(i, classAbility, this, particleManager);
                     nodeList.Add(nodeUI);
-
-                    // DEBUG: Check if particles are assigned after instantiation
-                    if (nodeUI.GetComponentInChildren<ParticleSystem>() == null)
-                    {
-                        Debug.LogWarning($"[SkillTreeUI] Tab {tabIndex}, Node {i} ({classAbility.ability.abilityName}) has NO particle systems!");
-                    }
-                    else
-                    {
-                        int particleCount = nodeUI.GetComponentsInChildren<ParticleSystem>(true).Length;
-                        Debug.Log($"[SkillTreeUI] Tab {tabIndex}, Node {i} ({classAbility.ability.abilityName}) has {particleCount} particle systems");
-                    }
                 }
-                else
+
+                // Create sub-skill nodes for this ability
+                if (classAbility.HasSubSkills())
                 {
-                    Debug.LogError($"[SkillTreeUI] Tab {tabIndex}, Node {i} has no SkillTreeNodeUI component!");
+                    for (int j = 0; j < classAbility.subSkills.Length; j++)
+                    {
+                        SubSkillNodeData subSkillData = classAbility.subSkills[j];
+                        if (subSkillData == null || !subSkillData.IsValid())
+                            continue;
+
+                        GameObject subNodeObj = Instantiate(subSkillNodePrefab, container);
+                        if (subNodeObj == null)
+                            continue;
+
+                        RectTransform subRectTransform = subNodeObj.GetComponent<RectTransform>();
+                        
+                        // Position relative to parent
+                        Vector2 subWorldPos = new Vector2(
+                            worldPos.x + subSkillData.positionOffset.x * nodeSpacing.x,
+                            worldPos.y - subSkillData.positionOffset.y * nodeSpacing.y
+                        );
+                        subRectTransform.anchoredPosition = subWorldPos;
+
+                        SubSkillNodeUI subNodeUI = subNodeObj.GetComponent<SubSkillNodeUI>();
+                        if (subNodeUI != null)
+                        {
+                            subNodeUI.Initialize(i, j, subSkillData, this, particleManager);
+                            subSkillList.Add(subNodeUI);
+                        }
+                    }
                 }
             }
 
-            // Draw connections
+            // Draw connections (main nodes and sub-skill connections)
             if (renderer != null)
             {
-                renderer.DrawConnections(nodeList, playerClass.classAbilities);
+                renderer.DrawConnections(nodeList, subSkillList, playerClass.classAbilities);
             }
 
-            Debug.Log($"[SkillTreeUI] ✅ Built tab {tabIndex} with {nodeList.Count} nodes");
+            Debug.Log($"[SkillTreeUI] ✅ Built tab {tabIndex} with {nodeList.Count} main nodes and {subSkillList.Count} sub-skill nodes");
         }
 
         //-----------------------------------------------------
@@ -371,21 +429,41 @@ namespace Havengard.UI
 
             bool[] unlockedAbilities = playerAbilityUser.unlockedAbilities;
             List<SkillTreeNodeUI> currentNodes = GetCurrentTabNodes();
+            List<SubSkillNodeUI> currentSubNodes = GetCurrentTabSubSkillNodes();
 
+            // Refresh main nodes
             foreach (SkillTreeNodeUI node in currentNodes)
             {
                 node.RefreshState(unlockedAbilities, playerEXPSystem.AvailableSkillPoints,
                     playerEXPSystem.CurrentLevel);
             }
 
+            // Refresh sub-skill nodes
+            for (int i = 0; i < currentSubNodes.Count; i++)
+            {
+                SubSkillNodeUI subNode = currentSubNodes[i];
+                // Find parent ability for this sub-skill
+                ClassAbility parentAbility = selectedSpecialization.classAbilities[subNode.ParentAbilityIndex];
+                
+                bool parentUnlocked = unlockedAbilities[subNode.ParentAbilityIndex];
+                SubSkillSelection selection = playerAbilityUser.subSkillSelections[subNode.ParentAbilityIndex];
+                
+                subNode.RefreshState(parentUnlocked, selection.HasSelection(), selection.subSkillIndex,
+                    playerEXPSystem.AvailableSkillPoints, playerEXPSystem.CurrentLevel);
+            }
+
             UpdatePlayerInfoDisplay();
         }
 
-        //-----------------------------------------------------
-
-        public void RefreshAllNodes()
+        private List<SubSkillNodeUI> GetCurrentTabSubSkillNodes()
         {
-            RefreshCurrentTab();
+            return currentTabIndex switch
+            {
+                0 => subSkillNodesTab1,
+                1 => subSkillNodesTab2,
+                2 => subSkillNodesTab3,
+                _ => subSkillNodesTab1
+            };
         }
 
         //-----------------------------------------------------
@@ -429,7 +507,25 @@ namespace Havengard.UI
             ShowInfoPanel(classAbility, abilityIndex, nodeUI, isAlreadyUnlocked);
         }
 
-        //-----------------------------------------------------
+        public void OnSubSkillNodeClicked(int parentAbilityIndex, int subSkillIndex, 
+                                           SubSkillNodeData subSkillData, SubSkillNodeUI nodeUI)
+        {
+            // Deselect previous selections
+            if (selectedNode != null)
+                selectedNode.SetSelected(false);
+            if (selectedSubSkillNode != null)
+                selectedSubSkillNode.SetSelected(false);
+
+            selectedSubSkillNode = nodeUI;
+            selectedSubSkillData = subSkillData;
+            selectedSubSkillParentIndex = parentAbilityIndex;
+            selectedSubSkillOptionIndex = subSkillIndex;
+
+            selectedSubSkillNode.SetSelected(true);
+
+            ClassAbility parentAbility = selectedSpecialization.classAbilities[parentAbilityIndex];
+            ShowSubSkillInfoPanel(parentAbility, parentAbilityIndex, subSkillData, subSkillIndex, nodeUI);
+        }
 
         private void ShowInfoPanel(ClassAbility classAbility, int abilityIndex,
             SkillTreeNodeUI nodeUI, bool isAlreadyUnlocked)
@@ -447,7 +543,29 @@ namespace Havengard.UI
             }
 
             if (infoDescriptionText != null)
-                infoDescriptionText.text = classAbility.GetDescription();
+            {
+                string description = classAbility.GetDescription();
+                
+                // If this is a main ability with sub-skills, show available sub-skills
+                if (classAbility.HasSubSkills() && isAlreadyUnlocked)
+                {
+                    description += "\n\n<color=yellow>Sub-Skills Available:</color>";
+                    SubSkillSelection selection = playerAbilityUser.subSkillSelections[abilityIndex];
+                    
+                    for (int i = 0; i < classAbility.subSkills.Length; i++)
+                    {
+                        SubSkillNodeData subSkill = classAbility.subSkills[i];
+                        if (subSkill != null && subSkill.IsValid())
+                        {
+                            bool subUnlocked = selection.IsSelected(i);
+                            string status = subUnlocked ? "✓" : "-";
+                            description += $"\n  {status} {subSkill.GetName()}";
+                        }
+                    }
+                }
+                
+                infoDescriptionText.text = description;
+            }
 
             if (infoRequirementsText != null)
             {
@@ -495,6 +613,92 @@ namespace Havengard.UI
                         $"Unlock (-{classAbility.skillPointCost} SP)" :
                         "Cannot Unlock";
                 }
+
+                // Restore normal unlock action
+                confirmUnlockButton.onClick.RemoveAllListeners();
+                confirmUnlockButton.onClick.AddListener(ConfirmUnlockSelectedAbility);
+            }
+        }
+
+        private void ShowSubSkillInfoPanel(ClassAbility parentAbility, int parentIndex,
+                                            SubSkillNodeData subSkillData, int subSkillIndex, SubSkillNodeUI nodeUI)
+        {
+            if (infoPanelObject != null)
+                infoPanelObject.SetActive(true);
+
+            if (infoAbilityNameText != null)
+                infoAbilityNameText.text = $"[Sub-Skill] {subSkillData.GetName()}";
+    
+            if (infoAbilityIcon != null)
+            {
+                Sprite icon = subSkillData.GetIcon();
+                if (icon != null)
+                {
+                    infoAbilityIcon.sprite = icon;
+                    infoAbilityIcon.enabled = true;
+                }
+            }
+
+            if (infoDescriptionText != null)
+            {
+                string desc = $"<color=cyan>Modifies: {parentAbility.ability.abilityName}</color>\n\n";
+                desc += subSkillData.GetDescription();
+                infoDescriptionText.text = desc;
+            }
+
+            // Check unlock status
+            SubSkillSelection selection = playerAbilityUser.subSkillSelections[parentIndex];
+            bool isUnlocked = selection.IsSelected(subSkillIndex);
+            bool anySubSkillUnlocked = selection.HasSelection();
+            bool isParentUnlocked = playerAbilityUser.unlockedAbilities[parentIndex]; // RENAMED VARIABLE
+            
+            bool meetsLevel = playerEXPSystem.CurrentLevel >= subSkillData.requiredLevel;
+            bool hasPoints = playerEXPSystem.AvailableSkillPoints >= subSkillData.skillPointCost;
+            bool canUnlock = isParentUnlocked && meetsLevel && hasPoints && !anySubSkillUnlocked; // USE RENAMED VARIABLE
+
+            if (infoRequirementsText != null)
+            {
+                string reqText = $"Required Level: {subSkillData.requiredLevel}\n";
+                reqText += $"Skill Points: {subSkillData.skillPointCost}\n";
+                reqText += $"Requires: {parentAbility.ability.abilityName} ";
+                reqText += isParentUnlocked ? "<color=green>✓</color>" : "<color=red>✗</color>"; // USE RENAMED VARIABLE
+                
+                infoRequirementsText.text = reqText;
+            }
+
+            if (infoStatusText != null)
+            {
+                if (isUnlocked)
+                    infoStatusText.text = "<color=green>[UNLOCKED]</color>";
+                else if (anySubSkillUnlocked)
+                    infoStatusText.text = "<color=red>[ANOTHER SUB-SKILL CHOSEN]</color>";
+                else if (canUnlock)
+                    infoStatusText.text = "<color=yellow>[READY TO UNLOCK]</color>";
+                else if (!isParentUnlocked) // USE RENAMED VARIABLE
+                    infoStatusText.text = "<color=red>[Parent Ability Required]</color>";
+                else if (!meetsLevel)
+                    infoStatusText.text = $"<color=red>[Requires Level {subSkillData.requiredLevel}]</color>";
+                else if (!hasPoints)
+                    infoStatusText.text = "<color=red>[Not Enough Skill Points]</color>";
+                else
+                    infoStatusText.text = "<color=red>[LOCKED]</color>";
+            }
+
+            if (confirmUnlockButton != null)
+            {
+                confirmUnlockButton.gameObject.SetActive(!isUnlocked && !anySubSkillUnlocked);
+                confirmUnlockButton.interactable = canUnlock;
+
+                if (confirmButtonText != null)
+                {
+                    confirmButtonText.text = canUnlock ?
+                        $"Unlock (-{subSkillData.skillPointCost} SP)" :
+                        "Cannot Unlock";
+                }
+
+                // Set up button to unlock sub-skill
+                confirmUnlockButton.onClick.RemoveAllListeners();
+                confirmUnlockButton.onClick.AddListener(() => ConfirmUnlockSubSkill(parentIndex, subSkillIndex, subSkillData));
             }
         }
 
@@ -510,6 +714,16 @@ namespace Havengard.UI
             selectedNode = null;
             selectedAbility = null;
             selectedAbilityIndex = -1;
+
+            if (selectedSubSkillNode != null)
+            {
+                selectedSubSkillNode.SetSelected(false);
+            }
+
+            selectedSubSkillNode = null;
+            selectedSubSkillData = null;
+            selectedSubSkillParentIndex = -1;
+            selectedSubSkillOptionIndex = -1;
 
             if (infoPanelObject != null)
                 infoPanelObject.SetActive(false);
@@ -570,6 +784,35 @@ namespace Havengard.UI
 
             Debug.Log($"[SkillTreeUI] ✅ Unlocked {selectedAbility.ability.abilityName}! " +
                 $"Remaining SP: {playerEXPSystem.AvailableSkillPoints}");
+        }
+
+        private void ConfirmUnlockSubSkill(int parentIndex, int subSkillIndex, SubSkillNodeData subSkillData)
+        {
+            if (!playerEXPSystem.TrySpendSkillPoints(subSkillData.skillPointCost))
+                return;
+
+            // Unlock sub-skill
+            playerAbilityUser.UnlockSubSkill(parentIndex, subSkillIndex, subSkillData.subSkillModifier);
+
+            // Apply modifier to parent ability
+            ClassAbility parentAbility = selectedSpecialization.classAbilities[parentIndex];
+            if (parentAbility.ability != null && subSkillData.subSkillModifier != null)
+            {
+                if (!parentAbility.ability.activeSubSkills.Contains(subSkillData.subSkillModifier))
+                {
+                    parentAbility.ability.activeSubSkills.Add(subSkillData.subSkillModifier);
+                }
+            }
+
+            // Play effects
+            if (selectedSubSkillNode != null)
+                selectedSubSkillNode.PlayUnlockEffects();
+
+            PlayUISound(skillUnlockedSound);
+            RefreshCurrentTab();
+            StartCoroutine(DelayedClearSelection(0.5f));
+
+            Debug.Log($"[SkillTreeUI] ✅ Unlocked sub-skill '{subSkillData.GetName()}'!");
         }
 
         //-----------------------------------------------------

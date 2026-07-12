@@ -1,12 +1,12 @@
 fileFormatVersion: 2
-guid: 03281c94f9924fa47a72404b965890f6
+guid: c2541016858bb6f429ef6083f5f95395
 AssetOrigin:
   serializedVersion: 1
-  productId: 20869
-  packageName: Magic Arsenal
-  packageVersion: 2.75
-  assetPath: Assets/MagicArsenal/Effects/Icons/Textures/fire.png
-  uploadId: 715034
+  productId: 229460
+  packageName: 5800 Fantasy RPG Icons Pack
+  packageVersion: 1.4
+  assetPath: Assets/Fantasy RPG Icons Pack/RPG Pyromancer skill icons/PNG/20.png
+  uploadId: 702879
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -37,12 +37,12 @@ TextureImporter:
   generateCubemap: 6
   cubemapConvolution: 0
   seamlessCubemap: 0
-  textureFormat: -1
+  textureFormat: 1
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
     filterMode: 1
-    aniso: 0
+    aniso: 1
     mipBias: 0
     wrapU: 1
     wrapV: 1
@@ -70,7 +70,7 @@ TextureImporter:
   compressionQualitySet: 0
   textureFormatSet: 0
   ignorePngGamma: 0
-  applyGammaDecoding: 1
+  applyGammaDecoding: 0
   swizzle: 50462976
   cookieLightType: 1
   platformSettings:

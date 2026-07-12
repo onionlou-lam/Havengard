@@ -69,6 +69,15 @@ namespace Havengard.UI
             Initialize();
         }
 
+        private void Update()
+        {
+            // Close item cache with Escape
+            if (Input.GetKeyDown(KeyCode.Escape) && IsShowing)
+            {
+                RequestClose();
+            }
+        }
+
         /// <summary>
         /// Initialize the UI (called from Awake/Start or lazily on first Show)
         /// </summary>

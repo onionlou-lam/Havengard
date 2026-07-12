@@ -287,7 +287,7 @@ namespace Havengard.UI
         }
 
         /// <summary>
-        /// Get modifiers text for future sub-skills and item effects
+        /// Get modifiers text for sub-skills and item effects
         /// </summary>
         private string GetAbilityModifiers(AbilityBase ability)
         {
@@ -305,18 +305,61 @@ namespace Havengard.UI
                 modifiers += $"• Heals allies for {(ability.healingRatio * 100):F0}% of damage\n";
             }
 
-            // TODO: Add sub-skill modifiers here when implemented
-            // Example:
-            // - Multi-shot: Fire 2 additional projectiles
-            // - Chain: Bounces to 3 nearby enemies
-            // - CDR: -20% cooldown
-            // - Explosive: Creates 5m radius explosion on impact
+            // Sub-skill modifiers
+            if (ability.activeSubSkills != null && ability.activeSubSkills.Count > 0)
+            {
+                modifiers += "<color=cyan>[Active Sub-Skills]</color>\n";
+                
+                foreach (AbilitySubSkill subSkill in ability.activeSubSkills)
+                {
+                    if (subSkill == null) continue;
 
-            // TODO: Add item modifier effects here
-            // Example from AbilityModifierEffect:
-            // - Cooldown Reduction: -15%
-            // - Damage Increase: +25%
-            // - Range Increase: +30%
+                    modifiers += $"<b>• {subSkill.subSkillName}</b>\n";
+
+                    // Damage modifiers
+                    if (subSkill.modifiesDamage && subSkill.damageMultiplier != 1f)
+                    {
+                        float percent = (subSkill.damageMultiplier - 1f) * 100f;
+                        modifiers += $"  Damage: {(percent >= 0 ? "+" : "")}{percent:F0}%\n";
+                    }
+
+                    // Cooldown modifiers
+                    if (subSkill.modifiesCooldown && subSkill.cooldownReduction > 0f)
+                    {
+                        modifiers += $"  Cooldown: -{(subSkill.cooldownReduction * 100):F0}%\n";
+                    }
+
+                    // Cost modifiers
+                    if (subSkill.modifiesCost && subSkill.costReduction > 0f)
+                    {
+                        modifiers += $"  Cost: -{(subSkill.costReduction * 100):F0}%\n";
+                    }
+
+                    // Projectile modifiers
+                    if (subSkill.addsProjectiles && subSkill.additionalProjectiles > 0)
+                    {
+                        modifiers += $"  Fires {subSkill.additionalProjectiles + 1} projectiles\n";
+                    }
+
+                    // Chain modifiers
+                    if (subSkill.enablesChaining && subSkill.chainCount > 0)
+                    {
+                        modifiers += $"  Chains {subSkill.chainCount} times\n";
+                    }
+
+                    // AoE modifiers
+                    if (subSkill.addsExplosion)
+                    {
+                        modifiers += $"  Creates {subSkill.explosionRadius:F0}m explosion\n";
+                    }
+
+                    // Status effects
+                    if (subSkill.appliesStatusEffect && subSkill.statusEffect != null)
+                    {
+                        modifiers += $"  Applies: {subSkill.statusEffect.name}\n";
+                    }
+                }
+            }
 
             return modifiers.TrimEnd('\n');
         }

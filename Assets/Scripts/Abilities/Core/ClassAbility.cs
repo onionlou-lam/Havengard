@@ -23,6 +23,10 @@ namespace Havengard.Abilities
         [Tooltip("Skill points required to unlock")]
         public int skillPointCost = 1;
 
+        [Header("Sub-Skills (Direct References)")]
+        [Tooltip("Sub-skill options for this ability - shown as child nodes in skill tree")]
+        public SubSkillNodeData[] subSkills = new SubSkillNodeData[0];
+
         [Header("UI Display")]
         [Tooltip("Optional description override (uses ability description if empty)")]
         [TextArea(2, 4)]
@@ -68,6 +72,42 @@ namespace Havengard.Abilities
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Check if this ability has sub-skill options
+        /// </summary>
+        public bool HasSubSkills()
+        {
+            return subSkills != null && subSkills.Length > 0;
+        }
+
+        /// <summary>
+        /// Get number of valid sub-skills
+        /// </summary>
+        public int GetSubSkillCount()
+        {
+            if (!HasSubSkills())
+                return 0;
+
+            int count = 0;
+            foreach (var subSkill in subSkills)
+            {
+                if (subSkill != null && subSkill.IsValid())
+                    count++;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Get a specific sub-skill by index
+        /// </summary>
+        public SubSkillNodeData GetSubSkill(int index)
+        {
+            if (subSkills == null || index < 0 || index >= subSkills.Length)
+                return null;
+
+            return subSkills[index];
         }
     }
 }

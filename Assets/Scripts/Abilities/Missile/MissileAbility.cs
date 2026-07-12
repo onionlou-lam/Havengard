@@ -22,9 +22,9 @@ namespace Havengard.Abilities
         [SerializeField] private float aoeRadius = 3f;
         [SerializeField] private float aoeDamageMultiplier = 0.5f;
 
-        [Header("Multishot")]
-        [SerializeField] private int projectileCount = 1;
-        [SerializeField] private float spreadAngle = 15f;
+        [Header("Multishot (Base)")]
+        [SerializeField] private int baseProjectileCount = 1;
+        [SerializeField] private float baseSpreadAngle = 15f;
 
         public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
@@ -45,18 +45,64 @@ namespace Havengard.Abilities
                 AudioSource.PlayClipAtPoint(castSFX, user.transform.position);
             }
 
-            for (int i = 0; i < projectileCount; i++)
+            // Calculate effective projectile count with sub-skill modifiers
+            int effectiveProjectileCount = GetEffectiveProjectileCount();
+            float effectiveSpreadAngle = GetEffectiveSpreadAngle();
+
+            Debug.Log($"[MissileAbility] Firing {effectiveProjectileCount} projectiles with {effectiveSpreadAngle}° spread");
+
+            for (int i = 0; i < effectiveProjectileCount; i++)
             {
                 float angle = 0f;
-                if (projectileCount > 1)
+                if (effectiveProjectileCount > 1)
                 {
-                    float angleStep = spreadAngle / (projectileCount - 1);
-                    angle = -spreadAngle / 2f + (angleStep * i);
+                    float angleStep = effectiveSpreadAngle / (effectiveProjectileCount - 1);
+                    angle = -effectiveSpreadAngle / 2f + (angleStep * i);
                 }
 
                 Vector3 spreadDirection = Quaternion.Euler(0, 0, angle) * direction;
                 SpawnProjectile(user, user.transform.position, spreadDirection, targetEnemy);
             }
+        }
+
+        /// <summary>
+        /// Calculate total projectile count including sub-skill modifiers
+        /// </summary>
+        private int GetEffectiveProjectileCount()
+        {
+            int count = baseProjectileCount;
+
+            // Apply sub-skill projectile modifiers
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.addsProjectiles)
+                {
+                    count += subSkill.additionalProjectiles;
+                    Debug.Log($"[MissileAbility] Sub-skill '{subSkill.subSkillName}' adds {subSkill.additionalProjectiles} projectiles");
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Get effective spread angle (use sub-skill value if present, otherwise base)
+        /// </summary>
+        private float GetEffectiveSpreadAngle()
+        {
+            float angle = baseSpreadAngle;
+
+            // Use sub-skill spread angle if available
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.addsProjectiles && subSkill.spreadAngle > 0)
+                {
+                    angle = subSkill.spreadAngle;
+                    break; // Use first sub-skill's spread angle
+                }
+            }
+
+            return angle;
         }
 
         private void SpawnProjectile(AbilityUser user, Vector3 position, Vector3 direction, GameObject target)
@@ -105,9 +151,14 @@ namespace Havengard.Abilities
                 health.TakeDamage((int)damage, user.gameObject);
             }
 
-            if (hasAOE)
+            // Check if any sub-skill adds explosion
+            bool shouldExplode = hasAOE || HasExplosionSubSkill();
+            float explosionRadius = GetEffectiveExplosionRadius();
+            float explosionDamageMultiplier = GetEffectiveExplosionDamageMultiplier();
+
+            if (shouldExplode)
             {
-                ApplyAOEDamage(target.transform.position, user.gameObject);
+                ApplyAOEDamage(target.transform.position, user.gameObject, explosionRadius, explosionDamageMultiplier);
             }
 
             if (impactVFX != null)
@@ -124,16 +175,57 @@ namespace Havengard.Abilities
             Destroy(projectile);
         }
 
-        private void ApplyAOEDamage(Vector3 center, GameObject caster)
+        /// <summary>
+        /// Check if any sub-skill adds explosion effect
+        /// </summary>
+        private bool HasExplosionSubSkill()
         {
-            Collider2D[] hits = Physics2D.OverlapCircleAll(center, aoeRadius, targetLayers);
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.addsExplosion)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Get effective explosion radius (use sub-skill if present, otherwise base AOE)
+        /// </summary>
+        private float GetEffectiveExplosionRadius()
+        {
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.addsExplosion)
+                    return subSkill.explosionRadius;
+            }
+            return aoeRadius;
+        }
+
+        /// <summary>
+        /// Get effective explosion damage multiplier
+        /// </summary>
+        private float GetEffectiveExplosionDamageMultiplier()
+        {
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.addsExplosion)
+                    return subSkill.explosionDamageMultiplier;
+            }
+            return aoeDamageMultiplier;
+        }
+
+        private void ApplyAOEDamage(Vector3 center, GameObject caster, float radius, float damageMultiplier)
+        {
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius, targetLayers);
+
+            Debug.Log($"[MissileAbility] AoE explosion at {center} with radius {radius}, hit {hits.Length} targets");
 
             foreach (var hit in hits)
             {
                 var health = hit.GetComponent<Havengard.Core.HealthSystem.Health>();
                 if (health != null)
                 {
-                    float aoeDamage = CalculateDamage(caster) * aoeDamageMultiplier;
+                    float aoeDamage = CalculateDamage(caster) * damageMultiplier;
                     health.TakeDamage((int)aoeDamage, caster);
                 }
             }
