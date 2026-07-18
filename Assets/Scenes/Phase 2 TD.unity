@@ -1605,6 +1605,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 2
   abilityKeys: 3100000032000000330000003400000035000000
+  skillCastModifier: 304
 --- !u!114 &86043958
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -413075,7 +413076,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8be029b2899853847867080913a45ee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultSaveFileName: GameSave
   autoSaveEnabled: 1
   autoSaveInterval: 300
   playerInventory: {fileID: 7865055478451837670}
@@ -418798,6 +418798,7 @@ GameObject:
   - component: {fileID: 1907956375}
   - component: {fileID: 1907956374}
   - component: {fileID: 1907956373}
+  - component: {fileID: 1907956376}
   m_Layer: 0
   m_Name: NavMesh
   m_TagString: Untagged
@@ -418867,6 +418868,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1907956376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1907956372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b92d24dc1feddd14fb7014abaffb2e34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentSceneName: Phase 2 TD
 --- !u!1 &1915764327
 GameObject:
   m_ObjectHideFlags: 0

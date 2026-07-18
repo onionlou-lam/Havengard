@@ -1,8 +1,6 @@
 using UnityEngine;
-using System.Collections.Generic;
-using Havengard.Core.Heroes;
 using Havengard.Items;
-using Havengard.Resources;  // CHANGED: This is the correct namespace for currency
+using Havengard.Core.Heroes;
 
 namespace Havengard.Save
 {
@@ -14,21 +12,19 @@ namespace Havengard.Save
         public static SaveManager Instance { get; private set; }
 
         [Header("Settings")]
-        [SerializeField] private string defaultSaveFileName = "GameSave";
         [SerializeField] private bool autoSaveEnabled = true;
         [SerializeField] private float autoSaveInterval = 300f; // 5 minutes
 
         [Header("System References")]
         [Tooltip("Assign the player's ItemInventory component")]
         [SerializeField] private ItemInventory playerInventory;
-        
+
         [Tooltip("Assign the parent transform containing all placed buildings")]
         [SerializeField] private Transform buildingsParent;
-        
+
         [Tooltip("Assign the parent transform containing all hero instances")]
         [SerializeField] private Transform heroesParent;
-        
-        // NEW: Add this field
+
         [Tooltip("Assign the player GameObject (or its transform)")]
         [SerializeField] private Transform playerTransform;
 
@@ -68,11 +64,20 @@ namespace Havengard.Save
         #region Public API
 
         /// <summary>
-        /// Save game to the default save file
+        /// Save game to the active save slot
         /// </summary>
         public void SaveGame()
         {
-            SaveGame(defaultSaveFileName);
+            if (SaveSlotManager.Instance != null)
+            {
+                string saveFileName = SaveSlotManager.Instance.GetActiveSaveFileName();
+                SaveGame(saveFileName);
+            }
+            else
+            {
+                // Fallback if SaveSlotManager not available
+                SaveGame("GameSave");
+            }
         }
 
         /// <summary>
@@ -97,11 +102,20 @@ namespace Havengard.Save
         }
 
         /// <summary>
-        /// Load game from the default save file
+        /// Load game from the active save slot
         /// </summary>
         public void LoadGame()
         {
-            LoadGame(defaultSaveFileName);
+            if (SaveSlotManager.Instance != null)
+            {
+                string saveFileName = SaveSlotManager.Instance.GetActiveSaveFileName();
+                LoadGame(saveFileName);
+            }
+            else
+            {
+                // Fallback if SaveSlotManager not available
+                LoadGame("GameSave");
+            }
         }
 
         /// <summary>
@@ -117,6 +131,11 @@ namespace Havengard.Save
             {
                 ApplyGameData(saveData);
                 currentSaveData = saveData;
+
+                // Update playtime tracker
+                if (PlaytimeTracker.Instance != null)
+                    PlaytimeTracker.Instance.SetTotalPlaytime(saveData.playTime);
+
                 Debug.Log("[SaveManager] Load successful!");
                 OnGameLoaded?.Invoke(saveFileName);
             }
@@ -131,7 +150,14 @@ namespace Havengard.Save
         /// </summary>
         public bool SaveExists(string saveFileName = null)
         {
-            saveFileName ??= defaultSaveFileName;
+            if (saveFileName == null)
+            {
+                if (SaveSlotManager.Instance != null)
+                    saveFileName = SaveSlotManager.Instance.GetActiveSaveFileName();
+                else
+                    saveFileName = "GameSave";
+            }
+
             return SaveUtility.SaveFileExists(saveFileName);
         }
 
@@ -158,7 +184,7 @@ namespace Havengard.Save
         private void AutoSave()
         {
             Debug.Log("[SaveManager] Auto-saving...");
-            SaveGame("AutoSave");
+            SaveGame();
         }
 
         #endregion
@@ -179,25 +205,37 @@ namespace Havengard.Save
         private GameSaveData CollectGameData()
         {
             GameSaveData saveData = new GameSaveData();
-            
+
+            // Playtime
+            if (PlaytimeTracker.Instance != null)
+                saveData.playTime = PlaytimeTracker.Instance.GetTotalPlaytime();
+
             // Currency
             CollectCurrencyData(saveData);
-            
-            // Player Position (NEW)
+
+            // Player Position
             CollectPlayerPosition(saveData);
-            
+
             // Heroes
             CollectHeroData(saveData);
-            
+
+            // Set main character info (first hero)
+            if (saveData.heroes.Count > 0)
+            {
+                saveData.mainCharacterName = saveData.heroes[0].heroName;
+                saveData.mainCharacterClass = saveData.heroes[0].className;
+                saveData.mainCharacterLevel = saveData.heroes[0].level;
+            }
+
             // Inventory
             CollectInventoryData(saveData);
-            
+
             // Buildings
             CollectBuildingData(saveData);
-            
+
             return saveData;
         }
-        
+
         /// <summary>
         /// Collect player position
         /// </summary>
@@ -205,14 +243,11 @@ namespace Havengard.Save
         {
             if (playerTransform == null)
             {
-                // Try to find player automatically
                 GameObject player = GameObject.FindGameObjectWithTag("Player");
                 if (player != null)
-                {
                     playerTransform = player.transform;
-                }
             }
-            
+
             if (playerTransform != null)
             {
                 saveData.SetPlayerPosition(playerTransform.position);
@@ -229,15 +264,11 @@ namespace Havengard.Save
         /// </summary>
         private void CollectCurrencyData(GameSaveData saveData)
         {
-            if (GoldSystem.Instance != null)
-            {
-                saveData.gold = GoldSystem.Instance.CurrentGold;
-            }
+            if (Havengard.Resources.GoldSystem.Instance != null)
+                saveData.gold = Havengard.Resources.GoldSystem.Instance.CurrentGold;
 
-            if (CelestiumSystem.Instance != null)
-            {
-                saveData.celestium = CelestiumSystem.Instance.CurrentCelestium;
-            }
+            if (Havengard.Resources.CelestiumSystem.Instance != null)
+                saveData.celestium = Havengard.Resources.CelestiumSystem.Instance.CurrentCelestium;
 
             Debug.Log($"[SaveManager] Saved currency: {saveData.gold} gold, {saveData.celestium} celestium");
         }
@@ -265,27 +296,21 @@ namespace Havengard.Save
 
                 HeroSaveData heroData = new HeroSaveData
                 {
+                    heroName = hero.Data.heroName,
+                    className = hero.Data.heroClass != null ? hero.Data.heroClass.className : "Unknown",
                     heroDataName = hero.Data.name,
                     level = hero.ExpSystem != null ? hero.ExpSystem.CurrentLevel : 1,
                     currentExp = hero.ExpSystem != null ? hero.ExpSystem.CurrentExp : 0,
                     isOnQuest = hero.IsOnQuest
                 };
 
-                // Save health/resource state
                 var health = hero.GetComponent<Havengard.Core.HealthSystem.Health>();
                 if (health != null)
-                {
                     heroData.currentHealth = health.CurrentHealth;
-                }
 
                 var resourceSystem = hero.GetComponent<Havengard.Abilities.ResourceSystem>();
                 if (resourceSystem != null)
-                {
                     heroData.currentResource = resourceSystem.CurrentResource;
-                }
-
-                // Future: Save unlocked abilities (Phase 1)
-                // heroData.unlockedAbilityIndices = GetUnlockedAbilityIndices(hero);
 
                 saveData.heroes.Add(heroData);
             }
@@ -322,7 +347,7 @@ namespace Havengard.Save
         }
 
         /// <summary>
-        /// Collect building placement data - only saves direct children of buildingsParent
+        /// Collect building placement data
         /// </summary>
         private void CollectBuildingData(GameSaveData saveData)
         {
@@ -331,37 +356,27 @@ namespace Havengard.Save
                 Debug.LogWarning("[SaveManager] buildingsParent not assigned - skipping building save");
                 return;
             }
-            
-            // Get only DIRECT children (not nested children like particle effects)
+
             int childCount = buildingsParent.childCount;
-            
-            Debug.Log($"[SaveManager] Found {childCount} direct children of buildingsParent");
-            
+
             for (int i = 0; i < childCount; i++)
             {
                 Transform building = buildingsParent.GetChild(i);
-                
-                // Skip inactive objects
+
                 if (!building.gameObject.activeInHierarchy)
-                {
-                    Debug.Log($"[SaveManager] Skipping inactive: {building.name}");
                     continue;
-                }
-                
-                // Get the prefab name (clean up Unity's (Clone) suffix)
+
                 string prefabName = building.name.Replace("(Clone)", "").Trim();
-                
+
                 BuildingSaveData buildingData = new BuildingSaveData(
                     prefabName,
                     building.position,
                     building.eulerAngles.y
                 );
-                
+
                 saveData.placedBuildings.Add(buildingData);
-                
-                Debug.Log($"[SaveManager] Saving building: {prefabName} at {building.position}");
             }
-            
+
             Debug.Log($"[SaveManager] Saved {saveData.placedBuildings.Count} buildings");
         }
 
@@ -375,71 +390,42 @@ namespace Havengard.Save
         private void ApplyGameData(GameSaveData saveData)
         {
             Debug.Log($"[SaveManager] Applying save data (Version: {saveData.saveVersion}, Date: {saveData.saveDate})");
-            
-            // Currency
+
             ApplyCurrencyData(saveData);
-            
-            // Player Position (NEW)
             ApplyPlayerPosition(saveData);
-            
-            // Heroes
             ApplyHeroData(saveData);
-
-            // Inventory
             ApplyInventoryData(saveData);
-
-            // Buildings
             ApplyBuildingData(saveData);
         }
-        
-        /// <summary>
-        /// Apply player position
-        /// </summary>
+
         private void ApplyPlayerPosition(GameSaveData saveData)
         {
             if (playerTransform == null)
             {
-                // Try to find player automatically
                 GameObject player = GameObject.FindGameObjectWithTag("Player");
                 if (player != null)
-                {
                     playerTransform = player.transform;
-                }
             }
-            
+
             if (playerTransform != null)
             {
                 Vector3 savedPosition = saveData.GetPlayerPosition();
                 playerTransform.position = savedPosition;
                 Debug.Log($"[SaveManager] Restored player position: {savedPosition}");
             }
-            else
-            {
-                Debug.LogWarning("[SaveManager] Player transform not assigned - skipping position load");
-            }
         }
 
-        /// <summary>
-        /// Apply currency data
-        /// </summary>
         private void ApplyCurrencyData(GameSaveData saveData)
         {
-            if (GoldSystem.Instance != null)
-            {
-                GoldSystem.Instance.SetGold(saveData.gold);
-            }
-            
-            if (CelestiumSystem.Instance != null)
-            {
-                CelestiumSystem.Instance.SetCelestium(saveData.celestium);
-            }
-            
+            if (Havengard.Resources.GoldSystem.Instance != null)
+                Havengard.Resources.GoldSystem.Instance.SetGold(saveData.gold);
+
+            if (Havengard.Resources.CelestiumSystem.Instance != null)
+                Havengard.Resources.CelestiumSystem.Instance.SetCelestium(saveData.celestium);
+
             Debug.Log($"[SaveManager] Loaded currency: {saveData.gold} gold, {saveData.celestium} celestium");
         }
-        
-        /// <summary>
-        /// Apply hero data - restore hero states
-        /// </summary>
+
         private void ApplyHeroData(GameSaveData saveData)
         {
             if (heroesParent == null)
@@ -447,50 +433,35 @@ namespace Havengard.Save
                 Debug.LogWarning("[SaveManager] heroesParent not assigned - skipping hero load");
                 return;
             }
-            
+
             HeroInstance[] existingHeroes = heroesParent.GetComponentsInChildren<HeroInstance>();
-            
+
             foreach (HeroSaveData heroSaveData in saveData.heroes)
             {
-                // Find matching hero by HeroData name
-                HeroInstance hero = System.Array.Find(existingHeroes, 
+                HeroInstance hero = System.Array.Find(existingHeroes,
                     h => h.Data != null && h.Data.name == heroSaveData.heroDataName);
-                
+
                 if (hero == null)
                 {
                     Debug.LogWarning($"[SaveManager] Could not find hero with HeroData: {heroSaveData.heroDataName}");
                     continue;
                 }
-                
-                // Restore EXP and level
+
                 if (hero.ExpSystem != null)
-                {
                     hero.ExpSystem.SetEXPAndLevel(heroSaveData.currentExp, heroSaveData.level);
-                }
-                
-                // Restore health
+
                 var health = hero.GetComponent<Havengard.Core.HealthSystem.Health>();
                 if (health != null)
-                {
                     health.SetHealth(heroSaveData.currentHealth);
-                }
-                
-                // Restore resource
+
                 var resourceSystem = hero.GetComponent<Havengard.Abilities.ResourceSystem>();
                 if (resourceSystem != null)
-                {
                     resourceSystem.SetCurrentResource(heroSaveData.currentResource);
-                }
-                
-                Debug.Log($"[SaveManager] Restored hero: {heroSaveData.heroDataName} (Level {heroSaveData.level}, {heroSaveData.currentHealth} HP)");
             }
-            
+
             Debug.Log($"[SaveManager] Loaded {saveData.heroes.Count} heroes");
         }
-        
-        /// <summary>
-        /// Apply inventory data
-        /// </summary>
+
         private void ApplyInventoryData(GameSaveData saveData)
         {
             if (playerInventory == null)
@@ -498,42 +469,26 @@ namespace Havengard.Save
                 Debug.LogWarning("[SaveManager] playerInventory not assigned - skipping inventory load");
                 return;
             }
-            
-            // Clear existing inventory (this should trigger OnInventoryChanged)
+
             playerInventory.ClearInventory();
-            
-            // Load items from Resources folder
+
             foreach (ItemSaveData itemData in saveData.inventoryItems)
             {
-                // Load the ItemData asset by name
                 ItemData itemAsset = UnityEngine.Resources.Load<ItemData>($"Items/{itemData.itemDataName}");
-                
+
                 if (itemAsset == null)
                 {
                     Debug.LogWarning($"[SaveManager] Could not find ItemData: {itemData.itemDataName}");
                     continue;
                 }
-                
-                // Create ItemInstance and add to inventory
+
                 ItemInstance itemInstance = new ItemInstance(itemAsset, itemData.currentLevel);
-                bool added = playerInventory.TryAddItem(itemInstance);
-                
-                if (added)
-                {
-                    Debug.Log($"[SaveManager] Restored item: {itemData.itemDataName} (Level {itemData.currentLevel})");
-                }
-                else
-                {
-                    Debug.LogWarning($"[SaveManager] Failed to add item: {itemData.itemDataName}");
-                }
+                playerInventory.TryAddItem(itemInstance);
             }
-            
+
             Debug.Log($"[SaveManager] Loaded {saveData.inventoryItems.Count} items");
         }
 
-        /// <summary>
-        /// Apply building data - restore placed buildings
-        /// </summary>
         private void ApplyBuildingData(GameSaveData saveData)
         {
             if (buildingsParent == null)
@@ -542,16 +497,11 @@ namespace Havengard.Save
                 return;
             }
 
-            // Clear existing buildings
             foreach (Transform child in buildingsParent)
-            {
                 Destroy(child.gameObject);
-            }
 
-            // Spawn saved buildings
             foreach (BuildingSaveData buildingData in saveData.placedBuildings)
             {
-                // Load building prefab from Resources
                 GameObject buildingPrefab = UnityEngine.Resources.Load<GameObject>($"Buildings/{buildingData.buildingPrefabName}");
 
                 if (buildingPrefab == null)
@@ -560,7 +510,6 @@ namespace Havengard.Save
                     continue;
                 }
 
-                // Instantiate building
                 GameObject building = Instantiate(
                     buildingPrefab,
                     buildingData.GetPosition(),

@@ -8,6 +8,8 @@ namespace Havengard.Save
     [Serializable]
     public class HeroSaveData
     {
+        public string heroName;               // Display name of hero
+        public string className;              // Class name (Warrior, Mage, etc.)
         public string heroDataName;           // Name of HeroData asset
         public int level;                     // Current level
         public int currentExp;                // Current EXP

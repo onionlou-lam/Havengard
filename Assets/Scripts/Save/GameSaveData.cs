@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Havengard.Core.Heroes;
+using Havengard.Items;
+using Havengard.Core.Progression;
 
 namespace Havengard.Save
 {
@@ -15,11 +18,16 @@ namespace Havengard.Save
         public string saveDate;
         public float playTime;
 
+        // Character info (for main menu display)
+        public string mainCharacterName;
+        public string mainCharacterClass;
+        public int mainCharacterLevel;
+
         // Currency
         public int gold;
         public int celestium;
 
-        // NEW: Player Position
+        // Player Position
         public float playerPositionX;
         public float playerPositionY;
         public float playerPositionZ;
@@ -48,7 +56,7 @@ namespace Havengard.Save
             saveDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         }
 
-        // NEW: Helper methods
+        // Helper methods
         public void SetPlayerPosition(Vector3 position)
         {
             playerPositionX = position.x;

@@ -15,7 +15,7 @@ MonoBehaviour:
   abilityName: Flame Smite
   description: Smite the enemy from above with a flame strike in that deals high
     damage in the targeted area.
-  icon: {fileID: 21300000, guid: b24c661c5b270a248999f7e6dd335e8d, type: 3}
+  icon: {fileID: 21300000, guid: a5896da35bdf5ad4f98b0133ccea1aef, type: 3}
   maxLevel: 5
   damageType: 1
   canHeal: 0
