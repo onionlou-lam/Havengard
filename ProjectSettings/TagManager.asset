@@ -15,6 +15,7 @@ TagManager:
   - Zone
   - Item
   - Building
+  - Interactable
   layers:
   - Default
   - TransparentFX

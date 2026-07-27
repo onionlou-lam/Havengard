@@ -1,18 +1,33 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Havengard.Interactions;
 
 namespace Havengard.Town
 {
     /// <summary>
-    /// Trigger zone for building doors. When the player enters, loads the specified scene.
+    /// Trigger zone for building doors. Can work as entrance or exit.
+    /// When the player enters, loads the specified scene.
     /// </summary>
     [RequireComponent(typeof(BoxCollider2D))]
-    public class DoorTriggerZone : MonoBehaviour
+    public class DoorTriggerZone : MonoBehaviour, IInteractable
     {
         [Header("Scene Settings")]
         [SerializeField]
         [Tooltip("Name of the scene to load when entering this door")]
         private string targetSceneName;
+
+        [SerializeField]
+        [Tooltip("Door type - Auto enters on trigger, or requires interaction")]
+        private DoorType doorType = DoorType.AutoEnter;
+
+        [Header("Exit Settings")]
+        [SerializeField]
+        [Tooltip("Is this an exit door? (e.g., exiting shop back to town)")]
+        private bool isExitDoor = false;
+
+        [SerializeField]
+        [Tooltip("Custom prompt for exit (e.g., 'Exit Shop')")]
+        private string exitPromptText = "Exit";
 
         [Header("Visual Feedback")]
         [SerializeField]
@@ -28,6 +43,12 @@ namespace Havengard.Town
         [Tooltip("Optional: Sound to play when entering door")]
         private AudioClip doorOpenSound;
 
+        public enum DoorType
+        {
+            AutoEnter,      // Automatically enters on trigger
+            Interaction     // Requires E press
+        }
+
         private BoxCollider2D triggerCollider;
         private bool playerInRange = false;
         private Color originalHighlightColor;
@@ -42,15 +63,28 @@ namespace Havengard.Town
                 originalHighlightColor = highlightSprite.color;
                 highlightSprite.enabled = false;
             }
+
+            // Set layer for interaction system
+            if (doorType == DoorType.Interaction)
+            {
+                gameObject.layer = LayerMask.NameToLayer("Interactable");
+            }
         }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            // Check if the player entered the zone
             if (other.CompareTag("Player"))
             {
                 playerInRange = true;
-                LoadTargetScene();
+
+                if (doorType == DoorType.AutoEnter)
+                {
+                    LoadTargetScene();
+                }
+                else
+                {
+                    ShowHighlight();
+                }
             }
         }
 
@@ -105,27 +139,45 @@ namespace Havengard.Town
             }
         }
 
-        // Editor helper - visualize trigger zone
+        // IInteractable implementation (for interaction-based doors)
+        public string GetInteractionPrompt()
+        {
+            return isExitDoor ? exitPromptText : $"Enter";
+        }
+
+        public string GetInteractionKey()
+        {
+            return "E";
+        }
+
+        public void Interact()
+        {
+            LoadTargetScene();
+        }
+
+        public bool CanInteract()
+        {
+            return playerInRange && doorType == DoorType.Interaction;
+        }
+
+        public Transform GetTooltipTransform()
+        {
+            return transform;
+        }
+
+#if UNITY_EDITOR
         private void OnDrawGizmos()
         {
             BoxCollider2D col = GetComponent<BoxCollider2D>();
             if (col != null)
             {
-                Gizmos.color = new Color(0f, 1f, 0f, 0.3f);
-                Gizmos.matrix = transform.localToWorldMatrix;
-                Gizmos.DrawCube(col.offset, col.size);
-            }
-        }
+                Gizmos.color = doorType == DoorType.AutoEnter ? Color.green : Color.yellow;
+                Gizmos.DrawWireCube(transform.position + (Vector3)col.offset, col.size);
 
-        private void OnDrawGizmosSelected()
-        {
-            BoxCollider2D col = GetComponent<BoxCollider2D>();
-            if (col != null)
-            {
-                Gizmos.color = Color.green;
-                Gizmos.matrix = transform.localToWorldMatrix;
-                Gizmos.DrawWireCube(col.offset, col.size);
+                // Draw arrow indicating this is a door
+                UnityEditor.Handles.Label(transform.position, doorType == DoorType.AutoEnter ? "AUTO" : "INTERACT");
             }
         }
+#endif
     }
 }

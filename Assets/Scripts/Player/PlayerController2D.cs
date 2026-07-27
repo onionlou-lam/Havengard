@@ -9,7 +9,7 @@ public class PlayerController2D : MonoBehaviour
     [SerializeField] private bool useNavMeshMovement = false;
     [Tooltip("When NavMesh is disabled, movement will stop if velocity drops below this threshold")]
     [SerializeField] private float movementStopThreshold = 0.5f;
-
+    
     private NavMeshAgent agent;
     private Rigidbody2D rb;
     private Vector2 moveInput;
@@ -18,7 +18,8 @@ public class PlayerController2D : MonoBehaviour
 
     [Header("Animation")]
     private Animator animator;
-
+    private Vector2 lastMoveDirection = Vector2.down; // Default facing down
+    
     [Header("Abilities")]
     private AbilityUser abilityUser;
 
@@ -43,6 +44,8 @@ public class PlayerController2D : MonoBehaviour
     private static readonly int Vertical = Animator.StringToHash("Vertical");
     private static readonly int Speed = Animator.StringToHash("Speed");
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
+    private static readonly int IdleFrame = Animator.StringToHash("IdleFrame");
+    private static readonly int Attack = Animator.StringToHash("Attack");
 
     void Start()
     {
@@ -56,7 +59,7 @@ public class PlayerController2D : MonoBehaviour
         {
             agent.updateRotation = false;
             agent.updateUpAxis = false;
-
+            
             // NavMesh behavior depends on useNavMeshMovement setting
             if (useNavMeshMovement)
             {
@@ -78,6 +81,21 @@ public class PlayerController2D : MonoBehaviour
             rb.bodyType = RigidbodyType2D.Dynamic;
             rb.gravityScale = 0f;
             rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+        }
+
+        // Subscribe to ability events for attack animations
+        if (abilityUser != null)
+        {
+            abilityUser.OnAbilityUsed += HandleAbilityUsed;
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from ability events
+        if (abilityUser != null)
+        {
+            abilityUser.OnAbilityUsed -= HandleAbilityUsed;
         }
     }
 
@@ -117,15 +135,18 @@ public class PlayerController2D : MonoBehaviour
         }
 
         // WASD input using GetKey to avoid Unity's default Input Manager bindings
-        // This prevents Q/E interference with movement
         moveInput = Vector2.zero;
-
+        
         if (Input.GetKey(KeyCode.W)) moveInput.y += 1;
         if (Input.GetKey(KeyCode.S)) moveInput.y -= 1;
         if (Input.GetKey(KeyCode.A)) moveInput.x -= 1;
         if (Input.GetKey(KeyCode.D)) moveInput.x += 1;
-
-        moveInput.Normalize(); // Prevent diagonal speed boost
+        
+        // Normalize to ensure consistent speed in all directions
+        if (moveInput.magnitude > 1f)
+        {
+            moveInput.Normalize();
+        }
 
         // Right click to move (MB2)
         if (Input.GetMouseButtonDown(1))
@@ -225,14 +246,70 @@ public class PlayerController2D : MonoBehaviour
         float speed = velocity.magnitude;
         bool isMoving = speed > 0.1f;
 
-        // Normalize velocity for directional blend tree
-        Vector2 direction = velocity.normalized;
+        // Update last move direction when moving
+        if (isMoving)
+        {
+            lastMoveDirection = velocity.normalized;
+        }
 
-        // Set animator parameters to match blend tree
-        animator.SetFloat(Horizontal, direction.x);
-        animator.SetFloat(Vertical, direction.y);
+        // For 4-directional movement, snap to cardinal directions
+        Vector2 animationDirection = isMoving ? SnapToFourDirections(velocity.normalized) : SnapToFourDirections(lastMoveDirection);
+
+        // Set animator parameters for blend trees
+        animator.SetFloat(Horizontal, animationDirection.x);
+        animator.SetFloat(Vertical, animationDirection.y);
         animator.SetFloat(Speed, speed);
         animator.SetBool(IsMoving, isMoving);
+
+        // Set idle frame based on last facing direction (0-3 for 4 directions)
+        if (!isMoving)
+        {
+            int idleFrame = GetIdleFrameFromDirection(lastMoveDirection);
+            animator.SetFloat(IdleFrame, idleFrame);
+        }
+    }
+
+    /// <summary>
+    /// Snaps a direction to one of 4 cardinal directions (Up, Down, Left, Right)
+    /// Horizontal takes priority for diagonals
+    /// </summary>
+    private Vector2 SnapToFourDirections(Vector2 direction)
+    {
+        if (direction.magnitude < 0.1f)
+            return Vector2.down; // Default direction
+
+        // Check if horizontal or vertical is dominant
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            // Horizontal movement (Left or Right)
+            return direction.x > 0 ? Vector2.right : Vector2.left;
+        }
+        else
+        {
+            // Vertical movement (Up or Down)
+            return direction.y > 0 ? Vector2.up : Vector2.down;
+        }
+    }
+
+    /// <summary>
+    /// Converts a direction vector to an idle frame index (0-3 for 4 directions)
+    /// </summary>
+    private int GetIdleFrameFromDirection(Vector2 direction)
+    {
+        Vector2 snappedDirection = SnapToFourDirections(direction);
+
+        // Map to 4 directions:
+        // 0: Down (270°)
+        // 1: Left (180°)
+        // 2: Up (90°)
+        // 3: Right (0°)
+        
+        if (snappedDirection == Vector2.down) return 0;
+        if (snappedDirection == Vector2.left) return 1;
+        if (snappedDirection == Vector2.up) return 2;
+        if (snappedDirection == Vector2.right) return 3;
+
+        return 0; // Default to down
     }
 
     private void HandleAbilityInput()
@@ -250,7 +327,7 @@ public class PlayerController2D : MonoBehaviour
                 abilityUser.UseAbility(0, mouseWorldPos);
             }
         }
-
+        
         if (Input.GetMouseButtonUp(0) && abilityUser.IsChanneling)
         {
             abilityUser.StopChanneling();
@@ -289,23 +366,36 @@ public class PlayerController2D : MonoBehaviour
         {
             TryInteract();
         }
-
-        // MB2 on interactable (right-click interaction)
-        // We'll implement this once the interaction system is set up
-        // For now, MB2 is primarily used for click-to-move
     }
 
     private void TryInteract()
     {
         // TODO: Implement interaction system
-        // This will be set up later once the rest is working
-        // For now, this is a placeholder for future interaction logic
         Debug.Log("Interaction attempted (system to be implemented)");
     }
 
     /// <summary>
-    /// Checks if a specific ability slot has a skill assigned
+    /// Called when an ability is used - triggers attack animation
     /// </summary>
+    private void HandleAbilityUsed(int abilityIndex, AbilityBase ability)
+    {
+        if (animator != null && ability != null)
+        {
+            TriggerAttackAnimation();
+        }
+    }
+
+    /// <summary>
+    /// Triggers the attack animation
+    /// </summary>
+    public void TriggerAttackAnimation()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger(Attack);
+        }
+    }
+
     private bool IsSkillAssignedToSlot(int slotIndex)
     {
         if (abilityUser == null) return false;
@@ -317,29 +407,28 @@ public class PlayerController2D : MonoBehaviour
         return abilities[slotIndex] != null && abilityUser.IsAbilityUnlocked(slotIndex);
     }
 
-    /// <summary>
-    /// Public method to get the ability key bindings (for UI display)
-    /// </summary>
     public KeyCode[] GetAbilityKeys()
     {
         return abilityKeys;
     }
 
+    public void SetFacingDirection(Vector2 direction)
+    {
+        if (direction.magnitude > 0.1f)
+        {
+            lastMoveDirection = direction.normalized;
+        }
+    }
+
     #region Game Controller Support (Future Implementation)
-
-    // The following methods will be implemented when adding game controller support
-
+    
     private Vector2 GetGamepadMovementInput()
     {
-        // TODO: Implement gamepad input using Input.GetAxis for left stick
-        // Example: new Vector2(Input.GetAxis("Gamepad_LeftStickX"), Input.GetAxis("Gamepad_LeftStickY"))
         return Vector2.zero;
     }
 
     private Vector2 GetGamepadAimDirection()
     {
-        // TODO: Implement gamepad aiming using right stick
-        // Example: new Vector2(Input.GetAxis("Gamepad_RightStickX"), Input.GetAxis("Gamepad_RightStickY"))
         return Vector2.zero;
     }
 

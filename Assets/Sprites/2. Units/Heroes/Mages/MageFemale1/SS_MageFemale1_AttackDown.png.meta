@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: fd25617dd2892174eb3caf655c757e54
+guid: aa94f89a21af3ac46a6cc6a080ca032a
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -48,7 +48,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 128
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -97,7 +97,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SS_Mage_Archane_Female_0
+      name: MageFemale1_AttackDown_0
       rect:
         serializedVersion: 2
         x: 0
@@ -112,14 +112,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 713f8100269282c4f9ddfdeb64233ef8
-      internalID: -1744049564
+      spriteID: f261dd97b35ca354abb00f9d5e02dc06
+      internalID: 1556139199
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SS_Mage_Archane_Female_1
+      name: MageFemale1_AttackDown_1
       rect:
         serializedVersion: 2
         x: 64
@@ -134,14 +134,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2efc60e6a2c7410429511bc58b114233
-      internalID: 528594978
+      spriteID: edde28557a4dd6f4f9b7562b46aaf595
+      internalID: 288523438
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SS_Mage_Archane_Female_2
+      name: MageFemale1_AttackDown_2
       rect:
         serializedVersion: 2
         x: 128
@@ -156,14 +156,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 801e5f48fa345824c87adc85639e0bac
-      internalID: 1610963357
+      spriteID: 4e8e773f6766451439f3b9894979b66b
+      internalID: 473053377
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SS_Mage_Archane_Female_3
+      name: MageFemale1_AttackDown_3
       rect:
         serializedVersion: 2
         x: 192
@@ -178,14 +178,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c90fb74a1035b46468dda6c32df44c06
-      internalID: 429974673
+      spriteID: 2d55848875e01124f85ededf417dbb72
+      internalID: -1548321846
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SS_Mage_Archane_Female_4
+      name: MageFemale1_AttackDown_4
       rect:
         serializedVersion: 2
         x: 256
@@ -200,14 +200,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e2758bb8b86899043bdaacc4631b4d61
-      internalID: 522046388
+      spriteID: f614f10e5e9ccf243ae16909eb9168cf
+      internalID: 1273609463
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: SS_Mage_Archane_Female_5
+      name: MageFemale1_AttackDown_5
       rect:
         serializedVersion: 2
         x: 320
@@ -222,140 +222,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: cd164d713564a6944898c3cd994fe3b2
-      internalID: 1221230866
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SS_Mage_Archane_Female_6
-      rect:
-        serializedVersion: 2
-        x: 384
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 683502ad3314a3149a84c78db7dca995
-      internalID: 518434379
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SS_Mage_Archane_Female_7
-      rect:
-        serializedVersion: 2
-        x: 448
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2aa3faefb179aa947878f0c1a1576632
-      internalID: 2122118328
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SS_Mage_Archane_Female_8
-      rect:
-        serializedVersion: 2
-        x: 512
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3b230b01483dd9541bdf15d34a4c4fe8
-      internalID: -1411079254
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SS_Mage_Archane_Female_9
-      rect:
-        serializedVersion: 2
-        x: 576
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3dbdc96c32cfe1b479f2e21588c3de77
-      internalID: 868193663
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SS_Mage_Archane_Female_10
-      rect:
-        serializedVersion: 2
-        x: 640
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 7df27c77a4b37de44bc01951b2f9c739
-      internalID: -1316520850
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: SS_Mage_Archane_Female_11
-      rect:
-        serializedVersion: 2
-        x: 704
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 91be886f148dd744f9ee7572419d2201
-      internalID: 566704315
+      spriteID: ed2455639d57b074e9ce5ef8ad0537d6
+      internalID: 1638252019
       vertices: []
       indices: 
       edges: []
@@ -364,7 +232,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a4787057bca45dd468e4207f7ee9fb5d
+    spriteID: 86bf34198855d1f4e824a3800faa9de3
     internalID: 0
     vertices: []
     indices: 
@@ -374,18 +242,12 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SS_Mage_Archane_Female_0: -1744049564
-      SS_Mage_Archane_Female_1: 528594978
-      SS_Mage_Archane_Female_10: -1316520850
-      SS_Mage_Archane_Female_11: 566704315
-      SS_Mage_Archane_Female_2: 1610963357
-      SS_Mage_Archane_Female_3: 429974673
-      SS_Mage_Archane_Female_4: 522046388
-      SS_Mage_Archane_Female_5: 1221230866
-      SS_Mage_Archane_Female_6: 518434379
-      SS_Mage_Archane_Female_7: 2122118328
-      SS_Mage_Archane_Female_8: -1411079254
-      SS_Mage_Archane_Female_9: 868193663
+      MageFemale1_AttackDown_0: 1556139199
+      MageFemale1_AttackDown_1: 288523438
+      MageFemale1_AttackDown_2: 473053377
+      MageFemale1_AttackDown_3: -1548321846
+      MageFemale1_AttackDown_4: 1273609463
+      MageFemale1_AttackDown_5: 1638252019
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
