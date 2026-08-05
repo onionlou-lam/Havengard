@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 860fef899a4e7904e95325cf910f6129, type: 3}
+  m_Name: ArrowBurst
+  m_EditorClassIdentifier: 
+  abilityName: Arrow Burst
+  description: A ray of death.
+  icon: {fileID: 21300000, guid: 1604c0811fd0c3040962bf0c7aa39316, type: 3}
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 5
+  resourceCost: 30
+  baseDamage: 10
+  damagePerLevel: 10
+  lifestealPercent: 0
+  range: 15
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 448
+  requiresTarget: 0
+  castVFX: {fileID: 158942, guid: 7746042b76677fa4897bba11a2964416, type: 3}
+  impactVFX: {fileID: 114968, guid: 66daa82b181beef4d9465affcd97d06e, type: 3}
+  castSFX: {fileID: 8300000, guid: 18a8e138ed9cec647bc24631e8d16b7e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 91356e8d8c58fba4e87003ec1654ef98, type: 3}
+  activeSubSkills: []
+  channelDuration: 5
+  tickRate: 0.3
+  canMoveWhileChanneling: 1
+  preventMovement: 1
+  minReleasePercent: 0.05
+  allowPartialRelease: 1
+  chargingVFXPrefab: {fileID: 0}
+  beamPrefab: {fileID: 188364, guid: 17f899c4f15d4e94fae7d28bdd44f8ab, type: 3}
+  beamWidth: 2
+  beamMaxDistance: 40
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 1792
+  useBeamPulsing: 1
+  pulseInfo: Configure pulse in beam prefab
+  damagePerTickMultiplier: 0.4
+  rampDamageWithCharge: 0
+  minDamagePercent: 0.4
+  minTimeBetweenTicks: 0.4
+  frostSlowPercent: 1
+  fireBurnDamagePerTick: 0
+  lightningChainCount: 0
+  holyHealingBonus: 0
+  arcaneManaBurnPercent: 0.2
+  arcaneVulnerabilityPercent: 0.15
+  arcaneVulnerabilityDuration: 3
