@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a738663c2b9d06744b0593f87ae0633c, type: 3}
+  m_Name: Volley
+  m_EditorClassIdentifier: 
+  abilityName: Volley
+  description: Rain down arrows in a targeted area
+  icon: {fileID: 21300000, guid: 70eff5cedbd423947a4659e27621b426, type: 3}
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 10
+  resourceCost: 25
+  baseDamage: 10
+  damagePerLevel: 5
+  lifestealPercent: 0
+  enableResourceGeneration: 0
+  resourceGenerationPercent: 0
+  flatResourceGeneration: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  requiresTarget: 1
+  castVFX: {fileID: 0}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 0}
+  impactSFX: {fileID: 0}
+  activeSubSkills: []
+  zonePrefab: {fileID: 0}
+  maximumRange: 15
+  followsCaster: 0
+  statusEffect: {fileID: 0}
+  maxStatusStacks: 1
+  resourcePerTick: 0
+  resourcePercentPerTick: 0

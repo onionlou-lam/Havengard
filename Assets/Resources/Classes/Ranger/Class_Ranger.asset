@@ -31,6 +31,6 @@ MonoBehaviour:
   resourceGrowth: 5
   classAbilities: []
   specializations:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: ca6ec3a96ed935948af4f3d5a6399474, type: 2}
+  - {fileID: 11400000, guid: 93f1c8f0562c78440a42f20d39f44a86, type: 2}
+  - {fileID: 11400000, guid: ffc55e9e26928f9439c13cffa4863c82, type: 2}

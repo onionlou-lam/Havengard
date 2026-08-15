@@ -1,11 +1,12 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Havengard.Abilities;
+using System.Collections.Generic;
 
 namespace Havengard.UI
 {
     /// <summary>
-    /// Manages the ability bar UI with 6 slots (1, 2, 3, 4, LMB, and an extra slot).
-    /// Automatically syncs with the player's AbilityUser component.
+    /// Manages the ability bar UI with 6 slots.
+    /// Supports drag-and-drop assignment from skill tree.
     /// </summary>
     public class AbilityBarUI : MonoBehaviour
     {
@@ -19,13 +20,7 @@ namespace Havengard.UI
         [SerializeField] private AbilitySlotUI slot3;      // Index 2
         [SerializeField] private AbilitySlotUI slot4;      // Index 3
         [SerializeField] private AbilitySlotUI slotLMB;    // Left Mouse Button
-        [SerializeField] private AbilitySlotUI slotExtra;  // Extra slot
-
-        [Header("Ability Mapping")]
-        [Tooltip("Index in AbilityUser for Left Mouse Button ability")]
-        [SerializeField] private int leftMouseButtonIndex = 0; // MB1 uses slot 0
-        [Tooltip("Index in AbilityUser for Extra slot")]
-        [SerializeField] private int extraSlotIndex = 4;
+        [SerializeField] private AbilitySlotUI slotRMB;    // Right Mouse Button
 
         private AbilitySlotUI[] slots;
 
@@ -49,10 +44,40 @@ namespace Havengard.UI
             slots[2] = slot3;
             slots[3] = slot4;
             slots[4] = slotLMB;
-            slots[5] = slotExtra;
+            slots[5] = slotRMB;
 
-            // Set keybind labels dynamically from PlayerController2D
+            // Initialize each slot with its index
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null)
+                {
+                    slots[i].Initialize(i, this);
+                }
+            }
+
+            // Set keybind labels
             UpdateKeybindLabels();
+        }
+
+        private void Start()
+        {
+            // Sync with AbilityUser on start
+            RefreshAll();
+            
+            // Subscribe to ability changes
+            if (abilityUser != null)
+            {
+                abilityUser.OnAbilitiesChanged += RefreshAll;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe
+            if (abilityUser != null)
+            {
+                abilityUser.OnAbilitiesChanged -= RefreshAll;
+            }
         }
 
         private void UpdateKeybindLabels()
@@ -61,7 +86,6 @@ namespace Havengard.UI
             {
                 KeyCode[] abilityKeys = playerController.GetAbilityKeys();
                 
-                // Set ability keys 1, 2, 3, 4
                 if (slot1 != null && abilityKeys.Length > 0) 
                     slot1.SetKeybind(GetKeyDisplayName(abilityKeys[0]));
                 if (slot2 != null && abilityKeys.Length > 1) 
@@ -73,23 +97,16 @@ namespace Havengard.UI
             }
             else
             {
-                // Fallback to default labels
                 if (slot1 != null) slot1.SetKeybind("1");
                 if (slot2 != null) slot2.SetKeybind("2");
                 if (slot3 != null) slot3.SetKeybind("3");
                 if (slot4 != null) slot4.SetKeybind("4");
             }
             
-            // Mouse button is always LMB
             if (slotLMB != null) slotLMB.SetKeybind("LMB");
-            
-            // Extra slot (if you want to add a 5th ability key later)
-            if (slotExtra != null) slotExtra.SetKeybind("5");
+            if (slotRMB != null) slotRMB.SetKeybind("RMB");
         }
 
-        /// <summary>
-        /// Converts KeyCode to a user-friendly display name
-        /// </summary>
         private string GetKeyDisplayName(KeyCode key)
         {
             switch (key)
@@ -100,128 +117,182 @@ namespace Havengard.UI
                 case KeyCode.Alpha4: return "4";
                 case KeyCode.Alpha5: return "5";
                 case KeyCode.Alpha6: return "6";
-                case KeyCode.Alpha7: return "7";
-                case KeyCode.Alpha8: return "8";
-                case KeyCode.Alpha9: return "9";
-                case KeyCode.Alpha0: return "0";
-                case KeyCode.Mouse0: return "LMB";
-                case KeyCode.Mouse1: return "RMB";
-                case KeyCode.Mouse2: return "MMB";
+                case KeyCode.Q: return "Q";
+                case KeyCode.E: return "E";
+                case KeyCode.R: return "R";
+                case KeyCode.F: return "F";
                 default: return key.ToString();
             }
         }
 
-        private void OnEnable()
+        /// <summary>
+        /// Assign an ability to a specific slot.
+        /// Note: This adds the ability to AbilityUser's list if not already present.
+        /// </summary>
+        public void AssignAbilityToSlot(int slotIndex, AbilityBase ability)
         {
-            if (abilityUser != null)
-            {
-                abilityUser.OnAbilityUsed += HandleAbilityUsed;
-                abilityUser.OnAbilityCooldownStarted += HandleCooldownStarted;
-                abilityUser.OnAbilitiesChanged += RefreshAbilities;
-            }
-        }
+            if (abilityUser == null || ability == null)
+                return;
 
-        private void OnDisable()
-        {
-            if (abilityUser != null)
-            {
-                abilityUser.OnAbilityUsed -= HandleAbilityUsed;
-                abilityUser.OnAbilityCooldownStarted -= HandleCooldownStarted;
-                abilityUser.OnAbilitiesChanged -= RefreshAbilities;
-            }
-        }
+            if (slotIndex < 0 || slotIndex >= slots.Length)
+                return;
 
-        private void Start()
-        {
-            RefreshAbilities();
+            // Get current abilities list
+            List<AbilityBase> currentAbilities = abilityUser.GetAllAbilities();
+
+            // Make sure the ability is in the list
+            if (!currentAbilities.Contains(ability))
+            {
+                currentAbilities.Add(ability);
+            }
+
+            // Find the index of this ability
+            int abilityIndex = currentAbilities.IndexOf(ability);
+
+            // Map slot to the ability index we want to use
+            int targetIndex = MapSlotToAbilityUserIndex(slotIndex);
+
+            // Ensure the list is big enough
+            while (currentAbilities.Count <= targetIndex)
+            {
+                currentAbilities.Add(null);
+            }
+
+            // Set the ability at the target index
+            currentAbilities[targetIndex] = ability;
+
+            // Reassign the full list to AbilityUser
+            abilityUser.AssignAbilities(currentAbilities);
+
+            // Update the UI slot
+            if (slots[slotIndex] != null)
+            {
+                slots[slotIndex].SetAbility(ability);
+            }
+
+            Debug.Log($"[AbilityBarUI] Assigned {ability.abilityName} to slot {slotIndex}");
         }
 
         /// <summary>
-        /// Refreshes all ability slots with current abilities from AbilityUser.
+        /// Swap abilities between two slots.
         /// </summary>
-        public void RefreshAbilities()
+        public void SwapAbilities(int slotIndexA, int slotIndexB)
+        {
+            if (abilityUser == null)
+                return;
+
+            if (slotIndexA < 0 || slotIndexA >= slots.Length ||
+                slotIndexB < 0 || slotIndexB >= slots.Length)
+                return;
+
+            // Get abilities from slots
+            AbilityBase abilityA = slots[slotIndexA]?.GetAbility();
+            AbilityBase abilityB = slots[slotIndexB]?.GetAbility();
+
+            // Get the full ability list
+            List<AbilityBase> currentAbilities = abilityUser.GetAllAbilities();
+
+            // Map to AbilityUser indices
+            int indexA = MapSlotToAbilityUserIndex(slotIndexA);
+            int indexB = MapSlotToAbilityUserIndex(slotIndexB);
+
+            if (indexA < 0 || indexB < 0)
+                return;
+
+            // Ensure list is big enough
+            while (currentAbilities.Count <= Mathf.Max(indexA, indexB))
+            {
+                currentAbilities.Add(null);
+            }
+
+            // Swap in the list
+            currentAbilities[indexA] = abilityB;
+            currentAbilities[indexB] = abilityA;
+
+            // Reassign to AbilityUser
+            abilityUser.AssignAbilities(currentAbilities);
+
+            // Update UI
+            if (slots[slotIndexA] != null)
+                slots[slotIndexA].SetAbility(abilityB);
+            if (slots[slotIndexB] != null)
+                slots[slotIndexB].SetAbility(abilityA);
+
+            Debug.Log($"[AbilityBarUI] Swapped slot {slotIndexA} with slot {slotIndexB}");
+        }
+
+        /// <summary>
+        /// Refresh all slots from AbilityUser.
+        /// </summary>
+        public void RefreshAll()
         {
             if (abilityUser == null) return;
 
-            // Slots 1, 2, 3, 4 (indices 0-3)
-            for (int i = 0; i < 4; i++)
+            List<AbilityBase> currentAbilities = abilityUser.GetAllAbilities();
+
+            for (int i = 0; i < slots.Length; i++)
             {
                 if (slots[i] != null)
                 {
-                    AbilityBase ability = abilityUser.GetAbility(i);
-                    slots[i].SetAbility(ability);
+                    int abilityUserIndex = MapSlotToAbilityUserIndex(i);
+                    if (abilityUserIndex >= 0 && abilityUserIndex < currentAbilities.Count)
+                    {
+                        AbilityBase ability = currentAbilities[abilityUserIndex];
+                        slots[i].SetAbility(ability);
+                    }
+                    else
+                    {
+                        slots[i].SetAbility(null);
+                    }
                 }
             }
+        }
 
-            // LMB slot (uses slot 0 - same as key "1")
-            if (slotLMB != null)
+        /// <summary>
+        /// Map UI slot index to AbilityUser ability index.
+        /// </summary>
+        private int MapSlotToAbilityUserIndex(int slotIndex)
+        {
+            // Default mapping:
+            // Slot 0-3 (1-4 keys) → indices 1-4
+            // Slot 4 (LMB) → index 0
+            // Slot 5 (RMB) → index 5
+
+            if (slotIndex == 4) return 0;  // LMB
+            if (slotIndex == 5) return 5;  // RMB
+            if (slotIndex >= 0 && slotIndex < 4) return slotIndex + 1; // 1-4 keys
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Trigger cooldown visual on a specific slot.
+        /// </summary>
+        public void TriggerCooldown(int abilityUserIndex, float duration)
+        {
+            for (int i = 0; i < slots.Length; i++)
             {
-                AbilityBase lmbAbility = abilityUser.GetAbility(leftMouseButtonIndex);
-                slotLMB.SetAbility(lmbAbility);
+                if (MapSlotToAbilityUserIndex(i) == abilityUserIndex && slots[i] != null)
+                {
+                    slots[i].StartCooldown(duration);
+                    break;
+                }
             }
+        }
 
-            // Extra slot
-            if (slotExtra != null)
+        /// <summary>
+        /// Trigger flash effect on a specific slot.
+        /// </summary>
+        public void TriggerFlash(int abilityUserIndex)
+        {
+            for (int i = 0; i < slots.Length; i++)
             {
-                AbilityBase extraAbility = abilityUser.GetAbility(extraSlotIndex);
-                slotExtra.SetAbility(extraAbility);
+                if (MapSlotToAbilityUserIndex(i) == abilityUserIndex && slots[i] != null)
+                {
+                    slots[i].Flash();
+                    break;
+                }
             }
-        }
-
-        /// <summary>
-        /// Called when an ability is used. Handles visual feedback.
-        /// </summary>
-        private void HandleAbilityUsed(int abilityIndex, AbilityBase ability)
-        {
-            AbilitySlotUI slot = GetSlotForAbilityIndex(abilityIndex);
-            if (slot != null)
-                slot.Flash();
-        }
-
-        /// <summary>
-        /// Called when an ability cooldown starts.
-        /// </summary>
-        private void HandleCooldownStarted(int abilityIndex, float duration)
-        {
-            AbilitySlotUI slot = GetSlotForAbilityIndex(abilityIndex);
-            if (slot != null)
-                slot.StartCooldown(duration);
-        }
-
-        /// <summary>
-        /// Gets the UI slot for a given ability index.
-        /// </summary>
-        private AbilitySlotUI GetSlotForAbilityIndex(int abilityIndex)
-        {
-            // Keys 1, 2, 3, 4
-            if (abilityIndex >= 0 && abilityIndex < 4)
-                return slots[abilityIndex];
-
-            // Extra slot
-            if (abilityIndex == extraSlotIndex)
-                return slotExtra;
-
-            return null;
-        }
-
-        /// <summary>
-        /// Sets the ability for a specific slot.
-        /// </summary>
-        public void SetAbility(int slotIndex, AbilityBase ability)
-        {
-            if (slotIndex < 0 || slotIndex >= slots.Length) return;
-            if (slots[slotIndex] != null)
-                slots[slotIndex].SetAbility(ability);
-        }
-
-        /// <summary>
-        /// Manually triggers a cooldown on a specific slot (useful for external systems).
-        /// </summary>
-        public void TriggerCooldown(int slotIndex, float duration)
-        {
-            if (slotIndex < 0 || slotIndex >= slots.Length) return;
-            if (slots[slotIndex] != null)
-                slots[slotIndex].StartCooldown(duration);
         }
     }
 }

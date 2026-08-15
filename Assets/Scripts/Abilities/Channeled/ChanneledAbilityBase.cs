@@ -16,6 +16,13 @@ namespace Havengard.Abilities
         [SerializeField] protected GameObject chargingVFXPrefab;
         [SerializeField] protected GameObject beamPrefab;
 
+        [Header("Channeled Resource Generation")]
+        [Tooltip("Generate resource per tick while channeling")]
+        public int resourcePerTick = 0;
+        [Tooltip("Generate resource based on damage dealt per tick")]
+        [Range(0f, 1f)]
+        public float resourcePercentPerTick = 0f;
+
         protected bool isChanneling;
         protected float channelStartTime;
         protected float lastTickTime;

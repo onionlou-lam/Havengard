@@ -9,7 +9,7 @@ public class PlayerController2D : MonoBehaviour
     [SerializeField] private bool useNavMeshMovement = false;
     [Tooltip("When NavMesh is disabled, movement will stop if velocity drops below this threshold")]
     [SerializeField] private float movementStopThreshold = 0.5f;
-    
+
     private NavMeshAgent agent;
     private Rigidbody2D rb;
     private Vector2 moveInput;
@@ -19,7 +19,8 @@ public class PlayerController2D : MonoBehaviour
     [Header("Animation")]
     private Animator animator;
     private Vector2 lastMoveDirection = Vector2.down; // Default facing down
-    
+    private Vector2 lastAttackDirection = Vector2.down; // Last direction when attacking
+
     [Header("Abilities")]
     private AbilityUser abilityUser;
 
@@ -46,6 +47,9 @@ public class PlayerController2D : MonoBehaviour
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
     private static readonly int IdleFrame = Animator.StringToHash("IdleFrame");
     private static readonly int Attack = Animator.StringToHash("Attack");
+    private static readonly int AttackHorizontal = Animator.StringToHash("AttackHorizontal");
+    private static readonly int AttackVertical = Animator.StringToHash("AttackVertical");
+    private static readonly int AttackDirection = Animator.StringToHash("AttackDirection");
 
     void Start()
     {
@@ -59,7 +63,7 @@ public class PlayerController2D : MonoBehaviour
         {
             agent.updateRotation = false;
             agent.updateUpAxis = false;
-            
+
             // NavMesh behavior depends on useNavMeshMovement setting
             if (useNavMeshMovement)
             {
@@ -136,12 +140,12 @@ public class PlayerController2D : MonoBehaviour
 
         // WASD input using GetKey to avoid Unity's default Input Manager bindings
         moveInput = Vector2.zero;
-        
+
         if (Input.GetKey(KeyCode.W)) moveInput.y += 1;
         if (Input.GetKey(KeyCode.S)) moveInput.y -= 1;
         if (Input.GetKey(KeyCode.A)) moveInput.x -= 1;
         if (Input.GetKey(KeyCode.D)) moveInput.x += 1;
-        
+
         // Normalize to ensure consistent speed in all directions
         if (moveInput.magnitude > 1f)
         {
@@ -303,7 +307,7 @@ public class PlayerController2D : MonoBehaviour
         // 1: Left (180°)
         // 2: Up (90°)
         // 3: Right (0°)
-        
+
         if (snappedDirection == Vector2.down) return 0;
         if (snappedDirection == Vector2.left) return 1;
         if (snappedDirection == Vector2.up) return 2;
@@ -324,13 +328,27 @@ public class PlayerController2D : MonoBehaviour
         {
             if (IsSkillAssignedToSlot(0))
             {
-                abilityUser.UseAbility(0, mouseWorldPos);
+                abilityUser.UseAbility(0, mouseWorldPos, null, false);
             }
         }
-        
-        if (Input.GetMouseButtonUp(0) && abilityUser.IsChanneling)
+
+        // Hold MB1 for hold-to-cast
+        if (Input.GetMouseButton(0))
         {
-            abilityUser.StopChanneling();
+            // Hold-to-cast is handled in AbilityUser.Update()
+            // Just keep the hold state active
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (abilityUser.IsChanneling)
+            {
+                abilityUser.StopChanneling();
+            }
+            else
+            {
+                abilityUser.ReleaseAbility(0);
+            }
         }
 
         // Ability keys 1, 2, 3, 4 - cast abilities at mouse position
@@ -339,15 +357,25 @@ public class PlayerController2D : MonoBehaviour
             // Key pressed - start ability (or start channeling)
             if (Input.GetKeyDown(abilityKeys[i]))
             {
-                abilityUser.UseAbility(i, mouseWorldPos);
+                abilityUser.UseAbility(i, mouseWorldPos, null, false);
             }
 
-            // Key released - stop channeling
+            // Key held - hold-to-cast
+            if (Input.GetKey(abilityKeys[i]))
+            {
+                // Hold state tracked, AbilityUser handles repeat casting
+            }
+
+            // Key released - stop channeling or release hold
             if (Input.GetKeyUp(abilityKeys[i]))
             {
                 if (abilityUser.IsChanneling)
                 {
                     abilityUser.StopChanneling();
+                }
+                else
+                {
+                    abilityUser.ReleaseAbility(i);
                 }
             }
         }
@@ -381,19 +409,79 @@ public class PlayerController2D : MonoBehaviour
     {
         if (animator != null && ability != null)
         {
-            TriggerAttackAnimation();
+            // Calculate attack direction (towards mouse)
+            Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorldPos.z = 0f;
+            Vector2 attackDirection = (mouseWorldPos - transform.position).normalized;
+
+            // Store attack direction for animation
+            lastAttackDirection = SnapToFourDirections(attackDirection);
+
+            // Trigger ability-specific animation or default attack
+            TriggerAttackAnimation(ability);
         }
     }
 
     /// <summary>
-    /// Triggers the attack animation
+    /// Triggers the attack animation with ability-specific support
+    /// </summary>
+    public void TriggerAttackAnimation(AbilityBase ability = null)
+    {
+        if (animator == null) return;
+
+        // Set attack direction parameters
+        animator.SetFloat(AttackHorizontal, lastAttackDirection.x);
+        animator.SetFloat(AttackVertical, lastAttackDirection.y);
+        animator.SetFloat(AttackDirection, GetIdleFrameFromDirection(lastAttackDirection));
+
+        // Check if ability has a custom animation override
+        string animationTrigger = GetAbilityAnimationTrigger(ability);
+
+        if (!string.IsNullOrEmpty(animationTrigger) && HasAnimatorParameter(animationTrigger))
+        {
+            // Trigger ability-specific animation
+            animator.SetTrigger(animationTrigger);
+            Debug.Log($"Triggered ability-specific animation: {animationTrigger}");
+        }
+        else
+        {
+            // Trigger default attack animation
+            animator.SetTrigger(Attack);
+        }
+    }
+
+    /// <summary>
+    /// Gets the animation trigger name for a specific ability
+    /// </summary>
+    private string GetAbilityAnimationTrigger(AbilityBase ability)
+    {
+        if (ability == null) return null;
+
+        // Get custom animation trigger from ability
+        return ability.GetAnimationTrigger();
+    }
+
+    /// <summary>
+    /// Checks if animator has a parameter with the given name
+    /// </summary>
+    private bool HasAnimatorParameter(string parameterName)
+    {
+        if (animator == null) return false;
+
+        foreach (AnimatorControllerParameter param in animator.parameters)
+        {
+            if (param.name == parameterName)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Public method to trigger attack animation from external scripts
     /// </summary>
     public void TriggerAttackAnimation()
     {
-        if (animator != null)
-        {
-            animator.SetTrigger(Attack);
-        }
+        TriggerAttackAnimation(null);
     }
 
     private bool IsSkillAssignedToSlot(int slotIndex)
@@ -420,15 +508,21 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
-    #region Game Controller Support (Future Implementation)
-    
-    private Vector2 GetGamepadMovementInput()
+    public Vector2 GetLastMoveDirection()
     {
-        return Vector2.zero;
+        return lastMoveDirection;
     }
 
-    private Vector2 GetGamepadAimDirection()
+    public Vector2 GetLastAttackDirection()
     {
+        return lastAttackDirection;
+    }
+
+    #region Game Controller Support (Future Implementation)
+
+    private Vector2 GetGamepadMovementInput()
+    {
+        // TODO: Implement gamepad support
         return Vector2.zero;
     }
 

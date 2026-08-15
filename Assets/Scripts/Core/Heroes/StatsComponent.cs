@@ -2,39 +2,6 @@ using UnityEngine;
 
 namespace Havengard.Core.Character
 {
-    [System.Serializable]
-    public class HeroStats
-    {
-        public int MaxHP = 100;
-
-        public int Attack = 10;
-        public int Defense = 5;
-
-        public float AttackSpeed = 1f;
-        public float MoveSpeed = 5f;
-
-        public float CritChance = 0.05f;
-        public float CritMultiplier = 1.5f;
-
-        // ? Resource (mana) support
-        public int MaxResource = 50;
-
-        public HeroStats Clone()
-        {
-            return new HeroStats
-            {
-                MaxHP = MaxHP,
-                Attack = Attack,
-                Defense = Defense,
-                AttackSpeed = AttackSpeed,
-                MoveSpeed = MoveSpeed,
-                CritChance = CritChance,
-                CritMultiplier = CritMultiplier,
-                MaxResource = MaxResource
-            };
-        }
-    }
-
     [DisallowMultipleComponent]
     public class StatsComponent : MonoBehaviour
     {
@@ -63,5 +30,44 @@ namespace Havengard.Core.Character
 
         public HeroStats GetCurrentStatsClone() => CurrentStats != null ? CurrentStats.Clone() : new HeroStats();
         public HeroStats GetBaseStatsClone() => baseStats != null ? baseStats.Clone() : new HeroStats();
+
+        /// <summary>
+        /// Apply stat modifiers (for buffs, items, etc.)
+        /// </summary>
+        public void ApplyModifiers(HeroStats modifiers, bool isMultiplicative = false)
+        {
+            if (CurrentStats == null) return;
+            CurrentStats.ApplyModifiers(modifiers, isMultiplicative);
+        }
+
+        /// <summary>
+        /// Reset current stats back to base stats
+        /// </summary>
+        public void ResetToBaseStats()
+        {
+            CurrentStats = baseStats != null ? baseStats.Clone() : new HeroStats();
+        }
+
+        /// <summary>
+        /// Sync max health/resource with attached systems
+        /// </summary>
+        public void SyncWithSystems()
+        {
+            if (CurrentStats == null) return;
+
+            // Sync health
+            var health = GetComponent<Havengard.Core.HealthSystem.Health>();
+            if (health != null)
+            {
+                health.SetMaxHealthFromStats(refill: false);
+            }
+
+            // Sync resource
+            var resourceSystem = GetComponent<Havengard.Abilities.ResourceSystem>();
+            if (resourceSystem != null)
+            {
+                resourceSystem.SyncFromStats();
+            }
+        }
     }
 }

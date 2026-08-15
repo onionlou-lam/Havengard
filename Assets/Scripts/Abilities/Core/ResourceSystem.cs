@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Havengard.Core.Character;
 
 namespace Havengard.Abilities
 {
@@ -10,10 +11,14 @@ namespace Havengard.Abilities
         [SerializeField] private int currentResource = 100;
 
         [Header("Regeneration")]
-        [SerializeField] private float regenRate = 5f;
-        [SerializeField] private float regenDelay = 2f;
+        [SerializeField] private bool useStatsForRegen = true;
+        [Tooltip("Base regen rate if not using stats")]
+        [SerializeField] private float baseRegenRate = 5f;
+        [Tooltip("Base regen delay if not using stats")]
+        [SerializeField] private float baseRegenDelay = 2f;
 
         private float lastSpendTime;
+        private StatsComponent statsComponent;
 
         public event Action<int, int> OnResourceChanged;
         public event Action OnResourceDepleted;
@@ -24,19 +29,53 @@ namespace Havengard.Abilities
         public int CurrentResource => currentResource;
         public int MaxResource => maxResource;
 
+        private void Awake()
+        {
+            statsComponent = GetComponent<StatsComponent>();
+        }
+
         private void Start()
         {
+            // Sync max resource from stats if available
+            if (useStatsForRegen && statsComponent != null && statsComponent.CurrentStats != null)
+            {
+                maxResource = statsComponent.CurrentStats.MaxResource;
+            }
+
             currentResource = maxResource;
             OnResourceChanged?.Invoke(currentResource, maxResource);
         }
 
         private void Update()
         {
-            if (currentResource < maxResource && Time.time >= lastSpendTime + regenDelay)
+            if (currentResource >= maxResource) return;
+
+            float regenRate = GetEffectiveRegenRate();
+            float regenDelay = GetEffectiveRegenDelay();
+
+            if (Time.time >= lastSpendTime + regenDelay)
             {
                 float regenAmount = regenRate * Time.deltaTime;
-                AddResource((int)regenAmount);
+                AddResource(Mathf.CeilToInt(regenAmount));
             }
+        }
+
+        private float GetEffectiveRegenRate()
+        {
+            if (useStatsForRegen && statsComponent != null && statsComponent.CurrentStats != null)
+            {
+                return statsComponent.CurrentStats.ResourceRegenRate;
+            }
+            return baseRegenRate;
+        }
+
+        private float GetEffectiveRegenDelay()
+        {
+            if (useStatsForRegen && statsComponent != null && statsComponent.CurrentStats != null)
+            {
+                return statsComponent.CurrentStats.ResourceRegenDelay;
+            }
+            return baseRegenDelay;
         }
 
         public bool HasResource(int amount)
@@ -65,6 +104,7 @@ namespace Havengard.Abilities
 
         public void AddResource(int amount)
         {
+            if (amount <= 0) return;
             currentResource = Mathf.Min(currentResource + amount, maxResource);
             OnResourceChanged?.Invoke(currentResource, maxResource);
         }
@@ -99,7 +139,6 @@ namespace Havengard.Abilities
             return maxResource > 0 ? (float)currentResource / maxResource : 0f;
         }
         
-        // ADD THIS METHOD FOR SAVE SYSTEM
         /// <summary>
         /// Set current resource directly (for loading saves)
         /// </summary>
@@ -108,6 +147,20 @@ namespace Havengard.Abilities
             currentResource = Mathf.Clamp(amount, 0, maxResource);
             OnResourceChanged?.Invoke(currentResource, maxResource);
             Debug.Log($"[ResourceSystem] Resource set to: {currentResource}/{maxResource}");
+        }
+
+        /// <summary>
+        /// Sync max resource from stats (call after stats change)
+        /// </summary>
+        public void SyncFromStats()
+        {
+            if (!useStatsForRegen || statsComponent == null || statsComponent.CurrentStats == null) return;
+
+            int newMax = statsComponent.CurrentStats.MaxResource;
+            if (newMax != maxResource)
+            {
+                SetMaxResource(newMax);
+            }
         }
     }
 }

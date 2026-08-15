@@ -15,6 +15,7 @@ MonoBehaviour:
   className: Ranger
   specializationName: Sharpshooter
   classIcon: {fileID: 21300000, guid: 48a4e76fcf4c09240bd607a03d0666a6, type: 3}
+  baseClass: {fileID: 0}
   baseHP: 100
   baseAttack: 10
   baseDefense: 5
@@ -29,8 +30,36 @@ MonoBehaviour:
   attackGrowth: 2
   defenseGrowth: 1
   resourceGrowth: 5
-  classAbilities: []
+  classAbilities:
+  - ability: {fileID: 11400000, guid: a61ce99f448819c47b7b36a2ba9b6d75, type: 2}
+    requiredLevel: 1
+    prerequisiteIndices: 
+    treePosition: {x: 1, y: 3}
+    skillPointCost: 0
+    subSkills: []
+    customDescription: 
+  - ability: {fileID: 11400000, guid: a0e38b7f5b81e164b81c7a6fb3fece58, type: 2}
+    requiredLevel: 1
+    prerequisiteIndices: 00000000
+    treePosition: {x: 3, y: 3}
+    skillPointCost: 1
+    subSkills:
+    - subSkillModifier: {fileID: 11400000, guid: c783012768cd35442acbb632b329e458,
+        type: 2}
+      positionOffset: {x: 0.5, y: 1.5}
+      requiredLevel: 3
+      skillPointCost: 1
+      customIcon: {fileID: 0}
+      customDescription: Power Shot now pierces through enemies seemlessly
+    customDescription: 
+  - ability: {fileID: 11400000, guid: 1d8f27eb38f08fc4c8223f7f0ecb23e5, type: 2}
+    requiredLevel: 1
+    prerequisiteIndices: 01000000
+    treePosition: {x: 5, y: 3}
+    skillPointCost: 0
+    subSkills: []
+    customDescription: 
   specializations:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: ca6ec3a96ed935948af4f3d5a6399474, type: 2}
+  - {fileID: 11400000}
+  - {fileID: 11400000, guid: ffc55e9e26928f9439c13cffa4863c82, type: 2}

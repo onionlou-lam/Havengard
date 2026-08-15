@@ -161,6 +161,18 @@ namespace Havengard.Core.Progression
             OnSkillPointsChanged?.Invoke(AvailableSkillPoints);
         }
 
+        /// <summary>
+        /// Add skill points directly (for testing/admin/rewards)
+        /// </summary>
+        public void AddSkillPoints(int amount)
+        {
+            if (amount <= 0) return;
+            
+            SkillPoints += amount;
+            OnSkillPointsChanged?.Invoke(AvailableSkillPoints);
+            Debug.Log($"[ExpSystem] {name} gained {amount} skill points! Total: {SkillPoints}, Available: {AvailableSkillPoints}");
+        }
+
         private void RaiseChanged()
         {
             OnExpChanged?.Invoke();

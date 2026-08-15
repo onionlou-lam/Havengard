@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Havengard.Abilities;
 using Havengard.Core.HealthSystem;
 using Havengard.Core.Character;
@@ -8,7 +8,7 @@ using Havengard.Core.Progression;
 namespace Havengard.Core.Heroes
 {
     [RequireComponent(typeof(AbilityUser))]
-    [RequireComponent(typeof(Health))]
+    [RequireComponent(typeof(HealthSystem.Health))]
     [RequireComponent(typeof(StatsComponent))]
     [RequireComponent(typeof(ResourceSystem))]
     [RequireComponent(typeof(EXPSystem))]
@@ -23,7 +23,7 @@ namespace Havengard.Core.Heroes
         [SerializeField] private AbilityUser abilityUser;
         [SerializeField] private EXPSystem expSystem;
 
-        private Health health;
+        private HealthSystem.Health health;
         private ResourceSystem resourceSystem;
         private StatsComponent statsComponent;
 
@@ -49,10 +49,10 @@ namespace Havengard.Core.Heroes
 
         private void Awake()
         {
-            // Resolve components (don’t assume Awake order)
+            // Resolve components (don't assume Awake order)
             abilityUser ??= GetComponent<AbilityUser>();
             expSystem ??= GetComponent<EXPSystem>();
-            health ??= GetComponent<Health>();
+            health ??= GetComponent<HealthSystem.Health>();
             resourceSystem ??= GetComponent<ResourceSystem>();
             statsComponent ??= GetComponent<StatsComponent>();
 

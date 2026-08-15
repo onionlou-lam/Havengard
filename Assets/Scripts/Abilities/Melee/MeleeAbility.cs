@@ -203,8 +203,25 @@ namespace Havengard.Abilities
             if (health != null)
             {
                 float damage = CalculateDamage(caster) * damageMultiplier;
+                int damageDealt = (int)damage;
                 //Debug.Log($"[MeleeAbility] Dealing {damage} damage to {target.name}");
-                health.TakeDamage((int)damage, caster);
+                health.TakeDamage(damageDealt, caster);
+
+                // Apply lifesteal if configured
+                if (lifestealPercent > 0f)
+                {
+                    LifestealHandler.ApplyLifesteal(caster, damageDealt, lifestealPercent);
+                }
+
+                // Apply resource generation if enabled
+                if (enableResourceGeneration)
+                {
+                    ResourceGenerationHandler.ApplyResourceGeneration(
+                        caster,
+                        damageDealt,
+                        resourceGenerationPercent,
+                        flatResourceGeneration);
+                }
             }
             else
             {

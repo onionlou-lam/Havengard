@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -8,9 +8,15 @@ namespace Havengard.UI
 {
     /// <summary>
     /// Represents a single ability slot in the ability bar.
-    /// Displays icon, keybind, cooldown overlay, and countdown timer.
+    /// Supports drag-and-drop from skill tree and slot rearrangement.
     /// </summary>
-    public class AbilitySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class AbilitySlotUI : MonoBehaviour, 
+        IPointerEnterHandler, 
+        IPointerExitHandler,
+        IBeginDragHandler,
+        IDragHandler,
+        IEndDragHandler,
+        IDropHandler
     {
         [Header("References")]
         [SerializeField] private Image abilityIcon;
@@ -18,17 +24,25 @@ namespace Havengard.UI
         [SerializeField] private TextMeshProUGUI keybindText;
         [SerializeField] private TextMeshProUGUI cooldownText;
         [SerializeField] private Image flashOverlay;
+        [SerializeField] private Image slotBackground;
 
         [Header("Visual Settings")]
         [SerializeField] private Color availableColor = Color.white;
         [SerializeField] private Color onCooldownColor = new Color(0.5f, 0.5f, 0.5f, 1f);
         [SerializeField] private Color flashColor = new Color(1f, 1f, 1f, 0.5f);
+        [SerializeField] private Color dropHighlightColor = new Color(1f, 1f, 0f, 0.3f);
         [SerializeField] private float flashDuration = 0.2f;
 
         private AbilityBase ability;
+        private int slotIndex;
         private float cooldownEndTime;
         private bool isOnCooldown;
         private float flashTimer;
+
+        private AbilityBarUI parentBar;
+        private Canvas dragCanvas;
+        private GameObject dragPreview;
+        private Color originalBackgroundColor;
 
         private void Awake()
         {
@@ -43,12 +57,26 @@ namespace Havengard.UI
 
             if (flashOverlay != null)
                 flashOverlay.enabled = false;
+
+            if (slotBackground != null)
+                originalBackgroundColor = slotBackground.color;
+
+            dragCanvas = GetComponentInParent<Canvas>();
         }
 
         private void Update()
         {
             UpdateCooldown();
             UpdateFlash();
+        }
+
+        /// <summary>
+        /// Initialize this slot with its index and parent bar.
+        /// </summary>
+        public void Initialize(int index, AbilityBarUI bar)
+        {
+            slotIndex = index;
+            parentBar = bar;
         }
 
         /// <summary>
@@ -203,9 +231,174 @@ namespace Havengard.UI
             return ability;
         }
 
-        // NEW: Tooltip Integration
+        public int GetSlotIndex()
+        {
+            return slotIndex;
+        }
+
+        private void OnEnable()
+        {
+            Debug.Log($"[AbilitySlotUI] Slot {slotIndex} enabled - has IDropHandler: {this is IDropHandler}");
+        }
+
+        //-----------------------------------------------------
+        // DRAG AND DROP IMPLEMENTATION
+        //-----------------------------------------------------
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            // Only allow dragging if there's an ability in this slot
+            if (ability == null) return;
+
+            // Create drag preview
+            CreateDragPreview();
+
+            // Hide tooltip while dragging
+            if (TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.HideAbilityTooltip();
+            }
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (dragPreview != null)
+            {
+                // Move the drag preview to follow the cursor
+                dragPreview.transform.position = eventData.position;
+            }
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            // Destroy the drag preview
+            if (dragPreview != null)
+            {
+                Destroy(dragPreview);
+                dragPreview = null;
+            }
+
+            // Check if we dropped on another ability slot
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventData, results);
+
+            foreach (var result in results)
+            {
+                var targetSlot = result.gameObject.GetComponent<AbilitySlotUI>();
+                if (targetSlot != null && targetSlot != this)
+                {
+                    // Swap abilities between slots
+                    if (parentBar != null)
+                    {
+                        parentBar.SwapAbilities(slotIndex, targetSlot.GetSlotIndex());
+                    }
+                    return;
+                }
+            }
+        }
+
+        public void OnDrop(PointerEventData eventData)
+        {
+            Debug.Log($"[AbilitySlotUI] OnDrop called on slot {slotIndex}");
+            
+            // Restore background color
+            if (slotBackground != null)
+            {
+                slotBackground.color = originalBackgroundColor;
+            }
+
+            // ✅ Safety check: Try to find parent bar if not initialized
+            if (parentBar == null)
+            {
+                parentBar = GetComponentInParent<AbilityBarUI>();
+                if (parentBar != null)
+                {
+                    Debug.LogWarning($"[AbilitySlotUI] parentBar was null, found via GetComponentInParent: {parentBar.name}");
+                }
+                else
+                {
+                    Debug.LogError($"[AbilitySlotUI] Could not find AbilityBarUI parent!");
+                    return;
+                }
+            }
+
+            // ✅ Check drag state first
+            if (!AbilityDragHandler.IsDragging())
+            {
+                Debug.LogWarning($"[AbilitySlotUI] OnDrop - Not currently dragging!");
+                return;
+            }
+
+            // Check if we're receiving an ability from the skill tree
+            var draggedAbility = AbilityDragHandler.GetDraggedAbility();
+            Debug.Log($"[AbilitySlotUI] Dragged ability from handler: {(draggedAbility != null ? draggedAbility.abilityName : "NULL")}");
+            
+            if (draggedAbility != null && parentBar != null)
+            {
+                Debug.Log($"[AbilitySlotUI] Assigning {draggedAbility.abilityName} to slot {slotIndex} via {parentBar.name}");
+                parentBar.AssignAbilityToSlot(slotIndex, draggedAbility);
+                
+                // ✅ Clear drag state AFTER successful drop
+                AbilityDragHandler.ClearDraggedAbility();
+            }
+            else
+            {
+                if (draggedAbility == null)
+                    Debug.LogWarning($"[AbilitySlotUI] OnDrop - draggedAbility is NULL");
+                if (parentBar == null)
+                    Debug.LogWarning($"[AbilitySlotUI] OnDrop - parentBar is NULL");
+                    
+                // ✅ Clear drag state even if drop failed
+                AbilityDragHandler.ClearDraggedAbility();
+            }
+        }
+
+        private void CreateDragPreview()
+        {
+            if (dragCanvas == null || ability == null) return;
+
+            // Create a new GameObject for the preview
+            dragPreview = new GameObject("AbilityDragPreview");
+            dragPreview.transform.SetParent(dragCanvas.transform, false);
+
+            // Add RectTransform
+            var rectTransform = dragPreview.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(50, 50); // Smaller preview
+
+            // Add Image component
+            var previewImage = dragPreview.AddComponent<Image>();
+            previewImage.sprite = ability.icon;
+            previewImage.raycastTarget = false;
+
+            // Make it semi-transparent
+            var color = previewImage.color;
+            color.a = 0.7f;
+            previewImage.color = color;
+
+            // Position it at the cursor
+            dragPreview.transform.position = Input.mousePosition;
+
+            // Bring to front
+            dragPreview.transform.SetAsLastSibling();
+        }
+
+        //-----------------------------------------------------
+        // TOOLTIP / HOVER
+        //-----------------------------------------------------
+
         public void OnPointerEnter(PointerEventData eventData)
         {
+            // Highlight slot background when hovering during a drag
+            if (AbilityDragHandler.IsDragging())
+            {
+                Debug.Log($"[AbilitySlotUI] Hovering over slot {slotIndex} during drag");
+                if (slotBackground != null)
+                {
+                    slotBackground.color = dropHighlightColor;
+                }
+            }
+
+            // Show tooltip
             if (ability != null && TooltipManager.Instance != null)
             {
                 TooltipManager.Instance.ShowAbilityTooltip(ability);
@@ -214,6 +407,13 @@ namespace Havengard.UI
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            // Restore background color
+            if (slotBackground != null)
+            {
+                slotBackground.color = originalBackgroundColor;
+            }
+
+            // Hide tooltip
             if (TooltipManager.Instance != null)
             {
                 TooltipManager.Instance.HideAbilityTooltip();

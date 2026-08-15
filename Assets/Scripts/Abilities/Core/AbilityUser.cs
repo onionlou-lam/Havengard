@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -66,11 +66,16 @@ namespace Havengard.Abilities
 
         [Header("Skill Tree Unlocks")]
         [Tooltip("Tracks which abilities from PlayerClass are unlocked")]
-        [SerializeField] public bool[] unlockedAbilities;
+        [NonSerialized] public bool[] unlockedAbilities;  // ✅ CRITICAL FIX: Don't serialize this runtime data!
 
         [Header("Sub-Skill Selections")]
         [Tooltip("Tracks which sub-skill was selected for each ability")]
-        [SerializeField] public SubSkillSelection[] subSkillSelections;
+        [NonSerialized] public SubSkillSelection[] subSkillSelections;  // ✅ Also don't serialize this
+
+        [Header("Hold-to-Cast Settings")]
+        [SerializeField] private bool enableHoldToCast = true;
+        private bool[] isHoldingAbility; // Track which abilities are being held
+        private float[] lastHoldCastTime; // Track when ability was last cast while holding
 
         #region Sub-Skill Management
 
@@ -170,6 +175,13 @@ namespace Havengard.Abilities
             }
 
             RebuildCooldownArray();
+
+            // Initialize hold-to-cast tracking
+            if (abilities != null)
+            {
+                isHoldingAbility = new bool[abilities.Count];
+                lastHoldCastTime = new float[abilities.Count];
+            }
         }
 
         private void OnValidate()
@@ -188,6 +200,40 @@ namespace Havengard.Abilities
             {
                 UpdateChanneling();
             }
+
+            // Update hold-to-cast abilities
+            if (enableHoldToCast)
+            {
+                UpdateHoldToCast();
+            }
+        }
+
+        /// <summary>
+        /// Check held abilities and auto-cast when off cooldown
+        /// </summary>
+        private void UpdateHoldToCast()
+        {
+            if (isHoldingAbility == null) return;
+
+            for (int i = 0; i < Mathf.Min(abilities.Count, isHoldingAbility.Length); i++)
+            {
+                if (!isHoldingAbility[i]) continue;
+
+                AbilityBase ability = abilities[i];
+                if (ability == null || !ability.canHoldToCast) continue;
+
+                // Check if ability is off cooldown and enough time has passed
+                if (CanUseAbility(i))
+                {
+                    // Get mouse position for targeting
+                    if (mainCamera != null)
+                    {
+                        Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                        mouseWorldPos.z = 0f;
+                        UseAbility(i, mouseWorldPos, null, true);
+                    }
+                }
+            }
         }
 
         public void RebuildCooldownArray()
@@ -195,18 +241,25 @@ namespace Havengard.Abilities
             nextReadyTimes = (abilities != null && abilities.Count > 0)
                 ? new float[abilities.Count]
                 : new float[0];
+
+            isHoldingAbility = new bool[abilities.Count];
+            lastHoldCastTime = new float[abilities.Count];
         }
 
         public void AssignAbilities(List<AbilityBase> list)
         {
             abilities = list ?? new List<AbilityBase>();
             RebuildCooldownArray();
+            OnAbilitiesChanged?.Invoke();
+            Debug.Log($"[AbilityUser] Assigned {abilities.Count} abilities");
         }
 
         public void AssignAbilities(AbilityBase[] array)
         {
             abilities = array != null ? new List<AbilityBase>(array) : new List<AbilityBase>();
             RebuildCooldownArray();
+            OnAbilitiesChanged?.Invoke();
+            Debug.Log($"[AbilityUser] Assigned {abilities.Count} abilities");
         }
 
         public AbilityBase GetAbility(int index)
@@ -272,12 +325,21 @@ namespace Havengard.Abilities
         /// <summary>
         /// Main ability activation method - handles both normal and channeled abilities
         /// </summary>
-        public bool UseAbility(int index, Vector3 targetPosition, GameObject targetEnemy = null)
+        public bool UseAbility(int index, Vector3 targetPosition, GameObject targetEnemy = null, bool isHeldInput = false)
         {
             if (index < 0 || index >= abilities.Count) return false;
 
             AbilityBase ability = abilities[index];
             if (ability == null) return false;
+
+            // Mark as holding if this is a held input
+            if (isHeldInput && enableHoldToCast && ability.canHoldToCast)
+            {
+                if (index < isHoldingAbility.Length)
+                {
+                    isHoldingAbility[index] = true;
+                }
+            }
 
             // Check if it's a channeled ability
             var channeledAbility = ability as ChanneledAbilityBase;
@@ -296,6 +358,12 @@ namespace Havengard.Abilities
             ConsumeResource(ability);
             ability.Activate(this, targetPosition, targetEnemy);
             StartCooldown(index);
+
+            // Track last cast time for hold-to-cast
+            if (index < lastHoldCastTime.Length)
+            {
+                lastHoldCastTime[index] = Time.time;
+            }
 
             OnAbilityUsed?.Invoke(index, ability);
             return true;
@@ -684,20 +752,23 @@ namespace Havengard.Abilities
 
         private void StartCooldown(int index)
         {
-            var ability = GetAbility(index);
+            if (abilities == null || index < 0 || index >= abilities.Count) return;
+
+            AbilityBase ability = abilities[index];
             if (ability == null) return;
 
-            float now = Time.time;
+            // Get effective cooldown with stat modifiers
+            float cooldown = ability.GetEffectiveCooldown(gameObject);
 
-            if (nextReadyTimes != null && index >= 0 && index < nextReadyTimes.Length)
+            if (nextReadyTimes != null && index < nextReadyTimes.Length)
             {
-                nextReadyTimes[index] = now + ability.baseCooldown;
-                OnAbilityCooldownStarted?.Invoke(index, ability.baseCooldown);
+                nextReadyTimes[index] = Time.time + cooldown;
+                OnAbilityCooldownStarted?.Invoke(index, cooldown);
             }
 
             if (useGlobalCooldown)
             {
-                globalCooldownEndTime = now + globalCooldownDuration;
+                globalCooldownEndTime = Time.time + globalCooldownDuration;
             }
         }
 
@@ -787,6 +858,15 @@ namespace Havengard.Abilities
         public List<AbilityBase> GetAbilities()
         {
             return abilities;
+        }
+
+        /// <summary>
+        /// Release a held ability (for hold-to-cast)
+        /// </summary>
+        public void ReleaseAbility(int index)
+        {
+            if (isHoldingAbility == null || index < 0 || index >= isHoldingAbility.Length) return;
+            isHoldingAbility[index] = false;
         }
     }
 }

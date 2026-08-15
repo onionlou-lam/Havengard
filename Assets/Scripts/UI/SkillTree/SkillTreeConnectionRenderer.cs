@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using Havengard.Abilities;
@@ -84,7 +84,6 @@ namespace Havengard.UI
 
             Image lineImage = lineObj.AddComponent<Image>();
             
-            // Apply style based on line type
             if (isSubSkillLine)
             {
                 lineImage.color = subSkillLineColor;
@@ -99,13 +98,16 @@ namespace Havengard.UI
             }
 
             RectTransform rectTransform = lineObj.GetComponent<RectTransform>();
+            
+            // ✅ Set same anchors as parent renderer (top-left)
+            rectTransform.anchorMin = new Vector2(0, 1);
+            rectTransform.anchorMax = new Vector2(0, 1);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);  // Center pivot for rotation
 
-            // Calculate position and rotation
             Vector2 direction = endPos - startPos;
             float distance = direction.magnitude;
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-            // Position line at midpoint
             rectTransform.anchoredPosition = startPos + direction * 0.5f;
             rectTransform.sizeDelta = new Vector2(distance, isSubSkillLine ? subSkillLineWidth : mainLineWidth);
             rectTransform.rotation = Quaternion.Euler(0, 0, angle);

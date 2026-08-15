@@ -15,7 +15,7 @@ MonoBehaviour:
   heroName: Ilmar
   portrait: {fileID: 21300000, guid: aec72c271304d9141b3e045820dfe106, type: 3}
   faction: 2
-  heroClass: {fileID: 11400000, guid: b9c1852843b53984bbe6203bd976bdf8, type: 2}
+  heroClass: {fileID: 11400000, guid: 93f1c8f0562c78440a42f20d39f44a86, type: 2}
   startingUnlockedIndices: 
   bonusStartingSkillPoints: 5
   backstory: An mysterious ranger that dramatically likes to keep their story a mystery

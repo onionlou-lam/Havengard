@@ -206,7 +206,7 @@ namespace Havengard.UI
             particle.Clear();
             particle.Play();
 
-            Debug.Log($"✅ [ParticleManager] Playing {particle.name} at {worldPos}, Active: {particle.gameObject.activeSelf}, Playing: {particle.isPlaying}");
+            //Debug.Log($"✅ [ParticleManager] Playing {particle.name} at {worldPos}, Active: {particle.gameObject.activeSelf}, Playing: {particle.isPlaying}");
 
             // Return to pool
             StartCoroutine(ReturnToPoolAfterPlay(particle, prefab));
@@ -240,7 +240,7 @@ namespace Havengard.UI
                 // Convert to world position at canvas distance
                 worldPos = canvas.worldCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, canvas.planeDistance - 0.5f));
 
-                Debug.Log($"[ParticleManager] UI: {uiElement.name}, Screen: {screenPos}, World: {worldPos}, Canvas Plane: {canvas.planeDistance}");
+                //Debug.Log($"[ParticleManager] UI: {uiElement.name}, Screen: {screenPos}, World: {worldPos}, Canvas Plane: {canvas.planeDistance}");
             }
             else
             {

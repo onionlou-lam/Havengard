@@ -26,6 +26,10 @@ namespace Havengard.Abilities
         [SerializeField] private int baseProjectileCount = 1;
         [SerializeField] private float baseSpreadAngle = 15f;
 
+        [Header("Wall Collision")]
+        [SerializeField] private AudioClip wallHitSFX;
+        [SerializeField] private LayerMask wallLayers;
+
         public override void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
             if (user == null) return;
@@ -105,6 +109,27 @@ namespace Havengard.Abilities
             return angle;
         }
 
+        /// <summary>
+        /// Check if any sub-skill enables piercing
+        /// </summary>
+        private bool HasPiercingSubSkill(out int pierceCount, out float damageReduction)
+        {
+            pierceCount = 0;
+            damageReduction = 0f;
+
+            foreach (var subSkill in activeSubSkills)
+            {
+                if (subSkill != null && subSkill.enablesPiercing)
+                {
+                    pierceCount = subSkill.pierceCount;
+                    damageReduction = subSkill.pierceDamageReduction;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void SpawnProjectile(AbilityUser user, Vector3 position, Vector3 direction, GameObject target)
         {
             if (projectilePrefab == null) return;
@@ -122,12 +147,18 @@ namespace Havengard.Abilities
             var projectile = projectileObj.GetComponent<Projectile>();
             if (projectile != null)
             {
+                // Check for piercing
+                bool isPiercing = HasPiercingSubSkill(out int pierceCount, out float damageReduction);
+
                 projectile.Initialize(
                     direction,
                     projectileSpeed,
                     projectileLifetime,
                     user.gameObject,
-                    (hit) => OnProjectileHit(projectileObj, hit, user)
+                    (hit, shouldDestroy) => OnProjectileHit(projectileObj, hit, user, shouldDestroy),
+                    wallLayers,
+                    isPiercing,
+                    pierceCount
                 );
 
                 Color damageColor = GetDamageTypeColor();
@@ -140,15 +171,71 @@ namespace Havengard.Abilities
             }
         }
 
-        protected virtual void OnProjectileHit(GameObject projectile, GameObject target, AbilityUser user)
+        protected virtual void OnProjectileHit(GameObject projectile, GameObject target, AbilityUser user, bool shouldDestroy)
         {
             if (target == null || user == null) return;
 
+            // Check if hit a wall
+            bool hitWall = IsWall(target);
+
+            if (hitWall)
+            {
+                // Play wall hit sound
+                if (wallHitSFX != null)
+                {
+                    AudioSource.PlayClipAtPoint(wallHitSFX, projectile.transform.position);
+                }
+
+                // Optional: Spawn impact VFX for walls too
+                if (impactVFX != null)
+                {
+                    GameObject vfx = Instantiate(impactVFX, projectile.transform.position, Quaternion.identity);
+                    Destroy(vfx, 2f);
+                }
+
+                // Walls always destroy projectiles (even piercing ones)
+                Destroy(projectile);
+                return;
+            }
+
+            // Get projectile component to check pierce count
+            var projectileComponent = projectile.GetComponent<Projectile>();
+            int enemiesHit = projectileComponent != null ? projectileComponent.GetEnemiesHit() : 0;
+
+            // Calculate damage with pierce reduction
+            float damage = CalculateDamage(user.gameObject);
+            
+            // Apply pierce damage reduction if applicable
+            if (HasPiercingSubSkill(out int pierceCount, out float damageReduction) && enemiesHit > 0)
+            {
+                // Reduce damage based on number of enemies already hit
+                float reductionMultiplier = Mathf.Pow(1f - damageReduction, enemiesHit);
+                damage *= reductionMultiplier;
+                Debug.Log($"[MissileAbility] Pierce damage reduced to {damage} ({enemiesHit} enemies hit, {damageReduction * 100}% reduction per pierce)");
+            }
+
+            // Hit a valid target (not a wall)
             var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
             if (health != null)
             {
-                float damage = CalculateDamage(user.gameObject);
-                health.TakeDamage((int)damage, user.gameObject);
+                int damageDealt = (int)damage;
+                health.TakeDamage(damageDealt, user.gameObject);
+
+                // Apply lifesteal if configured
+                if (lifestealPercent > 0f)
+                {
+                    LifestealHandler.ApplyLifesteal(user.gameObject, damageDealt, lifestealPercent);
+                }
+
+                // Apply resource generation if enabled
+                if (enableResourceGeneration)
+                {
+                    ResourceGenerationHandler.ApplyResourceGeneration(
+                        user.gameObject,
+                        damageDealt,
+                        resourceGenerationPercent,
+                        flatResourceGeneration);
+                }
             }
 
             // Check if any sub-skill adds explosion
@@ -161,18 +248,37 @@ namespace Havengard.Abilities
                 ApplyAOEDamage(target.transform.position, user.gameObject, explosionRadius, explosionDamageMultiplier);
             }
 
-            if (impactVFX != null)
+            // Only spawn VFX/SFX on each hit if not piercing, or on final hit
+            bool shouldPlayEffects = !HasPiercingSubSkill(out _, out _) || shouldDestroy;
+
+            if (shouldPlayEffects)
             {
-                GameObject vfx = Instantiate(impactVFX, projectile.transform.position, Quaternion.identity);
-                Destroy(vfx, 2f);
+                if (impactVFX != null)
+                {
+                    GameObject vfx = Instantiate(impactVFX, projectile.transform.position, Quaternion.identity);
+                    Destroy(vfx, 2f);
+                }
+
+                if (impactSFX != null)
+                {
+                    AudioSource.PlayClipAtPoint(impactSFX, projectile.transform.position);
+                }
             }
 
-            if (impactSFX != null)
+            // Destroy projectile if told to (reached pierce limit or not piercing)
+            if (shouldDestroy)
             {
-                AudioSource.PlayClipAtPoint(impactSFX, projectile.transform.position);
+                Destroy(projectile);
             }
+        }
 
-            Destroy(projectile);
+        /// <summary>
+        /// Check if the hit object is a wall based on layer
+        /// </summary>
+        private bool IsWall(GameObject obj)
+        {
+            if (wallLayers == 0) return false; // No wall layers defined
+            return ((1 << obj.layer) & wallLayers) != 0;
         }
 
         /// <summary>
@@ -226,7 +332,24 @@ namespace Havengard.Abilities
                 if (health != null)
                 {
                     float aoeDamage = CalculateDamage(caster) * damageMultiplier;
-                    health.TakeDamage((int)aoeDamage, caster);
+                    int damageDealt = (int)aoeDamage;
+                    health.TakeDamage(damageDealt, caster);
+
+                    // Apply lifesteal for AOE damage
+                    if (lifestealPercent > 0f)
+                    {
+                        LifestealHandler.ApplyLifesteal(caster, damageDealt, lifestealPercent);
+                    }
+
+                    // Apply resource generation for AOE damage
+                    if (enableResourceGeneration)
+                    {
+                        ResourceGenerationHandler.ApplyResourceGeneration(
+                            caster,
+                            damageDealt,
+                            resourceGenerationPercent,
+                            flatResourceGeneration);
+                    }
                 }
             }
         }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Havengard.Statuses;
 
 namespace Havengard.Abilities
 {
@@ -38,6 +39,14 @@ namespace Havengard.Abilities
         public int additionalProjectiles = 0;
         [Tooltip("Spread angle for multiple projectiles")]
         public float spreadAngle = 15f;
+
+        [Header("Piercing Modifiers")]
+        public bool enablesPiercing = false;
+        [Tooltip("Number of enemies the projectile can pierce through (0 = infinite piercing)")]
+        public int pierceCount = 1;
+        [Tooltip("Damage reduction per pierce (0.1 = -10% per enemy pierced, 0 = no reduction)")]
+        [Range(0f, 1f)]
+        public float pierceDamageReduction = 0f;
 
         [Header("Chain Modifiers")]
         public bool enablesChaining = false;
@@ -92,6 +101,19 @@ namespace Havengard.Abilities
             if (addsProjectiles && additionalProjectiles > 0)
             {
                 text += $"\n• Fires {additionalProjectiles + 1} projectiles";
+            }
+
+            if (enablesPiercing)
+            {
+                if (pierceCount > 0)
+                    text += $"\n• Pierces {pierceCount} enemies";
+                else
+                    text += $"\n• Pierces all enemies";
+
+                if (pierceDamageReduction > 0f)
+                {
+                    text += $" (-{(pierceDamageReduction * 100):F0}% per pierce)";
+                }
             }
 
             if (enablesChaining && chainCount > 0)

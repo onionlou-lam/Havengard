@@ -16,6 +16,10 @@ namespace Havengard.Core.Progression
         public string specializationName;
         public Sprite classIcon;
 
+        [Header("Class Hierarchy")]
+        [Tooltip("If this is a specialization, reference the base class (e.g., Ranger) to inherit its abilities")]
+        public PlayerClass baseClass;
+
         [Header("Base Stats")]
         public int baseHP = 100;
         public int baseAttack = 10;
@@ -39,12 +43,44 @@ namespace Havengard.Core.Progression
         public int resourceGrowth = 5;
 
         [Header("Class Abilities / Skill Tree")]
-        [Tooltip("All abilities available to this class/specialization in skill tree order")]
+        [Tooltip("Abilities specific to THIS class/specialization")]
         public ClassAbility[] classAbilities;
 
         [Header("Specializations (Optional)")]
         [Tooltip("If this is a main class, define 3 specializations here for the skill tree tabs")]
         public PlayerClass[] specializations = new PlayerClass[3];
+
+        /// <summary>
+        /// Get all abilities including inherited ones from base class
+        /// </summary>
+        public ClassAbility[] GetAllAbilities()
+        {
+            // If no base class, just return our abilities
+            if (baseClass == null)
+                return classAbilities ?? new ClassAbility[0];
+
+            // Merge base class abilities with our own
+            var baseAbilities = baseClass.classAbilities ?? new ClassAbility[0];
+            var specAbilities = classAbilities ?? new ClassAbility[0];
+
+            var combined = new ClassAbility[baseAbilities.Length + specAbilities.Length];
+            
+            // Copy base class abilities first
+            System.Array.Copy(baseAbilities, 0, combined, 0, baseAbilities.Length);
+            
+            // Then add specialization abilities
+            System.Array.Copy(specAbilities, 0, combined, baseAbilities.Length, specAbilities.Length);
+
+            return combined;
+        }
+
+        /// <summary>
+        /// Check if this is a specialization (has a base class)
+        /// </summary>
+        public bool IsSpecialization()
+        {
+            return baseClass != null;
+        }
 
         /// <summary>
         /// Check if this class has specializations defined

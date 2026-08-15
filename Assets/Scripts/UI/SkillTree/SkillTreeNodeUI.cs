@@ -13,7 +13,10 @@ namespace Havengard.UI
     public class SkillTreeNodeUI : MonoBehaviour,
         IPointerClickHandler,
         IPointerEnterHandler,
-        IPointerExitHandler
+        IPointerExitHandler,
+        IBeginDragHandler,
+        IDragHandler,
+        IEndDragHandler
     {
         [Header("UI")]
         [SerializeField] private Image iconImage;
@@ -56,6 +59,21 @@ namespace Havengard.UI
         [SerializeField] private float scaleAmount = 1.1f;
         [SerializeField] private float scaleDuration = 0.15f;
 
+        [Header("Tooltip")]
+        [SerializeField] private bool enableTooltip = true;
+        [Tooltip("If true, uses TooltipManager for ability tooltips. If false, uses SkillTreeTooltip.")]
+        [SerializeField] private bool useTooltipManager = true;
+        [Tooltip("Keep tooltip visible when node is selected")]
+        [SerializeField] private bool keepTooltipOnSelect = true;
+        [Tooltip("Show small hover tooltip with just name and level")]
+        [SerializeField] private bool enableHoverTooltip = true;
+
+        [Header("Investment Display")]
+        [SerializeField] private GameObject investmentCounterObject;
+        [SerializeField] private TextMeshProUGUI investmentCountText;
+        [SerializeField] private TextMeshProUGUI investmentLevelText; // ✅ NEW: For display below node
+        [SerializeField] private Color maxInvestmentColor = new Color(1f, 0.84f, 0f);
+
         [Header("Debug")]
         [SerializeField] private bool enableDebugLogs = false;
 
@@ -70,18 +88,26 @@ namespace Havengard.UI
         private bool isSelected;
         private bool isUnlocked;
         private bool canUnlock;
+        private bool isHovering;
         private AudioSource audioSource;
 
-        private ParticleSystem activePulseParticle; // Track continuous pulse
+        private ParticleSystem activePulseParticle;
+
+        private int investmentLevel = 0;
+        public const int MAX_INVESTMENT = 20;
 
         public int AbilityIndex => abilityIndex;
         public RectTransform RectTransform => GetComponent<RectTransform>();
+
+        // Drag support
+        private Canvas dragCanvas;
+        private bool isDragging = false;
+        private GameObject dragPreview; // Preview object for drag and drop
 
         //-----------------------------------------------------
 
         private void Awake()
         {
-            // Setup glow border
             if (glowBorder != null)
             {
                 glowBorder.enabled = true;
@@ -95,7 +121,6 @@ namespace Havengard.UI
                 borderImage.color = normalBorderColor;
             }
 
-            // Setup audio
             audioSource = GetComponent<AudioSource>();
             if (audioSource == null)
             {
@@ -104,6 +129,9 @@ namespace Havengard.UI
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
             audioSource.volume = sfxVolume;
+
+            // ✅ Add this line
+            dragCanvas = GetComponentInParent<Canvas>();
         }
 
         //-----------------------------------------------------
@@ -119,19 +147,123 @@ namespace Havengard.UI
             {
                 iconImage.sprite = ability.ability.icon;
             }
+
+            UpdateInvestmentDisplay();
+        }
+
+        public void SetInvestmentLevel(int level)
+        {
+            investmentLevel = Mathf.Clamp(level, 0, MAX_INVESTMENT);
+            UpdateInvestmentDisplay();
+        }
+
+        public int GetInvestmentLevel() => investmentLevel;
+        public bool CanInvest() => investmentLevel < MAX_INVESTMENT;
+
+        private void UpdateInvestmentDisplay()
+        {
+            // ✅ Update counter badge (on top of node)
+            if (investmentCounterObject != null)
+            {
+                bool shouldShow = isUnlocked && investmentLevel > 0;
+                investmentCounterObject.SetActive(shouldShow);
+            }
+
+            if (investmentCountText != null && investmentLevel > 0)
+            {
+                investmentCountText.text = $"{investmentLevel}/{MAX_INVESTMENT}";
+                
+                if (investmentLevel >= MAX_INVESTMENT)
+                {
+                    investmentCountText.color = maxInvestmentColor;
+                }
+                else
+                {
+                    investmentCountText.color = Color.white;
+                }
+            }
+
+            // ✅ Update investment level display below node
+            if (investmentLevelText != null)
+            {
+                if (isUnlocked && investmentLevel > 0)
+                {
+                    investmentLevelText.text = $"+{investmentLevel}";
+                    investmentLevelText.gameObject.SetActive(true);
+                    
+                    // Color based on investment level
+                    if (investmentLevel >= MAX_INVESTMENT)
+                    {
+                        investmentLevelText.color = maxInvestmentColor;
+                    }
+                    else if (investmentLevel >= 10)
+                    {
+                        investmentLevelText.color = new Color(0.8f, 1f, 0.8f); // Light green
+                    }
+                    else
+                    {
+                        investmentLevelText.color = Color.white;
+                    }
+                }
+                else
+                {
+                    investmentLevelText.gameObject.SetActive(false);
+                }
+            }
         }
 
         //-----------------------------------------------------
 
         public void RefreshState(bool[] unlockedAbilities, int availableSkillPoints, int playerLevel)
         {
+            if (enableDebugLogs)
+            {
+                Debug.Log($"[SkillTreeNodeUI {abilityIndex}] RefreshState called");
+            }
+
+            if (unlockedAbilities == null)
+            {
+                Debug.LogError($"[SkillTreeNodeUI {abilityIndex}] unlockedAbilities is NULL!");
+                SetVisualState(lockedColor, true);
+                canUnlock = false;
+                return;
+            }
+
+            if (abilityIndex < 0 || abilityIndex >= unlockedAbilities.Length)
+            {
+                Debug.LogError($"[SkillTreeNodeUI {abilityIndex}] Invalid index! Array length: {unlockedAbilities.Length}");
+                SetVisualState(lockedColor, true);
+                canUnlock = false;
+                return;
+            }
+
             isUnlocked = unlockedAbilities[abilityIndex];
 
             if (isUnlocked)
             {
                 SetVisualState(unlockedColor, false);
-                canUnlock = false;
-                StopPulseParticle();
+                
+                canUnlock = investmentLevel < MAX_INVESTMENT && availableSkillPoints > 0;
+                
+                UpdateInvestmentDisplay();
+                
+                if (!canUnlock)
+                {
+                    StopPulseParticle();
+                }
+                else if (availableSkillPoints > 0)
+                {
+                    if (activePulseParticle == null && pulseParticlePrefab != null && particleManager != null)
+                    {
+                        activePulseParticle = particleManager.PlayContinuousParticle(pulseParticlePrefab, RectTransform);
+                    }
+                }
+                
+                if (isSelected && enableTooltip)
+                {
+                    RefreshTooltipForSelectedNode();
+                }
+                
                 return;
             }
 
@@ -154,6 +286,11 @@ namespace Havengard.UI
             {
                 SetVisualState(lockedColor, true);
                 StopPulseParticle();
+            }
+
+            if (isSelected && enableTooltip)
+            {
+                RefreshTooltipForSelectedNode();
             }
         }
 
@@ -204,12 +341,22 @@ namespace Havengard.UI
             if (selected)
             {
                 pulseRoutine = StartCoroutine(PulseGlow());
+                
+                if (enableTooltip && keepTooltipOnSelect)
+                {
+                    ShowTooltipInternal();
+                }
             }
             else
             {
                 Color c = glowBorder.color;
                 c.a = 0;
                 glowBorder.color = c;
+                
+                if (enableTooltip && !isHovering)
+                {
+                    HideTooltipInternal();
+                }
             }
         }
 
@@ -217,6 +364,16 @@ namespace Havengard.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            // ✅ Don't show hover effects while dragging
+            if (isDragging || AbilityDragHandler.IsDragging())
+                return;
+
+            // ✅ Don't show hover tooltip at all - only selected node shows tooltip
+            if (isSelected)
+                return;
+
+            isHovering = true;
+
             if (!isSelected && borderImage != null)
             {
                 borderImage.color = hoverBorderColor;
@@ -235,23 +392,29 @@ namespace Havengard.UI
                     StopCoroutine(scaleRoutine);
                 scaleRoutine = StartCoroutine(ScaleAnimation(scaleAmount));
             }
+
+            // ✅ Removed hover tooltip - only selected nodes show tooltips
         }
 
         //-----------------------------------------------------
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            isHovering = false;
+
             if (!isSelected && borderImage != null)
             {
                 borderImage.color = normalBorderColor;
             }
 
-            if (enableScaleAnimation)
+            if (enableScaleAnimation && !isSelected)
             {
                 if (scaleRoutine != null)
                     StopCoroutine(scaleRoutine);
                 scaleRoutine = StartCoroutine(ScaleAnimation(1f));
             }
+
+            // ✅ No hover tooltip to hide
         }
 
         //-----------------------------------------------------
@@ -275,6 +438,64 @@ namespace Havengard.UI
 
         //-----------------------------------------------------
 
+        private void ShowHoverTooltip()
+        {
+            // Small tooltip implementation - can be added later
+        }
+
+        private void HideHoverTooltip()
+        {
+            // Hide hover tooltip implementation
+        }
+
+        private void RefreshTooltipForSelectedNode()
+        {
+            if (isSelected && keepTooltipOnSelect)
+            {
+                parentUI?.OnNodeClicked(abilityIndex, this);
+            }
+        }
+
+        private void ShowTooltipInternal()
+        {
+            if (classAbility == null || classAbility.ability == null)
+                return;
+
+            if (useTooltipManager && TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.ShowAbilityTooltip(classAbility.ability);
+            }
+            else
+            {
+                var tooltip = FindObjectOfType<SkillTreeTooltip>();
+                if (tooltip != null)
+                {
+                    Vector2 nodeWorldPos = RectTransform.position;
+                    tooltip.ShowTooltip(classAbility, nodeWorldPos, isUnlocked, canUnlock);
+                }
+            }
+        }
+
+        //-----------------------------------------------------
+
+        private void HideTooltipInternal()
+        {
+            if (useTooltipManager && TooltipManager.Instance != null)
+            {
+                TooltipManager.Instance.HideAbilityTooltip();
+            }
+            else
+            {
+                var tooltip = FindObjectOfType<SkillTreeTooltip>();
+                if (tooltip != null)
+                {
+                    tooltip.HideTooltip();
+                }
+            }
+        }
+
+        //-----------------------------------------------------
+
         public void PlayUnlockEffects()
         {
             if (unlockParticlePrefab != null && particleManager != null)
@@ -284,12 +505,9 @@ namespace Havengard.UI
 
             PlaySound(unlockSound);
 
-            if (enableScaleAnimation)
-            {
-                if (scaleRoutine != null)
-                    StopCoroutine(scaleRoutine);
-                scaleRoutine = StartCoroutine(UnlockScaleAnimation());
-            }
+            if (scaleRoutine != null)
+                StopCoroutine(scaleRoutine);
+            scaleRoutine = StartCoroutine(UnlockScaleAnimation());
         }
 
         //-----------------------------------------------------
@@ -342,32 +560,171 @@ namespace Havengard.UI
 
         private IEnumerator UnlockScaleAnimation()
         {
-            Vector3 originalScale = transform.localScale;
+            Vector3 originalScale = Vector3.one;
             Vector3 bigScale = originalScale * 1.3f;
+            float duration = 0.2f;
 
             float elapsed = 0f;
-            float punchDuration = 0.2f;
-
-            // Scale up
-            while (elapsed < punchDuration)
+            while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                float t = elapsed / punchDuration;
+                float t = elapsed / duration;
                 transform.localScale = Vector3.Lerp(originalScale, bigScale, t);
                 yield return null;
             }
-
-            // Scale back down
+            transform.localScale = originalScale;
             elapsed = 0f;
-            while (elapsed < punchDuration)
+            while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                float t = elapsed / punchDuration;
+                float t = elapsed / duration;
                 transform.localScale = Vector3.Lerp(bigScale, originalScale, t);
                 yield return null;
             }
 
             transform.localScale = originalScale;
+        }
+
+        //-----------------------------------------------------
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            // ✅ Only allow dragging unlocked abilities
+            if (!isUnlocked || classAbility == null || classAbility.ability == null)
+            {
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"[SkillTreeNodeUI] Cannot drag - Unlocked: {isUnlocked}, ClassAbility: {classAbility != null}, Ability: {classAbility?.ability != null}");
+                }
+                return;
+            }
+
+            isDragging = true;
+
+            // ✅ Start tracking this ability as being dragged
+            AbilityDragHandler.StartDrag(classAbility.ability);
+
+            // ✅ Create visual drag preview
+            CreateDragPreview();
+
+            // Hide tooltip during drag
+            HideTooltipInternal();
+            HideHoverTooltip();
+
+            Debug.Log($"[SkillTreeNodeUI] Started dragging: {classAbility.ability.abilityName}");
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            // ✅ Update drag preview position to follow cursor
+            if (dragPreview != null)
+            {
+                RectTransform previewRect = dragPreview.GetComponent<RectTransform>();
+                if (previewRect != null && dragCanvas != null)
+                {
+                    Vector2 localPoint;
+                    RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                        dragCanvas.GetComponent<RectTransform>(),
+                        eventData.position,
+                        dragCanvas.worldCamera,
+                        out localPoint
+                    );
+                    previewRect.localPosition = localPoint;
+                }
+            }
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            isDragging = false;
+
+            // ✅ Destroy drag preview
+            if (dragPreview != null)
+            {
+                Destroy(dragPreview);
+                dragPreview = null;
+            }
+
+            Debug.Log($"[SkillTreeNodeUI] OnEndDrag - ability: {(classAbility?.ability != null ? classAbility.ability.abilityName : "NULL")}");
+            
+            // ✅ Check what we're hovering over
+            var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            UnityEngine.EventSystems.EventSystem.current.RaycastAll(eventData, results);
+            
+            Debug.Log($"[SkillTreeNodeUI] OnEndDrag - Found {results.Count} raycast hits");
+            
+            bool droppedOnSlot = false;
+            foreach (var result in results)
+            {
+                var slot = result.gameObject.GetComponent<AbilitySlotUI>();
+                if (slot != null)
+                {
+                    Debug.Log($"[SkillTreeNodeUI] OnEndDrag - Found AbilitySlotUI on {result.gameObject.name}, slot index: {slot.GetSlotIndex()}");
+                    droppedOnSlot = true;
+                    break;
+                }
+            }
+            
+            // ✅ Only end drag if NOT dropped on a slot (let OnDrop handle it)
+            if (!droppedOnSlot)
+            {
+                Debug.Log($"[SkillTreeNodeUI] OnEndDrag - Not dropped on slot, clearing drag state");
+                AbilityDragHandler.ClearDraggedAbility();
+            }
+            else
+            {
+                Debug.Log($"[SkillTreeNodeUI] OnEndDrag - Dropped on slot, waiting for OnDrop to handle");
+            }
+        }
+
+        /// <summary>
+        /// Creates a visual preview that follows the cursor during drag
+        /// </summary>
+        private void CreateDragPreview()
+        {
+            if (dragCanvas == null || classAbility == null || classAbility.ability == null)
+            {
+                Debug.LogWarning("[SkillTreeNodeUI] Cannot create preview - missing canvas or ability");
+                return;
+            }
+
+            try
+            {
+                // Simple approach: Create directly on root canvas
+                Canvas rootCanvas = dragCanvas.rootCanvas ?? dragCanvas;
+                
+                dragPreview = new GameObject("SkillDragPreview");
+                dragPreview.transform.SetParent(rootCanvas.transform, false);
+                
+                // Add Canvas with high sort order
+                Canvas previewCanvas = dragPreview.AddComponent<Canvas>();
+                previewCanvas.overrideSorting = true;
+                previewCanvas.sortingOrder = 10000;
+                
+                // Add CanvasGroup
+                CanvasGroup cg = dragPreview.AddComponent<CanvasGroup>();
+                cg.alpha = 0.8f;
+                cg.blocksRaycasts = false;
+                cg.interactable = false;
+                
+                // Add RectTransform
+                RectTransform rt = dragPreview.AddComponent<RectTransform>();
+                rt.sizeDelta = new Vector2(60, 60);
+                rt.position = Input.mousePosition;
+                
+                // Add icon image
+                Image img = dragPreview.AddComponent<Image>();
+                img.sprite = classAbility.ability.icon;
+                img.raycastTarget = false;
+                
+                dragPreview.transform.SetAsLastSibling();
+                
+                Debug.Log($"[SkillTreeNodeUI] Created drag preview successfully");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[SkillTreeNodeUI] Failed to create drag preview: {e.Message}");
+            }
         }
     }
 }

@@ -47,7 +47,7 @@ namespace Havengard.UI
         [SerializeField] private Color hoverBorderColor = new Color(0.8f, 1f, 1f);
 
         [Header("Scale")]
-        [SerializeField] private float nodeScale = 0.7f;
+        [SerializeField] private float nodeScale = 0.6f; // Changed from 0.7f to make it 60px (0.6 * 100 = 60)
 
         private int parentAbilityIndex;
         private int subSkillIndex;

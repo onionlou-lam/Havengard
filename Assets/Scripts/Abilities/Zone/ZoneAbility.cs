@@ -16,6 +16,13 @@ namespace Havengard.Abilities
         [SerializeField] private StatusEffectData statusEffect;
         [SerializeField] private int maxStatusStacks = 1;
 
+        [Header("Zone Resource Generation")]
+        [Tooltip("Generate resource per tick while zone is active")]
+        public int resourcePerTick = 0;
+        [Tooltip("Generate resource based on damage dealt per tick")]
+        [Range(0f, 1f)]
+        public float resourcePercentPerTick = 0f;
+
         protected GameObject ZonePrefab => zonePrefab;
         protected bool FollowsCaster => followsCaster;
 

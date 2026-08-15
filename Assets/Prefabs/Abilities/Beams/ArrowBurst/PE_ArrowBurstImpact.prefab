@@ -567,7 +567,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    gravitySource: 0
+    gravitySource: 1
     maxNumParticles: 20
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
@@ -4702,9 +4702,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 5
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -4815,9 +4815,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 47421343
+  m_SortingLayer: 5
+  m_SortingOrder: 1
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 3
@@ -5402,7 +5402,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    gravitySource: 0
+    gravitySource: 1
     maxNumParticles: 100
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
@@ -9586,8 +9586,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 2b06b8b758b1c0a4398157eae225dc2b, type: 3}
-  m_Resource: {fileID: 8300000, guid: 2b06b8b758b1c0a4398157eae225dc2b, type: 3}
+  m_audioClip: {fileID: 8300000, guid: 39f5d2a36ea53d74190fefd1f41c4c6c, type: 3}
+  m_Resource: {fileID: 8300000, guid: 39f5d2a36ea53d74190fefd1f41c4c6c, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1.2
@@ -9748,6 +9748,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198388083358710476, guid: 1be2572052efd584296895036cceb277,
         type: 3}
+      propertyPath: InitialModule.gravitySource
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 198388083358710476, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
       propertyPath: EmissionModule.m_Bursts.Array.data[0].repeatInterval
       value: 1
       objectReference: {fileID: 0}
@@ -9793,8 +9798,38 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 199553225183257570, guid: 1be2572052efd584296895036cceb277,
         type: 3}
+      propertyPath: m_SortingLayer
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 199553225183257570, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
+      propertyPath: m_SortingOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 199553225183257570, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
+      propertyPath: m_SortingLayerID
+      value: 47421343
+      objectReference: {fileID: 0}
+    - target: {fileID: 199553225183257570, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 199817355426839294, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
+      propertyPath: m_SortingLayer
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 199817355426839294, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
+      propertyPath: m_SortingOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 199817355426839294, guid: 1be2572052efd584296895036cceb277,
+        type: 3}
+      propertyPath: m_SortingLayerID
+      value: 47421343
       objectReference: {fileID: 0}
     - target: {fileID: 199817355426839294, guid: 1be2572052efd584296895036cceb277,
         type: 3}

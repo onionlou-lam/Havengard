@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2341084bbe603c147915a3dba720aa73, type: 3}
+  m_Name: FocusingShot
+  m_EditorClassIdentifier: 
+  abilityName: Focusing Shot
+  description: Shoot an arrow that damnages the enemy and generates mana for the
+    Ranger.
+  icon: {fileID: 21300000, guid: 3b439976f5f4fdf45993cab1dbddee21, type: 3}
+  maxLevel: 5
+  damageType: 0
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 0
+  canHoldToCast: 0
+  scalesWithAttackSpeed: 0
+  baseDamage: 10
+  damagePerLevel: 5
+  lifestealPercent: 0
+  enableResourceGeneration: 1
+  resourceGenerationPercent: 1
+  flatResourceGeneration: 0
+  range: 15
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  requiresTarget: 0
+  castVFX: {fileID: 0}
+  impactVFX: {fileID: 107242, guid: e9f8734c3209fac4bbcde5705cfdec5b, type: 3}
+  castSFX: {fileID: 8300000, guid: 143beb74dfb5f8f40899fa14e293985b, type: 3}
+  impactSFX: {fileID: 8300000, guid: b487e419382b543d8920150dc5315093, type: 3}
+  customAnimationTrigger: 
+  activeSubSkills: []
+  investment:
+    investmentLevel: 0
+    investmentBonuses: []
+  baseCritChance: 0.05
+  baseCritDamage: 1.5
+  projectilePrefab: {fileID: 8653230985722798040, guid: acbf468e694069c4d843b242a1cdf654,
+    type: 3}
+  projectileSpeed: 20
+  projectileLifetime: 5
+  homing: 0
+  homingStrength: 5
+  trailTime: 0.5
+  projectileScale: 1
+  hasAOE: 0
+  aoeRadius: 3
+  aoeDamageMultiplier: 0.5
+  baseProjectileCount: 1
+  baseSpreadAngle: 15
+  wallHitSFX: {fileID: 8300000, guid: 47cc942bad3532341ae8833e0360b34a, type: 3}
+  wallLayers:
+    serializedVersion: 2
+    m_Bits: 1024
