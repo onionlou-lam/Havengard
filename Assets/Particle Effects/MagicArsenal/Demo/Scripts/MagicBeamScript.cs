@@ -45,7 +45,11 @@ namespace MagicArsenal
         [Tooltip("Maximum beam distance in world units")]
         public float maxBeamDistance = 100f;
         [Tooltip("Layers that block the beam visually (leave as Nothing for infinite beam)")]
-        public LayerMask beamBlockingLayers = 0; // ADD THIS - default to "Nothing"
+        public LayerMask beamBlockingLayers = 0;
+
+        [Header("Particle Rotation")]
+        [Tooltip("Force particle systems to align with beam direction (for arrow/projectile particles)")]
+        public bool rotateParticles = true;
 
         [Header("Put Sliders here (Optional)")]
         public Slider endOffSetSlider;
@@ -62,6 +66,10 @@ namespace MagicArsenal
         private float currentChargePercent = 0f;
         private Vector3 originalStartScale = Vector3.one;
         private Vector3 originalEndScale = Vector3.one;
+
+        // Cache particle systems for rotation
+        private ParticleSystem[] startParticleSystems;
+        private ParticleSystem[] endParticleSystems;
 
         // Use Awake instead of Start for immediate initialization
         void Awake()
@@ -114,6 +122,12 @@ namespace MagicArsenal
             if (beamEnd != null)
                 originalEndScale = beamEnd.transform.localScale;
             
+            // Cache particle systems for rotation
+            if (beamStart != null)
+                startParticleSystems = beamStart.GetComponentsInChildren<ParticleSystem>();
+            if (beamEnd != null)
+                endParticleSystems = beamEnd.GetComponentsInChildren<ParticleSystem>();
+            
             // Ensure proper rendering in 2D
             if (use2DMode && line != null)
             {
@@ -142,6 +156,9 @@ namespace MagicArsenal
             SetParticleRendererSorting(beamStart);
             SetParticleRendererSorting(beamEnd);
             
+            // Configure particle systems for directional emission
+            ConfigureParticleSystemsForDirection();
+            
             beamStart.SetActive(false);
             beamEnd.SetActive(false);
             beam.SetActive(false);
@@ -156,6 +173,47 @@ namespace MagicArsenal
             {
                 renderer.sortingLayerName = "Characters";
                 renderer.sortingOrder = 100;
+            }
+        }
+
+        /// <summary>
+        /// Configure particle systems to emit in the direction of the beam
+        /// </summary>
+        void ConfigureParticleSystemsForDirection()
+        {
+            if (!rotateParticles) return;
+
+            // Configure beamStart particles to emit forward
+            ConfigureParticleDirection(startParticleSystems, true);
+            
+            // Configure beamEnd particles (if needed)
+            ConfigureParticleDirection(endParticleSystems, false);
+        }
+
+        void ConfigureParticleDirection(ParticleSystem[] systems, bool isStartEffect)
+        {
+            if (systems == null) return;
+
+            foreach (var ps in systems)
+            {
+                if (ps == null) continue;
+
+                var main = ps.main;
+                
+                // Use local space so particles inherit parent rotation
+                main.simulationSpace = ParticleSystemSimulationSpace.Local;
+                
+                var shape = ps.shape;
+                shape.enabled = true;
+                shape.shapeType = ParticleSystemShapeType.Cone;
+                shape.angle = 0f; // Tight cone for arrow-like emission
+                shape.radius = 0.1f;
+                
+                if (isStartEffect)
+                {
+                    // Start particles emit forward (in local Z+ direction for 2D)
+                    shape.rotation = new Vector3(0, 90, 0); // Emit along local right (for 2D facing right)
+                }
             }
         }
 
@@ -186,7 +244,7 @@ namespace MagicArsenal
                 {
                     Vector3 targetPoint = GetTargetPoint();
                     Vector3 dir = targetPoint - transform.position;
-                    ShootBeamInDir(transform.position, dir); // ADD ShootBeamInDir here
+                    ShootBeamInDir(transform.position, dir);
                 }
 
                 if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))

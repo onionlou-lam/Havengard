@@ -90,9 +90,8 @@ namespace Havengard.Combat
             if (fireSFX != null)
                 AudioSource.PlayClipAtPoint(fireSFX, transform.position, 0.8f);
 
-            // 5. Spawn and initialize projectile
-            Quaternion rotation = Quaternion.LookRotation(Vector3.forward, dir);
-            GameObject projGO = Instantiate(projectilePrefab, spawnPos, rotation);
+            // 5. Spawn projectile - rotation will be set by Projectile.Initialize()
+            GameObject projGO = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
             var proj = projGO.GetComponent<Projectile>();
             if (proj != null)
             {

@@ -162,7 +162,7 @@ namespace Havengard.UI
 
         private void UpdateInvestmentDisplay()
         {
-            // ✅ Update counter badge (on top of node)
+            // ✅ Update counter badge (optional - top right of node showing "5/20")
             if (investmentCounterObject != null)
             {
                 bool shouldShow = isUnlocked && investmentLevel > 0;
@@ -183,7 +183,7 @@ namespace Havengard.UI
                 }
             }
 
-            // ✅ Update investment level display below node
+            // ✅ Update investment level display below node ("+5" style)
             if (investmentLevelText != null)
             {
                 if (isUnlocked && investmentLevel > 0)
@@ -194,15 +194,19 @@ namespace Havengard.UI
                     // Color based on investment level
                     if (investmentLevel >= MAX_INVESTMENT)
                     {
-                        investmentLevelText.color = maxInvestmentColor;
+                        investmentLevelText.color = maxInvestmentColor; // Gold
                     }
                     else if (investmentLevel >= 10)
+                    {
+                        investmentLevelText.color = new Color(0.5f, 1f, 0.5f); // Bright green
+                    }
+                    else if (investmentLevel >= 5)
                     {
                         investmentLevelText.color = new Color(0.8f, 1f, 0.8f); // Light green
                     }
                     else
                     {
-                        investmentLevelText.color = Color.white;
+                        investmentLevelText.color = Color.white; // White for 1-4
                     }
                 }
                 else

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 12018526}
   - component: {fileID: 3392891844238150506}
   m_Layer: 9
-  m_Name: ArrowBurst_Prefab
+  m_Name: ArrowBurstBeam_Prefab
   m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,8 +30,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 7143557012256557838}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!120 &12018526
@@ -58,7 +57,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 851294589e63e214893c8de70fbddfa5, type: 2}
+  - {fileID: 2100000, guid: 2e75f864308727c4fa46bb3c3ea74390, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -164,86 +163,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   beamLineRendererPrefab:
   - {fileID: 168570, guid: d43e628796a11fd48b54e73872508b37, type: 3}
-  beamStartPrefab: []
+  beamStartPrefab:
+  - {fileID: 101350, guid: ea72aca1214b2ab4daca57345d563d07, type: 3}
   beamEndPrefab:
   - {fileID: 182458, guid: 4678d9828f437c042a3c8d114d8f3c3b, type: 3}
-  beamEndOffset: 0.5
-  textureScrollSpeed: 20
+  beamEndOffset: 0
+  textureScrollSpeed: 8
   textureLengthScale: 3
-  minBeamWidth: 0.9
+  minBeamWidth: 0.25
   maxBeamWidth: 1
-  minStartScale: 0.8
-  maxStartScale: 0.9
+  minStartScale: 0.25
+  maxStartScale: 0.8
   use2DMode: 1
-  maxBeamDistance: 20
+  maxBeamDistance: 8
   beamBlockingLayers:
     serializedVersion: 2
     m_Bits: 1280
-  rotateParticles: 1
   endOffSetSlider: {fileID: 0}
   scrollSpeedSlider: {fileID: 0}
   textBeamName: {fileID: 0}
   externalControl: 0
---- !u!1001 &7143557012256326778
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 441978}
-    m_Modifications:
-    - target: {fileID: 101350, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_Name
-      value: PE_ArrowBurstStart
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 90
-      objectReference: {fileID: 0}
-    - target: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: -90
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
---- !u!4 &7143557012256557838 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 495476, guid: 734eb1dd6e6878f41af41b8fe96db888,
-    type: 3}
-  m_PrefabInstance: {fileID: 7143557012256326778}
-  m_PrefabAsset: {fileID: 0}

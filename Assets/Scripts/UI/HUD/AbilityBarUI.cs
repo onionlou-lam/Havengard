@@ -64,10 +64,11 @@ namespace Havengard.UI
             // Sync with AbilityUser on start
             RefreshAll();
             
-            // Subscribe to ability changes
+            // Subscribe to ability changes and cooldowns
             if (abilityUser != null)
             {
                 abilityUser.OnAbilitiesChanged += RefreshAll;
+                abilityUser.OnAbilityCooldownStarted += OnCooldownStarted;
             }
         }
 
@@ -77,7 +78,16 @@ namespace Havengard.UI
             if (abilityUser != null)
             {
                 abilityUser.OnAbilitiesChanged -= RefreshAll;
+                abilityUser.OnAbilityCooldownStarted -= OnCooldownStarted;
             }
+        }
+
+        /// <summary>
+        /// Called when an ability goes on cooldown
+        /// </summary>
+        private void OnCooldownStarted(int abilityIndex, float duration)
+        {
+            TriggerCooldown(abilityIndex, duration);
         }
 
         private void UpdateKeybindLabels()

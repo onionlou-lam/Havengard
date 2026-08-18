@@ -55,7 +55,14 @@ MonoBehaviour:
   - ability: {fileID: 11400000, guid: 1d8f27eb38f08fc4c8223f7f0ecb23e5, type: 2}
     requiredLevel: 1
     prerequisiteIndices: 01000000
-    treePosition: {x: 5, y: 3}
+    treePosition: {x: 6, y: 3}
+    skillPointCost: 0
+    subSkills: []
+    customDescription: 
+  - ability: {fileID: 11400000, guid: 0f153c0c1651c284c82e507b19d88dbc, type: 2}
+    requiredLevel: 1
+    prerequisiteIndices: 01000000
+    treePosition: {x: 6, y: 1}
     skillPointCost: 0
     subSkills: []
     customDescription: 

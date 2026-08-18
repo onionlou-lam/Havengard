@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 860fef899a4e7904e95325cf910f6129, type: 3}
-  m_Name: ArrowBurst
+  m_Name: ArrowBurst_Beam
   m_EditorClassIdentifier: 
-  abilityName: Arrow Burst
-  description: Channel firing a repeating wave of arrows in a direct line.
-  icon: {fileID: 21300000, guid: 1604c0811fd0c3040962bf0c7aa39316, type: 3}
+  abilityName: Arrow Burst (Beam)
+  description: 
+  icon: {fileID: 21300000, guid: bf6260164e3f0d9478ebb915553bb260, type: 3}
   maxLevel: 5
   damageType: 0
   canHeal: 0
   healingRatio: 0
-  baseCooldown: 5
-  resourceCost: 30
+  baseCooldown: 2
+  resourceCost: 5
   canHoldToCast: 0
   scalesWithAttackSpeed: 0
-  baseDamage: 10
-  damagePerLevel: 10
+  baseDamage: 80
+  damagePerLevel: 12
   lifestealPercent: 0
   enableResourceGeneration: 0
   resourceGenerationPercent: 0
@@ -35,37 +35,37 @@ MonoBehaviour:
     m_Bits: 256
   requiresTarget: 0
   castVFX: {fileID: 101350, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-  impactVFX: {fileID: 182458, guid: 4678d9828f437c042a3c8d114d8f3c3b, type: 3}
-  castSFX: {fileID: 8300000, guid: 5f873dde0c912f34d8ca8104b742b9e6, type: 3}
-  impactSFX: {fileID: 8300000, guid: b487e419382b543d8920150dc5315093, type: 3}
+  impactVFX: {fileID: 143488, guid: 7ab599370938e1948a5eb2967f1cbd66, type: 3}
+  castSFX: {fileID: 8300000, guid: c50a81b498c81364788796ca5419a03e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
   customAnimationTrigger: 
   activeSubSkills: []
   investment:
-    investmentLevel: 1
+    investmentLevel: 0
     investmentBonuses: []
   baseCritChance: 0.05
   baseCritDamage: 1.5
-  channelDuration: 5
+  channelDuration: 15
   tickRate: 0.3
-  canMoveWhileChanneling: 0
-  preventMovement: 0
+  canMoveWhileChanneling: 1
+  preventMovement: 1
   minReleasePercent: 0.05
   allowPartialRelease: 1
-  chargingVFXPrefab: {fileID: 101350, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
+  chargingVFXPrefab: {fileID: 139178, guid: 6b3488aa97f1d514d8a4fa45cc3b2dad, type: 3}
   beamPrefab: {fileID: 168570, guid: 5b011e821e36bac4993f120e72e1169d, type: 3}
   resourcePerTick: 0
   resourcePercentPerTick: 0
-  beamWidth: 2
-  beamMaxDistance: 40
+  beamWidth: 1.25
+  beamMaxDistance: 8
   hitLayers:
     serializedVersion: 2
-    m_Bits: 1280
-  useBeamPulsing: 0
+    m_Bits: 1792
+  useBeamPulsing: 1
   pulseInfo: Configure pulse in beam prefab
   damagePerTickMultiplier: 0.4
-  rampDamageWithCharge: 0
+  rampDamageWithCharge: 1
   minDamagePercent: 0.4
-  minTimeBetweenTicks: 0.4
+  minTimeBetweenTicks: 0.3
   frostSlowPercent: 1
   fireBurnDamagePerTick: 0
   lightningChainCount: 0

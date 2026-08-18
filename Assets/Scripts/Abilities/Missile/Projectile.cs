@@ -1,13 +1,17 @@
-﻿using System;
+﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace Havengard.Abilities
+namespace Havengard.Combat
 {
     [RequireComponent(typeof(Rigidbody2D))]
     public class Projectile : MonoBehaviour
     {
+        [Header("Rotation Settings")]
+        [Tooltip("Offset angle if projectile sprite doesn't face right (0°). E.g., if sprite faces up, use 90")]
+        [SerializeField] private float spriteAngleOffset = 90f;
+
         private Vector3 direction;
         private float speed;
         private float lifetime;
@@ -73,6 +77,9 @@ namespace Havengard.Abilities
             {
                 rb.linearVelocity = this.direction * this.speed;
             }
+
+            // Rotate projectile to face direction of travel
+            RotateToDirection(this.direction);
 
             // Enable collision after a short delay
             StartCoroutine(EnableCollisionAfterDelay(0.1f));
@@ -165,8 +172,22 @@ namespace Havengard.Abilities
                 Vector2 targetDirection = (homingTarget.position - transform.position).normalized;
                 rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, targetDirection * speed, Time.deltaTime * homingStrength);
 
-                float angle = Mathf.Atan2(rb.linearVelocity.y, rb.linearVelocity.x) * Mathf.Rad2Deg;
-                transform.rotation = Quaternion.Euler(0, 0, angle);
+                // Update rotation for homing projectiles
+                RotateToDirection(rb.linearVelocity);
+            }
+        }
+
+        /// <summary>
+        /// Rotate the projectile to face its direction of travel (2D)
+        /// Accounts for sprite orientation offset
+        /// </summary>
+        private void RotateToDirection(Vector3 dir)
+        {
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                // Apply sprite offset (e.g., if sprite faces up instead of right, add 90)
+                transform.rotation = Quaternion.Euler(0, 0, angle - spriteAngleOffset);
             }
         }
 
