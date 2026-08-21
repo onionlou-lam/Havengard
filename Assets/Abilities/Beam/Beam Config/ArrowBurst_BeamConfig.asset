@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1343854c2b92fa649a1eb2d8326a9268, type: 3}
+  m_Name: ArrowBurst_BeamConfig
+  m_EditorClassIdentifier: 
+  beamEndOffset: 0.2
+  textureScrollSpeed: 50
+  textureLengthScale: 2
+  minBeamWidth: 0.8
+  maxBeamWidth: 1
+  minParticleScale: 1
+  maxParticleScale: 1
+  beamStartPrefabScale: 1
+  beamEndPrefabScale: 0.6
+  rotateParticles: 1
+  useLocalParticleSpace: 1
+  useStretchedBillboard: 1
+  stretchOnlyStartParticles: 1
+  particleSpeedScale: 0.1
+  particleLengthScale: 0.3
+  emissionConeAngle: 3
+  emissionRadius: 0.05
+  sortingLayer: Characters
+  sortingOrder: 5
+  particleSortingOrder: 100
+  maxBeamDistance: 8
+  beamBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 1024

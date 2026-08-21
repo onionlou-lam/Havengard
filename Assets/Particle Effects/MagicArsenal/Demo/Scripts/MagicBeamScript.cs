@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using Havengard.Abilities; // Import for BeamConfig
 
 namespace MagicArsenal
 {
@@ -26,30 +27,41 @@ namespace MagicArsenal
         private new Transform transform;
         private float textureScrollOffset;
 
-        [Header("Adjustable Variables")]
+        [Header("Configuration")]
+        [Tooltip("Optional: Use a BeamConfig asset to override settings below")]
+        public BeamConfig beamConfig;
+
+        [Header("Adjustable Variables (Overridden by BeamConfig if set)")]
         public float beamEndOffset = 1f;
         public float textureScrollSpeed = 8f;
         public float textureLengthScale = 3;
 
         [Header("Beam Width/Charge Scaling")]
-        [Tooltip("When externally controlled, charge will lerp the line width between these values")]
         public float minBeamWidth = 0.05f;
         public float maxBeamWidth = 0.4f;
-        [Tooltip("When externally controlled, scale start/end effect transforms between these values")]
         public float minStartScale = 0.2f;
         public float maxStartScale = 1.0f;
 
-        [Header("2D Support")]
-        [Tooltip("Enable for 2D games - uses screen to world point instead of raycasting")]
-        public bool use2DMode = true;
-        [Tooltip("Maximum beam distance in world units")]
-        public float maxBeamDistance = 100f;
-        [Tooltip("Layers that block the beam visually (leave as Nothing for infinite beam)")]
-        public LayerMask beamBlockingLayers = 0;
+        [Header("Prefab Scale Multipliers (Overridden by BeamConfig if set)")]
+        [Tooltip("Independent scale multiplier for Beam Start prefab (default 1.0). Reduce if start effect is too large.")]
+        [Range(0.1f, 5f)]
+        public float beamStartPrefabScale = 1.0f;
+        
+        [Tooltip("Independent scale multiplier for Beam End prefab (default 1.0). Reduce if end effect is too large.")]
+        [Range(0.1f, 5f)]
+        public float beamEndPrefabScale = 1.0f;
 
-        [Header("Particle Rotation")]
-        [Tooltip("Force particle systems to align with beam direction (for arrow/projectile particles)")]
+        [Header("2D Support")]
+        public bool use2DMode = true;
+        public float maxBeamDistance = 100f;
+        public LayerMask beamBlockingLayers = 0;
         public bool rotateParticles = true;
+
+        [Header("Dynamic Particle Lifetime")]
+        [Tooltip("Adjust particle lifetime dynamically based on beam distance to prevent particles going through walls")]
+        public bool dynamicParticleLifetime = true;
+        [Tooltip("Particle speed in units per second (used to calculate lifetime)")]
+        public float particleSpeed = 10f;
 
         [Header("Put Sliders here (Optional)")]
         public Slider endOffSetSlider;
@@ -61,21 +73,84 @@ namespace MagicArsenal
         private bool isFiringBeam = false;
         private bool isInitialized = false;
 
-        // When set to true, this component will ignore its built-in mouse handling and accept external Activate/Deactivate/UpdateDirectionToPoint calls.
         [HideInInspector] public bool externalControl = false;
         private float currentChargePercent = 0f;
         private Vector3 originalStartScale = Vector3.one;
         private Vector3 originalEndScale = Vector3.one;
 
-        // Cache particle systems for rotation
         private ParticleSystem[] startParticleSystems;
         private ParticleSystem[] endParticleSystems;
 
-        // Use Awake instead of Start for immediate initialization
+        // Cached settings (from BeamConfig or inspector)
+        private float _beamEndOffset;
+        private float _textureScrollSpeed;
+        private float _textureLengthScale;
+        private float _minBeamWidth;
+        private float _maxBeamWidth;
+        private float _minStartScale;
+        private float _maxStartScale;
+        private float _beamStartPrefabScale;
+        private float _beamEndPrefabScale;
+        private float _maxBeamDistance;
+        private LayerMask _beamBlockingLayers;
+        private bool _rotateParticles;
+        private string _sortingLayer;
+        private int _sortingOrder;
+        private int _particleSortingOrder;
+
+        private float currentBeamDistance = 0f;
+
         void Awake()
         {
             transform = gameObject.transform;
+            ApplyBeamConfig();
             EnsureInitialized();
+        }
+
+        /// <summary>
+        /// Apply BeamConfig if set, otherwise use inspector values
+        /// </summary>
+        void ApplyBeamConfig()
+        {
+            if (beamConfig != null)
+            {
+                _beamEndOffset = beamConfig.beamEndOffset;
+                _textureScrollSpeed = beamConfig.textureScrollSpeed;
+                _textureLengthScale = beamConfig.textureLengthScale;
+                _minBeamWidth = beamConfig.minBeamWidth;
+                _maxBeamWidth = beamConfig.maxBeamWidth;
+                _minStartScale = beamConfig.minParticleScale;
+                _maxStartScale = beamConfig.maxParticleScale;
+                _beamStartPrefabScale = beamConfig.beamStartPrefabScale;
+                _beamEndPrefabScale = beamConfig.beamEndPrefabScale;
+                _maxBeamDistance = beamConfig.maxBeamDistance;
+                _beamBlockingLayers = beamConfig.beamBlockingLayers;
+                _rotateParticles = beamConfig.rotateParticles;
+                _sortingLayer = beamConfig.sortingLayer;
+                _sortingOrder = beamConfig.sortingOrder;
+                _particleSortingOrder = beamConfig.particleSortingOrder;
+
+                Debug.Log($"[MagicBeamScript] Applied BeamConfig: {beamConfig.name} - StartScale: {_beamStartPrefabScale}, EndScale: {_beamEndPrefabScale}");
+            }
+            else
+            {
+                // Use inspector values
+                _beamEndOffset = beamEndOffset;
+                _textureScrollSpeed = textureScrollSpeed;
+                _textureLengthScale = textureLengthScale;
+                _minBeamWidth = minBeamWidth;
+                _maxBeamWidth = maxBeamWidth;
+                _minStartScale = minStartScale;
+                _maxStartScale = maxStartScale;
+                _beamStartPrefabScale = beamStartPrefabScale;
+                _beamEndPrefabScale = beamEndPrefabScale;
+                _maxBeamDistance = maxBeamDistance;
+                _beamBlockingLayers = beamBlockingLayers;
+                _rotateParticles = rotateParticles;
+                _sortingLayer = "Characters";
+                _sortingOrder = 5;
+                _particleSortingOrder = 100;
+            }
         }
 
         void Start()
@@ -83,9 +158,9 @@ namespace MagicArsenal
             if (textBeamName)
                 textBeamName.text = beamLineRendererPrefab[(int)currentBeam].name;
             if (endOffSetSlider)
-                endOffSetSlider.value = beamEndOffset;
+                endOffSetSlider.value = _beamEndOffset;
             if (scrollSpeedSlider)
-                scrollSpeedSlider.value = textureScrollSpeed;
+                scrollSpeedSlider.value = _textureScrollSpeed;
         }
 
         void EnsureInitialized()
@@ -106,7 +181,6 @@ namespace MagicArsenal
 
         void CreateBeamObjects()
         {
-            // Clean up existing objects if any
             if (beamStart != null) Destroy(beamStart);
             if (beamEnd != null) Destroy(beamEnd);
             if (beam != null) Destroy(beam);
@@ -116,47 +190,48 @@ namespace MagicArsenal
             beam = Instantiate(beamLineRendererPrefab[(int)currentBeam], Vector3.zero, Quaternion.identity, transform);
             line = beam.GetComponent<LineRenderer>();
             
-            // IMPORTANT: Store the original scales from the prefabs
+            // Store original scales from prefabs
             if (beamStart != null)
                 originalStartScale = beamStart.transform.localScale;
             if (beamEnd != null)
                 originalEndScale = beamEnd.transform.localScale;
             
-            // Cache particle systems for rotation
+            // Apply independent prefab scale multipliers immediately
+            if (beamStart != null)
+            {
+                beamStart.transform.localScale = originalStartScale * _beamStartPrefabScale;
+                // Update stored original to include the base multiplier
+                originalStartScale = beamStart.transform.localScale;
+                Debug.Log($"[MagicBeamScript] Applied Start Prefab Scale: {_beamStartPrefabScale} -> Final Scale: {originalStartScale}");
+            }
+            if (beamEnd != null)
+            {
+                beamEnd.transform.localScale = originalEndScale * _beamEndPrefabScale;
+                // Update stored original to include the base multiplier
+                originalEndScale = beamEnd.transform.localScale;
+                Debug.Log($"[MagicBeamScript] Applied End Prefab Scale: {_beamEndPrefabScale} -> Final Scale: {originalEndScale}");
+            }
+            
             if (beamStart != null)
                 startParticleSystems = beamStart.GetComponentsInChildren<ParticleSystem>();
             if (beamEnd != null)
                 endParticleSystems = beamEnd.GetComponentsInChildren<ParticleSystem>();
             
-            // Ensure proper rendering in 2D
             if (use2DMode && line != null)
             {
                 line.useWorldSpace = true;
-                
-                // Set sorting layer for 2D visibility
-                line.sortingLayerName = "Characters";
-                line.sortingOrder = 5;
-                
-                // Force alignment for 2D
+                line.sortingLayerName = _sortingLayer;
+                line.sortingOrder = _sortingOrder;
                 line.alignment = LineAlignment.TransformZ;
-                
-                // Ensure the line has a reasonable width
-                line.startWidth = 0.2f;
-                line.endWidth = 0.2f;
-                
-                // Make sure positions are set (even if zero initially)
+                line.startWidth = _minBeamWidth;
+                line.endWidth = _minBeamWidth;
                 line.positionCount = 2;
                 line.SetPosition(0, Vector3.zero);
                 line.SetPosition(1, Vector3.forward);
-                
-                Debug.Log($"LineRenderer created - Sorting Layer: {line.sortingLayerName}, Order: {line.sortingOrder}, Width: {line.startWidth}, Material: {line.sharedMaterial?.name}, Positions: {line.positionCount}");
             }
             
-            // Also set sorting for particle renderers if they exist
             SetParticleRendererSorting(beamStart);
             SetParticleRendererSorting(beamEnd);
-            
-            // Configure particle systems for directional emission
             ConfigureParticleSystemsForDirection();
             
             beamStart.SetActive(false);
@@ -171,22 +246,16 @@ namespace MagicArsenal
             ParticleSystemRenderer[] renderers = particleObj.GetComponentsInChildren<ParticleSystemRenderer>();
             foreach (var renderer in renderers)
             {
-                renderer.sortingLayerName = "Characters";
-                renderer.sortingOrder = 100;
+                renderer.sortingLayerName = _sortingLayer;
+                renderer.sortingOrder = _particleSortingOrder;
             }
         }
 
-        /// <summary>
-        /// Configure particle systems to emit in the direction of the beam
-        /// </summary>
         void ConfigureParticleSystemsForDirection()
         {
-            if (!rotateParticles) return;
+            if (!_rotateParticles) return;
 
-            // Configure beamStart particles to emit forward
             ConfigureParticleDirection(startParticleSystems, true);
-            
-            // Configure beamEnd particles (if needed)
             ConfigureParticleDirection(endParticleSystems, false);
         }
 
@@ -200,19 +269,20 @@ namespace MagicArsenal
 
                 var main = ps.main;
                 
-                // Use local space so particles inherit parent rotation
-                main.simulationSpace = ParticleSystemSimulationSpace.Local;
+                if (beamConfig != null && beamConfig.useLocalParticleSpace)
+                {
+                    main.simulationSpace = ParticleSystemSimulationSpace.Local;
+                }
                 
                 var shape = ps.shape;
                 shape.enabled = true;
                 shape.shapeType = ParticleSystemShapeType.Cone;
-                shape.angle = 0f; // Tight cone for arrow-like emission
+                shape.angle = 0f;
                 shape.radius = 0.1f;
                 
                 if (isStartEffect)
                 {
-                    // Start particles emit forward (in local Z+ direction for 2D)
-                    shape.rotation = new Vector3(0, 90, 0); // Emit along local right (for 2D facing right)
+                    shape.rotation = new Vector3(0, 90, 0);
                 }
             }
         }
@@ -228,125 +298,64 @@ namespace MagicArsenal
                 if (Input.GetMouseButtonDown(0))
                 {
                     isFiringBeam = true;
-                    beamStart.SetActive(true);
-                    beamEnd.SetActive(true);
-                    beam.SetActive(true);
+                    if (beamStart) beamStart.SetActive(true);
+                    if (beamEnd) beamEnd.SetActive(true);
+                    if (beam) beam.SetActive(true);
                 }
+
                 if (Input.GetMouseButtonUp(0))
                 {
                     isFiringBeam = false;
-                    beamStart.SetActive(false);
-                    beamEnd.SetActive(false);
-                    beam.SetActive(false);
-                }
-
-                if (isFiringBeam)
-                {
-                    Vector3 targetPoint = GetTargetPoint();
-                    Vector3 dir = targetPoint - transform.position;
-                    ShootBeamInDir(transform.position, dir);
-                }
-
-                if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
-                {
-                    currentBeam = (BeamType)(((int)currentBeam + 1) % beamLineRendererPrefab.Length);
-                    UpdateBeam();
-                }
-                else if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
-                {
-                    currentBeam = (BeamType)(((int)currentBeam - 1 + beamLineRendererPrefab.Length) % beamLineRendererPrefab.Length);
-                    UpdateBeam();
+                    if (beamStart) beamStart.SetActive(false);
+                    if (beamEnd) beamEnd.SetActive(false);
+                    if (beam) beam.SetActive(false);
                 }
             }
 
-            // Scroll texture even when externally controlled if active
-            if (line != null && line.gameObject.activeSelf)
+            if (isFiringBeam)
             {
-                textureScrollOffset -= Time.deltaTime * textureScrollSpeed;
-                if (textureScrollOffset < 0f)
-                    textureScrollOffset += 1f;
-                line.sharedMaterial.mainTextureOffset = new Vector2(textureScrollOffset, 0);
-            }
-        }
-
-        Vector3 GetTargetPoint()
-        {
-            if (use2DMode)
-            {
-                // 2D Mode: Convert mouse to world point
-                Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                mouseWorld.z = transform.position.z; // Keep same Z as beam
-                return mouseWorld;
-            }
-            else
-            {
-                // 3D Mode: Raycast
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit))
+                Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                
+                if (use2DMode)
                 {
-                    return hit.point;
+                    mousePos.z = 0f;
                 }
-                else
+
+                Vector3 start = transform.position;
+                Vector3 dir = mousePos - start;
+                ShootBeamInDir(start, dir);
+            }
+
+            if (line != null && isFiringBeam)
+            {
+                textureScrollOffset += Time.deltaTime * _textureScrollSpeed;
+                if (line.sharedMaterial != null)
                 {
-                    return ray.origin + ray.direction * maxBeamDistance;
+                    line.sharedMaterial.mainTextureOffset = new Vector2(textureScrollOffset, 0);
                 }
             }
-        }
-
-        void UpdateBeam()
-        {
-            if (textBeamName)
-                textBeamName.text = beamLineRendererPrefab[(int)currentBeam].name;
-            Destroy(beamStart);
-            Destroy(beamEnd);
-            Destroy(beam);
-            CreateBeamObjects();
         }
 
         void ShootBeamInDir(Vector3 start, Vector3 dir)
         {
-            if (line == null)
-            {
-                Debug.LogError("Line is null in ShootBeamInDir!");
-                return;
-            }
-
-            // Ensure Z is consistent in 2D
-            if (use2DMode)
-            {
-                start.z = 0f;
-            }
+            if (line == null) return;
 
             line.SetPosition(0, start);
             beamStart.transform.position = start;
 
             Vector3 end = Vector3.zero;
-            
+
             if (use2DMode)
             {
-                // 2D: Calculate end point based on direction and max distance
-                Vector2 start2D = start;
-                Vector2 dir2D = new Vector2(dir.x, dir.y).normalized;
-                
-                // Only raycast if we have blocking layers set
-                if (beamBlockingLayers.value != 0)
+                RaycastHit2D hit = Physics2D.Raycast(start, dir, _maxBeamDistance, _beamBlockingLayers);
+                if (hit.collider != null)
                 {
-                    RaycastHit2D hit2D = Physics2D.Raycast(start2D, dir2D, maxBeamDistance, beamBlockingLayers);
-                    if (hit2D.collider != null)
-                    {
-                        end = hit2D.point - (dir2D * beamEndOffset);
-                        end.z = 0f;
-                    }
-                    else
-                    {
-                        end = start + (dir.normalized * maxBeamDistance);
-                        end.z = 0f;
-                    }
+                    end = hit.point - (Vector2)(dir.normalized * _beamEndOffset);
+                    end.z = 0f;
                 }
                 else
                 {
-                    // No blocking layers - beam goes full distance
-                    end = start + (dir.normalized * maxBeamDistance);
+                    end = start + (dir.normalized * _maxBeamDistance);
                     end.z = 0f;
                 }
             }
@@ -355,9 +364,9 @@ namespace MagicArsenal
                 // 3D: Original behavior
                 RaycastHit hit;
                 if (Physics.Raycast(start, dir, out hit))
-                    end = hit.point - (dir.normalized * beamEndOffset);
+                    end = hit.point - (dir.normalized * _beamEndOffset);
                 else
-                    end = transform.position + (dir.normalized * maxBeamDistance);
+                    end = transform.position + (dir.normalized * _maxBeamDistance);
             }
 
             beamEnd.transform.position = end;
@@ -380,7 +389,46 @@ namespace MagicArsenal
             }
 
             float distance = Vector3.Distance(start, end);
-            line.sharedMaterial.mainTextureScale = new Vector2(distance / textureLengthScale, 1);
+            currentBeamDistance = distance;
+            line.sharedMaterial.mainTextureScale = new Vector2(distance / _textureLengthScale, 1);
+
+            // Dynamically adjust particle lifetime based on distance
+            if (dynamicParticleLifetime)
+            {
+                UpdateParticleLifetimes(distance);
+            }
+        }
+
+        /// <summary>
+        /// Dynamically adjust particle lifetimes based on beam distance
+        /// </summary>
+        void UpdateParticleLifetimes(float beamDistance)
+        {
+            if (startParticleSystems == null) return;
+
+            // Calculate how long particles should live to reach the end of the beam
+            // Lifetime = Distance / Speed
+            float calculatedLifetime = beamDistance / particleSpeed;
+            
+            // Clamp to reasonable values
+            calculatedLifetime = Mathf.Clamp(calculatedLifetime, 0.1f, 2f);
+
+            foreach (var ps in startParticleSystems)
+            {
+                if (ps == null) continue;
+
+                // Skip orb/glow effects (they don't travel along the beam)
+                if (ps.name.ToLower().Contains("orb") || 
+                    ps.name.ToLower().Contains("glow") || 
+                    ps.name.ToLower().Contains("swirl") ||
+                    ps.name.ToLower().Contains("aura"))
+                {
+                    continue;
+                }
+
+                var main = ps.main;
+                main.startLifetime = calculatedLifetime;
+            }
         }
 
         // -- Public API for external channel/ability controllers --
@@ -394,8 +442,6 @@ namespace MagicArsenal
             if (beamStart) beamStart.SetActive(true);
             if (beamEnd) beamEnd.SetActive(true);
             if (beam) beam.SetActive(true);
-            
-            Debug.Log($"Beam Activated - Start: {beamStart != null}, End: {beamEnd != null}, Beam: {beam != null}, Line: {line != null}");
         }
 
         public void Deactivate()
@@ -411,20 +457,18 @@ namespace MagicArsenal
             currentChargePercent = Mathf.Clamp01(percent);
             if (line != null)
             {
-                float w = Mathf.Lerp(minBeamWidth, maxBeamWidth, currentChargePercent);
+                float w = Mathf.Lerp(_minBeamWidth, _maxBeamWidth, currentChargePercent);
                 line.startWidth = w;
                 line.endWidth = w;
             }
             if (beamStart != null)
             {
-                float s = Mathf.Lerp(minStartScale, maxStartScale, currentChargePercent);
-                // Multiply by original scale to respect prefab size
+                float s = Mathf.Lerp(_minStartScale, _maxStartScale, currentChargePercent);
                 beamStart.transform.localScale = originalStartScale * s;
             }
             if (beamEnd != null)
             {
-                float s = Mathf.Lerp(minStartScale, maxStartScale, currentChargePercent);
-                // Multiply by original scale to respect prefab size
+                float s = Mathf.Lerp(_minStartScale, _maxStartScale, currentChargePercent);
                 beamEnd.transform.localScale = originalEndScale * s;
             }
         }
@@ -435,6 +479,38 @@ namespace MagicArsenal
             Vector3 start = transform.position;
             Vector3 dir = point - start;
             ShootBeamInDir(start, dir);
+        }
+
+        /// <summary>
+        /// Apply a BeamConfig at runtime (useful for ability systems)
+        /// </summary>
+        public void ApplyConfig(BeamConfig config)
+        {
+            beamConfig = config;
+            ApplyBeamConfig();
+        }
+
+        public void ChangeBeamPrefab(int newBeamIndex)
+        {
+            if (newBeamIndex >= 0 && newBeamIndex < beamLineRendererPrefab.Length)
+            {
+                currentBeam = (BeamType)newBeamIndex;
+                isInitialized = false;
+                EnsureInitialized();
+                
+                if (textBeamName)
+                    textBeamName.text = beamLineRendererPrefab[newBeamIndex].name;
+            }
+        }
+
+        public void ChangeOffsetSliderValue()
+        {
+            _beamEndOffset = endOffSetSlider.value;
+        }
+
+        public void ChangeScrollSliderValue()
+        {
+            _textureScrollSpeed = scrollSpeedSlider.value;
         }
     }
 }

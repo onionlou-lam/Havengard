@@ -6,28 +6,23 @@ namespace Havengard.Abilities
     [CreateAssetMenu(menuName = "Havengard/Abilities/Channeled/Beam Ability")]
     public class ChanneledBeamAbility : ChanneledAbilityBase
     {
-        [Header("Beam Configuration")]
-        [SerializeField] private float beamWidth = 1f;
-        [SerializeField] private float beamMaxDistance = 15f;
+        [Header("Beam Visual Configuration")]
+        [Tooltip("Reference to BeamConfig asset for visual settings")]
+        [SerializeField] private BeamConfig beamConfig;
+
+        [Header("Gameplay Configuration")]
         [SerializeField] private LayerMask hitLayers;
 
-        [Header("Beam Pulsing (uses MagicBeamScript settings)")]
-        [Tooltip("MagicBeamScript on beam prefab handles pulsing automatically")]
-        [SerializeField] private bool useBeamPulsing = true;
-        [Tooltip("Info: Pulse frequency and width are controlled by the beam prefab's MagicBeamScript component")]
-        [SerializeField] private string pulseInfo = "Configure pulse in beam prefab";
-
         [Header("Damage Scaling")]
-        [Tooltip("Damage is multiplied by this per tick (prevents beam from being too strong)")]
+        [Tooltip("Damage is multiplied by this per tick")]
         [SerializeField] private float damagePerTickMultiplier = 0.3f;
-        [Tooltip("If true, damage ramps up the longer you channel (0% to 100%)")]
+        [Tooltip("If true, damage ramps up the longer you channel")]
         [SerializeField] private bool rampDamageWithCharge = true;
-        [Tooltip("Minimum damage percent at start of channel (if ramping enabled)")]
         [Range(0f, 1f)]
         [SerializeField] private float minDamagePercent = 0.4f;
 
         [Header("Tick Control")]
-        [Tooltip("Minimum time between damage ticks (overrides base tickRate if higher)")]
+        [Tooltip("Minimum time between damage ticks")]
         [SerializeField] private float minTimeBetweenTicks = 0.5f;
 
         [Header("Damage Type Specific Effects")]
@@ -35,32 +30,29 @@ namespace Havengard.Abilities
         [SerializeField] private float fireBurnDamagePerTick = 5f;
         [SerializeField] private int lightningChainCount = 2;
         [SerializeField] private float holyHealingBonus = 1.2f;
-        [SerializeField] private float arcaneManaBurnPercent = 0.2f; // NEW
-        [SerializeField] private float arcaneVulnerabilityPercent = 0.15f; // NEW
-        [SerializeField] private float arcaneVulnerabilityDuration = 3f; // NEW
+        [SerializeField] private float arcaneManaBurnPercent = 0.2f;
+        [SerializeField] private float arcaneVulnerabilityPercent = 0.15f;
+        [SerializeField] private float arcaneVulnerabilityDuration = 3f;
 
-        // Public property for range sync
-        public float BeamMaxRange => beamMaxDistance;
+        // Expose beam range from BeamConfig
+        public float BeamMaxRange => beamConfig != null ? beamConfig.maxBeamDistance : 15f;
 
         private float lastChargePercent = 0f;
         private float lastDamageTick = 0f;
 
-        // Called by AbilityUser Update loop
         public override void OnChannelTick(GameObject caster, float chargePercent)
         {
             if (caster == null) return;
 
             lastChargePercent = chargePercent;
 
-            // Enforce minimum tick interval for damage
             if (Time.time - lastDamageTick < minTimeBetweenTicks)
             {
-                return; // Skip this tick (visuals still update)
+                return;
             }
 
             lastDamageTick = Time.time;
 
-            // Get mouse position in world space
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = 0f;
             
@@ -69,7 +61,7 @@ namespace Havengard.Abilities
             RaycastHit2D[] hits = Physics2D.RaycastAll(
                 caster.transform.position,
                 direction,
-                beamMaxDistance,
+                BeamMaxRange,
                 hitLayers
             );
 
@@ -85,7 +77,6 @@ namespace Havengard.Abilities
             }
         }
 
-        // For compatibility with other systems
         protected override void OnChannelTick(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy)
         {
             if (user == null) return;
@@ -101,7 +92,7 @@ namespace Havengard.Abilities
             RaycastHit2D[] hits = Physics2D.RaycastAll(
                 user.transform.position,
                 direction,
-                beamMaxDistance,
+                BeamMaxRange,
                 hitLayers
             );
 
@@ -117,7 +108,6 @@ namespace Havengard.Abilities
 
         private void ApplyDamage(GameObject target, GameObject caster, float chargePercent)
         {
-            // Check faction filtering
             var casterHealth = caster.GetComponent<Core.HealthSystem.IHealth>();
             var targetHealth = target.GetComponent<Core.HealthSystem.IHealth>();
 
@@ -138,13 +128,9 @@ namespace Havengard.Abilities
             var health = target.GetComponent<Core.HealthSystem.Health>();
             if (health != null)
             {
-                // Calculate base damage from ability stats
                 float baseDmg = CalculateDamage(caster);
-
-                // Apply per-tick multiplier (makes beam damage controllable)
                 float tickDamage = baseDmg * damagePerTickMultiplier;
 
-                // Optionally ramp damage based on charge percent
                 if (rampDamageWithCharge)
                 {
                     float damageScale = Mathf.Lerp(minDamagePercent, 1f, chargePercent);
@@ -152,10 +138,8 @@ namespace Havengard.Abilities
                 }
 
                 int finalDamage = Mathf.RoundToInt(tickDamage);
-
                 health.TakeDamage(finalDamage, caster);
 
-                // Apply damage-type specific effects
                 ApplyDamageTypeEffects(target, caster, chargePercent);
             }
         }
@@ -165,7 +149,6 @@ namespace Havengard.Abilities
             switch (damageType)
             {
                 case DamageType.Arcane:
-                    // Mana burn (if enemy has resource system)
                     var resourceSys = target.GetComponent<ResourceSystem>();
                     if (resourceSys != null)
                     {
@@ -173,18 +156,14 @@ namespace Havengard.Abilities
                         resourceSys.SpendResource((int)burnAmount);
                     }
 
-                    // Apply vulnerability debuff
                     var statusApplier = target.GetComponent<StatusEffectApplier>();
                     if (statusApplier != null)
                     {
-                        // Apply "Arcane Vulnerability" status (you'd need to create this ScriptableObject)
-                        // statusApplier.ApplyStatusEffect(arcaneVulnerabilityStatus, caster);
+                        // Apply status effect here
                     }
                     
                     Debug.Log($"[Arcane] Burned mana and applied vulnerability to {target.name}");
                     break;
-
-                // ... other cases
             }
         }
 
@@ -193,6 +172,14 @@ namespace Havengard.Abilities
             base.Deactivate(user);
             lastChargePercent = 0f;
             lastDamageTick = 0f;
+        }
+
+        /// <summary>
+        /// Get the BeamConfig for this ability
+        /// </summary>
+        public BeamConfig GetBeamConfig()
+        {
+            return beamConfig;
         }
     }
 }

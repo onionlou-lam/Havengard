@@ -29,19 +29,19 @@ MonoBehaviour:
   enableResourceGeneration: 0
   resourceGenerationPercent: 0
   flatResourceGeneration: 0
-  range: 20
+  range: 8
   targetLayers:
     serializedVersion: 2
     m_Bits: 256
   requiresTarget: 0
-  castVFX: {fileID: 101350, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
-  impactVFX: {fileID: 143488, guid: 7ab599370938e1948a5eb2967f1cbd66, type: 3}
-  castSFX: {fileID: 8300000, guid: c50a81b498c81364788796ca5419a03e, type: 3}
-  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
+  castVFX: {fileID: 0}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 8300000, guid: 9d3a13953eaa18049888f4ea4cf6a206, type: 3}
+  impactSFX: {fileID: 8300000, guid: 388938ebf5b9402418de6c0cb91effbe, type: 3}
   customAnimationTrigger: 
   activeSubSkills: []
   investment:
-    investmentLevel: 0
+    investmentLevel: 1
     investmentBonuses: []
   baseCritChance: 0.05
   baseCritDamage: 1.5
@@ -51,17 +51,14 @@ MonoBehaviour:
   preventMovement: 1
   minReleasePercent: 0.05
   allowPartialRelease: 1
-  chargingVFXPrefab: {fileID: 139178, guid: 6b3488aa97f1d514d8a4fa45cc3b2dad, type: 3}
-  beamPrefab: {fileID: 168570, guid: 5b011e821e36bac4993f120e72e1169d, type: 3}
+  chargingVFXPrefab: {fileID: 0}
+  beamPrefab: {fileID: 168570, guid: b70a3f8770af48a4f9760520cbbc0bef, type: 3}
   resourcePerTick: 0
   resourcePercentPerTick: 0
-  beamWidth: 1.25
-  beamMaxDistance: 8
+  beamConfig: {fileID: 11400000, guid: 64d1b4a1cb5d3ab4e8fdbf2de826b68e, type: 2}
   hitLayers:
     serializedVersion: 2
-    m_Bits: 1792
-  useBeamPulsing: 1
-  pulseInfo: Configure pulse in beam prefab
+    m_Bits: 256
   damagePerTickMultiplier: 0.4
   rampDamageWithCharge: 1
   minDamagePercent: 0.4

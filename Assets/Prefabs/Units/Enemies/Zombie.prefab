@@ -595,9 +595,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abilities:
   - {fileID: 11400000, guid: 2e460e5a109f6e242bcabda75918ac3e, type: 2}
-  resourceComponent: {fileID: 0}
+  resourceSystem: {fileID: 0}
   useGlobalCooldown: 0
   globalCooldownDuration: 0.1
+  beamSpawnDistance: 0.5
+  beamZPosition: 0
+  rotateToBeam: 1
+  rotationTarget: {fileID: 0}
+  enableFizzleEffect: 1
+  fizzleSpeed: 5
+  fizzleDuration: 0.3
+  useChannelingAudio: 1
+  castSoundVolume: 1.5
+  impactSoundVolume: 2.5
+  enableHoldToCast: 1
 --- !u!195 &472932928089244403
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -648,6 +659,9 @@ MonoBehaviour:
   flashDuration: 0.2
   flashCount: 2
   agent: {fileID: 472932928089244403}
+  unitName: Unit
+  faction: 2
+  maxHealth: 100
   attackAbility: {fileID: 11400000, guid: 2e460e5a109f6e242bcabda75918ac3e, type: 2}
 --- !u!114 &75416912616188480
 MonoBehaviour:
@@ -718,6 +732,12 @@ MonoBehaviour:
   dropRadius: 1
   dropOnDeath: 1
   guaranteedDrops: []
+  minItemSpacing: 0.5
+  maxSpacingAttempts: 15
+  overlapCheckRadius: 0.3
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &7236294299874222791
 MonoBehaviour:
   m_ObjectHideFlags: 0

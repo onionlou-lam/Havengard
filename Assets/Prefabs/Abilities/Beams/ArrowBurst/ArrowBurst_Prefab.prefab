@@ -166,7 +166,8 @@ MonoBehaviour:
   - {fileID: 168570, guid: d43e628796a11fd48b54e73872508b37, type: 3}
   beamStartPrefab: []
   beamEndPrefab:
-  - {fileID: 182458, guid: 4678d9828f437c042a3c8d114d8f3c3b, type: 3}
+  - {fileID: 143488, guid: 7ab599370938e1948a5eb2967f1cbd66, type: 3}
+  beamConfig: {fileID: 0}
   beamEndOffset: 0.5
   textureScrollSpeed: 20
   textureLengthScale: 3
@@ -174,12 +175,16 @@ MonoBehaviour:
   maxBeamWidth: 1
   minStartScale: 0.8
   maxStartScale: 0.9
+  beamStartPrefabScale: 1
+  beamEndPrefabScale: 1
   use2DMode: 1
   maxBeamDistance: 20
   beamBlockingLayers:
     serializedVersion: 2
     m_Bits: 1280
   rotateParticles: 1
+  dynamicParticleLifetime: 1
+  particleSpeed: 1
   endOffSetSlider: {fileID: 0}
   scrollSpeedSlider: {fileID: 0}
   textBeamName: {fileID: 0}

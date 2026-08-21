@@ -24,7 +24,7 @@ namespace Havengard.Abilities
 
         public event Action<int, AbilityBase> OnAbilityUsed;
         public event Action<int, float> OnAbilityCooldownStarted;
-        public event Action OnAbilitiesChanged; // ADD THIS NEW EVENT
+        public event Action OnAbilitiesChanged;
 
         [Header("Channeling Visual Settings")]
         [SerializeField] private float beamSpawnDistance = 0.5f;
@@ -55,6 +55,7 @@ namespace Havengard.Abilities
         private GameObject chargingVFXInstance;
         private GameObject beamInstance;
         private MagicArsenal.MagicBeamScript beamScript;
+        private BeamVisualAdapter beamAdapter;
         private float channelStartTime;
         private float lastChannelTick;
         private Vector3 originalChargeVFXScale = Vector3.one;
@@ -66,16 +67,16 @@ namespace Havengard.Abilities
 
         [Header("Skill Tree Unlocks")]
         [Tooltip("Tracks which abilities from PlayerClass are unlocked")]
-        [NonSerialized] public bool[] unlockedAbilities;  // ✅ CRITICAL FIX: Don't serialize this runtime data!
+        [NonSerialized] public bool[] unlockedAbilities;
 
         [Header("Sub-Skill Selections")]
         [Tooltip("Tracks which sub-skill was selected for each ability")]
-        [NonSerialized] public SubSkillSelection[] subSkillSelections;  // ✅ Also don't serialize this
+        [NonSerialized] public SubSkillSelection[] subSkillSelections;
 
         [Header("Hold-to-Cast Settings")]
         [SerializeField] private bool enableHoldToCast = true;
-        private bool[] isHoldingAbility; // Track which abilities are being held
-        private float[] lastHoldCastTime; // Track when ability was last cast while holding
+        private bool[] isHoldingAbility;
+        private float[] lastHoldCastTime;
 
         #region Sub-Skill Management
 
@@ -617,19 +618,39 @@ namespace Havengard.Abilities
                     }
                 }
 
-                beamScript = beamInstance.GetComponent<MagicArsenal.MagicBeamScript>();
+                // FIXED: Assign to class field, not local variable
+                beamAdapter = beamInstance.GetComponent<BeamVisualAdapter>();
 
-                if (beamScript != null)
+                if (beamAdapter != null)
                 {
-                    // Sync beam range
+                    // Use the adapter - clean and simple!
                     var beamAbility = ability as ChanneledBeamAbility;
                     if (beamAbility != null)
                     {
-                        beamScript.maxBeamDistance = beamAbility.BeamMaxRange;
+                        BeamConfig config = beamAbility.GetBeamConfig();
+                        if (config != null)
+                        {
+                            beamAdapter.ApplyConfiguration(config);
+                        }
                     }
 
-                    beamScript.externalControl = true;
-                    beamScript.Activate();
+                    beamAdapter.EnableExternalControl(true);
+                    beamAdapter.Activate();
+                }
+                else
+                {
+                    // Fallback: Direct MagicBeamScript access (legacy)
+                    beamScript = beamInstance.GetComponent<MagicArsenal.MagicBeamScript>();
+                    if (beamScript != null)
+                    {
+                        var beamAbility = ability as ChanneledBeamAbility;
+                        if (beamAbility != null)
+                        {
+                            beamScript.maxBeamDistance = beamAbility.BeamMaxRange;
+                        }
+                        beamScript.externalControl = true;
+                        beamScript.Activate();
+                    }
                 }
             }
         }
@@ -651,16 +672,27 @@ namespace Havengard.Abilities
             }
 
             // Update beam
-            if (beamScript != null && beamInstance != null)
+            if (beamAdapter != null)
             {
+                beamAdapter.SetCharge(percent);
+                beamInstance.transform.position = spawnPos;
+                beamInstance.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+                if (mainCamera != null)
+                {
+                    beamAdapter.UpdateDirection(GetMouseWorldPoint());
+                }
+            }
+            else if (beamScript != null && beamInstance != null)
+            {
+                // Legacy fallback
                 beamScript.SetCharge(percent);
                 beamInstance.transform.position = spawnPos;
                 beamInstance.transform.rotation = Quaternion.Euler(0, 0, angle);
 
                 if (mainCamera != null)
                 {
-                    Vector3 targetPoint = GetMouseWorldPoint();
-                    beamScript.UpdateDirectionToPoint(targetPoint);
+                    beamScript.UpdateDirectionToPoint(GetMouseWorldPoint());
                 }
             }
         }
@@ -839,7 +871,7 @@ namespace Havengard.Abilities
                 Debug.Log($"[AbilityUser] Unlocked ability: {ability.abilityName}");
                 
                 // FIRE EVENT
-                OnAbilitiesChanged?.Invoke(); // ADD THIS LINE
+                OnAbilitiesChanged?.Invoke();
             }
         }
 

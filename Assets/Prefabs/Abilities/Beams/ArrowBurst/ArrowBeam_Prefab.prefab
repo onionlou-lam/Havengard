@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 441978}
   - component: {fileID: 12018526}
   - component: {fileID: 3392891844238150506}
+  - component: {fileID: 189290042059148462}
   m_Layer: 9
   m_Name: ArrowBeam_Prefab
   m_TagString: Projectile
@@ -164,16 +165,19 @@ MonoBehaviour:
   beamLineRendererPrefab:
   - {fileID: 168570, guid: d43e628796a11fd48b54e73872508b37, type: 3}
   beamStartPrefab:
-  - {fileID: 101350, guid: ea72aca1214b2ab4daca57345d563d07, type: 3}
+  - {fileID: 101350, guid: 734eb1dd6e6878f41af41b8fe96db888, type: 3}
   beamEndPrefab:
-  - {fileID: 143488, guid: 7ab599370938e1948a5eb2967f1cbd66, type: 3}
+  - {fileID: 143488, guid: 87ed8ca0c457c9a4aa50b98d1a9db39a, type: 3}
+  beamConfig: {fileID: 11400000, guid: 64d1b4a1cb5d3ab4e8fdbf2de826b68e, type: 2}
   beamEndOffset: 0.5
-  textureScrollSpeed: 30
+  textureScrollSpeed: 20
   textureLengthScale: 2
-  minBeamWidth: 0.25
-  maxBeamWidth: 1
-  minStartScale: 0.25
-  maxStartScale: 0.8
+  minBeamWidth: 0.2
+  maxBeamWidth: 0.2
+  minStartScale: 0.2
+  maxStartScale: 0.2
+  beamStartPrefabScale: 0.2
+  beamEndPrefabScale: 0.2
   use2DMode: 1
   maxBeamDistance: 8
   beamBlockingLayers:
@@ -184,3 +188,17 @@ MonoBehaviour:
   scrollSpeedSlider: {fileID: 0}
   textBeamName: {fileID: 0}
   externalControl: 0
+--- !u!114 &189290042059148462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24393d74a10fc0749a68ee7348bf5c63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beamConfig: {fileID: 11400000, guid: 64d1b4a1cb5d3ab4e8fdbf2de826b68e, type: 2}
+  preventParticleFlip: 1
