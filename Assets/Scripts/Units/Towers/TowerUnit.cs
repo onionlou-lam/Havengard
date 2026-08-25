@@ -136,11 +136,32 @@ namespace Havengard.Units
                 if (health != null)
                 {
                     health.TakeDamage(projectileDamage, gameObject);
+                    
+                    // NEW: Track damage for building system
+                    var tracker = GetComponent<Havengard.Building.TowerInvestmentTracker>();
+                    if (tracker != null)
+                    {
+                        tracker.RecordDamage(projectileDamage);
+                    }
                 }
             }
 
             // Destroy the projectile
             Destroy(projectile);
+        }
+
+        // NEW METHOD: Apply stats from build data
+        /// <summary>
+        /// Apply tower stats from build data (called by building system)
+        /// </summary>
+        public virtual void ApplyLevelStats(int damage, float range, float speed, float projSpeed)
+        {
+            projectileDamage = damage;
+            attackRange = range;
+            attackCooldown = 1f / speed; // Convert attacks per second to cooldown
+            projectileSpeed = projSpeed;
+            
+            Debug.Log($"[TowerUnit] {name} stats applied: Damage={damage}, Range={range}, AttackSpeed={speed}/s");
         }
 
         /// <summary>

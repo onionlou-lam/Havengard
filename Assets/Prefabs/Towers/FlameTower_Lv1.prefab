@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1485705252437900435}
   - component: {fileID: 8222908328725410814}
   - component: {fileID: 357895988039953960}
+  - component: {fileID: 5483251840907396059}
   m_Layer: 0
   m_Name: FlameTower_Lv1
   m_TagString: Untagged
@@ -29,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 3782076866461057146}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9.88, y: -7.11, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -80,8 +81,8 @@ SpriteRenderer:
   m_SortingLayerID: 47421343
   m_SortingLayer: 5
   m_SortingOrder: 10
-  m_Sprite: {fileID: 494335839, guid: 5a46be6a81a487c4c98755073553ba74, type: 3}
-  m_Color: {r: 1, g: 0.40117237, b: 0, a: 1}
+  m_Sprite: {fileID: 936653055, guid: e9a22c55ae1db89458c08daa3833ba91, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -98,7 +99,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3782076866461057146}
-  m_Enabled: 1
+  m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.48
   m_Speed: 3.5
@@ -139,13 +140,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 014e3eb6c1424e44eb29769cdff5d303, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aggroRange: 8
-  attackRange: 4.5
-  moveSpeed: 3.5
+  aggroRange: 6.5
+  attackRange: 6
+  moveSpeed: 0
   retargetInterval: 0.5
   targetLayers:
     serializedVersion: 2
     m_Bits: 256
+  targetDefaultObjectives: 1
   animator: {fileID: 0}
   spriteRenderer: {fileID: 0}
   flipCooldown: 0.15
@@ -155,17 +157,57 @@ MonoBehaviour:
   flashDuration: 0.2
   flashCount: 2
   agent: {fileID: 0}
+  unitName: Flame Tower
+  faction: 1
+  maxHealth: 100
   projectilePrefab: {fileID: 7223434081985527977, guid: 1258facddabb47d40ab1e6723be41aa8,
     type: 3}
   projectileSpeed: 10
-  projectileDamage: 8
-  attackCooldown: 1.25
+  projectileDamage: 20
+  projectileLifetime: 5
+  attackCooldown: 1
   friendlyFire: 0
   enableHoming: 1
   homingStrength: 3
-  homingDelay: 0.1
   turretRotationPivot: {fileID: 0}
   rotationSpeed: 5
+--- !u!70 &5483251840907396059
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3782076866461057146}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: -0.04056579}
+  m_Size: {x: 0.64, y: 1.3611315}
+  m_Direction: 0
 --- !u!1001 &8791744758653858959
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -180,11 +222,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 410898, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.5
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 410898, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.5
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 410898, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalPosition.y
@@ -192,7 +234,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 410898, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.762
+      value: 1.77
       objectReference: {fileID: 0}
     - target: {fileID: 410898, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -205,6 +247,18 @@ PrefabInstance:
     - target: {fileID: 410898, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 448438, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 448438, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 448438, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 448438, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -254,6 +308,10 @@ PrefabInstance:
       propertyPath: m_LocalScale.y
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 19833912, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
+      propertyPath: InitialModule.gravitySource
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 19858338, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: InitialModule.startSizeY.minMaxState
       value: 3
@@ -292,7 +350,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 19884038, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: simulationSpeed
-      value: 0.3
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 19884038, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: InitialModule.gravitySource
@@ -301,6 +359,14 @@ PrefabInstance:
     - target: {fileID: 19884038, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 19884038, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.a
+      value: 0.25490198
+      objectReference: {fileID: 0}
+    - target: {fileID: 19884038, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
+      propertyPath: InitialModule.gravityModifier.scalar
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 19884038, guid: 36f4a544e3a0cf140bb966d1597ac84f, type: 3}
       propertyPath: InitialModule.startSizeY.minMaxState

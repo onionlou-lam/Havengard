@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
+using Havengard.Waves.UI; // Added this line
 
 namespace Havengard.Waves
 {
@@ -15,6 +16,10 @@ namespace Havengard.Waves
         
         [Header("UI References")]
         [SerializeField] private PreWavePhaseUI phaseUI;
+        [SerializeField] private WavePreviewPanel wavePreviewPanel;
+
+        [Header("Wave Preview")]
+        [SerializeField] private bool showWavePreview = true;
 
         [Header("Events")]
         public UnityEvent OnPhaseStarted;
@@ -23,6 +28,7 @@ namespace Havengard.Waves
 
         private bool isPhaseActive = false;
         private float remainingTime;
+        private WaveDefinition currentWaveDefinition;
 
         public bool IsPhaseActive => isPhaseActive;
         public float RemainingTime => remainingTime;
@@ -40,7 +46,17 @@ namespace Havengard.Waves
                 }
             }
 
-            Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}, UseTimeLimit: {useTimeLimit}, TimeLimitSeconds: {timeLimitSeconds}");
+            // Auto-find wave preview panel if not assigned
+            if (wavePreviewPanel == null)
+            {
+                wavePreviewPanel = GetComponentInChildren<WavePreviewPanel>();
+                if (wavePreviewPanel == null)
+                {
+                    wavePreviewPanel = FindFirstObjectByType<WavePreviewPanel>();
+                }
+            }
+
+            Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}, Preview Panel found: {wavePreviewPanel != null}, UseTimeLimit: {useTimeLimit}, TimeLimitSeconds: {timeLimitSeconds}");
         }
 
         private void Update()
@@ -67,7 +83,7 @@ namespace Havengard.Waves
         /// <summary>
         /// Start the pre-wave phase
         /// </summary>
-        public void StartPhase(int upcomingWaveNumber)
+        public void StartPhase(int upcomingWaveNumber, WaveDefinition waveDefinition = null)
         {
             if (isPhaseActive)
             {
@@ -77,8 +93,7 @@ namespace Havengard.Waves
 
             isPhaseActive = true;
             remainingTime = timeLimitSeconds;
-
-            //Debug.Log($"[PreWavePhase] Starting pre-wave phase for Wave {upcomingWaveNumber}. Time limit: {(useTimeLimit ? $"{timeLimitSeconds}s" : "OFF")}, RemainingTime initialized to: {remainingTime}s");
+            currentWaveDefinition = waveDefinition;
             
             if (phaseUI != null)
             {
@@ -89,7 +104,22 @@ namespace Havengard.Waves
                 Debug.LogWarning("[PreWavePhase] No UI reference found!");
             }
 
+            // Show wave preview if enabled WITH TIMER INFO
+            if (showWavePreview && wavePreviewPanel != null && waveDefinition != null)
+            {
+                var previewData = WavePreviewData.FromWaveDefinition(waveDefinition, upcomingWaveNumber);
+                wavePreviewPanel.ShowPreview(previewData, useTimeLimit, timeLimitSeconds); // ← CHANGED: Added timer parameters
+            }
+
             OnPhaseStarted?.Invoke();
+        }
+
+        /// <summary>
+        /// Overload for backward compatibility
+        /// </summary>
+        public void StartPhase(int upcomingWaveNumber)
+        {
+            StartPhase(upcomingWaveNumber, null);
         }
 
         /// <summary>
@@ -111,6 +141,12 @@ namespace Havengard.Waves
             if (phaseUI != null)
             {
                 phaseUI.OnWaveStarted(); // ← CHANGED from HidePhase()
+            }
+
+            // Hide wave preview
+            if (wavePreviewPanel != null)
+            {
+                wavePreviewPanel.HidePreview();
             }
 
             OnPhaseEnded?.Invoke();
@@ -161,6 +197,14 @@ namespace Havengard.Waves
         {
             //Debug.Log("[PreWavePhase] Player manually started wave");
             EndPhase();
+        }
+
+        /// <summary>
+        /// Toggle wave preview on/off
+        /// </summary>
+        public void SetShowWavePreview(bool show)
+        {
+            showWavePreview = show;
         }
     }
 }

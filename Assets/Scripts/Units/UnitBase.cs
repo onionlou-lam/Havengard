@@ -20,6 +20,9 @@ namespace Havengard.Units
         [Header("Targeting")]
         [Tooltip("Layers this unit can target (Player, Ally, Gate, etc.).")]
         [SerializeField] private LayerMask targetLayers = ~0;
+        
+        [Tooltip("If true, will target DefaultTarget objects when no enemies in range")]
+        [SerializeField] private bool targetDefaultObjectives = true;
 
         [Header("Animation + Facing")]
         [SerializeField] private Animator animator;
@@ -44,11 +47,9 @@ namespace Havengard.Units
         private static readonly int AnimAttack = Animator.StringToHash("Attack");
         private static readonly int AnimHit = Animator.StringToHash("Hit");
         private static readonly int AnimDead = Animator.StringToHash("Dead");
-
-        // Add this field near the top with other Animator hashes
         private static readonly int AnimAttackIndex = Animator.StringToHash("AttackIndex");
 
-        public NavMeshAgent agent; //public for behaviors to access directly as it is a component reference, similar to RigidBody etc.
+        public NavMeshAgent agent;
         protected Health health;
         protected GameObject currentTarget;
 
@@ -66,7 +67,7 @@ namespace Havengard.Units
 
         [Header("Unit Identity")]
         public string unitName = "Unit";
-        public UnitFaction faction = UnitFaction.Neutral;
+        public Faction faction = Faction.Neutral;
 
         [Header("Stats")]
         [SerializeField] protected int maxHealth = 100;
@@ -89,7 +90,6 @@ namespace Havengard.Units
 
             if (health != null)
             {
-                // archive note for aniamtion changes: matches your Health.cs: event Action<int> OnDamaged
                 health.OnDamaged += OnDamaged;
                 health.OnDeath += HandleDeath;
             }
@@ -103,7 +103,6 @@ namespace Havengard.Units
                 health.OnDeath -= HandleDeath;
             }
 
-            // Restore original color on cleanup
             if (spriteRenderer != null)
                 spriteRenderer.color = originalSpriteColor;
         }
@@ -133,6 +132,7 @@ namespace Havengard.Units
             float closestDist = Mathf.Infinity;
             Faction myFaction = GetMyFaction();
 
+            // First pass: Look for enemies in aggro range
             Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, aggroRange, targetLayers);
 
             foreach (var hit in hits)
@@ -150,6 +150,55 @@ namespace Havengard.Units
                 {
                     closestDist = dist;
                     closest = hit.gameObject;
+                }
+            }
+
+            // Second pass: If no enemies found and we target objectives, find default targets
+            if (closest == null && targetDefaultObjectives)
+            {
+                DefaultTarget[] defaultTargets = FindObjectsByType<DefaultTarget>(FindObjectsSortMode.None);
+                
+                DefaultTarget highestPriority = null;
+                float shortestDistToHighPriority = Mathf.Infinity;
+
+                foreach (var defTarget in defaultTargets)
+                {
+                    if (defTarget == null) continue;
+
+                    var healthTarget = defTarget.GetComponent<IHealth>();
+                    if (healthTarget == null) continue;
+
+                    // Check if we can damage this target
+                    if (!FactionUtility.CanDamage(myFaction, healthTarget, false))
+                        continue;
+
+                    // If this target always has priority, use it
+                    if (defTarget.AlwaysPriority)
+                    {
+                        return defTarget.gameObject;
+                    }
+
+                    // Track highest priority target
+                    if (highestPriority == null || defTarget.TargetPriority > highestPriority.TargetPriority)
+                    {
+                        highestPriority = defTarget;
+                        shortestDistToHighPriority = Vector2.Distance(transform.position, defTarget.transform.position);
+                    }
+                    else if (defTarget.TargetPriority == highestPriority.TargetPriority)
+                    {
+                        // Same priority, choose closest
+                        float dist = Vector2.Distance(transform.position, defTarget.transform.position);
+                        if (dist < shortestDistToHighPriority)
+                        {
+                            highestPriority = defTarget;
+                            shortestDistToHighPriority = dist;
+                        }
+                    }
+                }
+
+                if (highestPriority != null)
+                {
+                    closest = highestPriority.gameObject;
                 }
             }
 
@@ -190,7 +239,6 @@ namespace Havengard.Units
         {
             if (animator != null)
             {
-                // Randomly select attack animation (0 or 1)
                 int attackIndex = Random.Range(0, 2);
                 animator.SetInteger(AnimAttackIndex, attackIndex);
                 animator.SetTrigger(AnimAttack);
@@ -199,184 +247,122 @@ namespace Havengard.Units
 
         private void TriggerHitAnim()
         {
-            if (animator != null)
+            if (animator != null && Time.time >= lastHitAnimTime + hitAnimCooldown)
+            {
                 animator.SetTrigger(AnimHit);
+                lastHitAnimTime = Time.time;
+            }
         }
 
-        protected void UpdateAnimatorAndFacing()
+        protected virtual void UpdateAnimatorAndFacing() // Changed from private to protected virtual
         {
             if (animator == null) return;
 
-            // Use agent.velocity for animation (more reliable than desiredVelocity for "actually moving")
-            Vector2 v = Vector2.zero;
-            if (agent != null && agent.enabled && agent.isOnNavMesh)
-                v = agent.velocity;
+            float speed = agent != null ? agent.velocity.magnitude : 0f;
+            animator.SetFloat(AnimSpeed, speed);
 
-            animator.SetFloat(AnimSpeed, v.magnitude);
-
-            if (spriteRenderer == null) return;
-
-            // Respect flip cooldown
-            if (Time.time < nextFlipAllowedTime)
-                return;
-
-            // 1) Prefer movement-based facing when moving meaningfully
-            if (Mathf.Abs(v.x) >= facingDeadzone)
-            {
-                int desired = (v.x >= 0f) ? 1 : -1;
-                ApplyFacing(desired);
-                return;
-            }
-
-            // 2) If not moving horizontally, face the target (useful for melee attacks while stopped)
             if (currentTarget != null)
             {
-                float dx = currentTarget.transform.position.x - transform.position.x;
-
-                if (Mathf.Abs(dx) >= facingDeadzone)
-                {
-                    int desired = (dx >= 0f) ? 1 : -1;
-                    ApplyFacing(desired);
-                }
+                Vector2 dirToTarget = (currentTarget.transform.position - transform.position).normalized;
+                UpdateFacing(dirToTarget);
+            }
+            else if (speed > 0.1f)
+            {
+                Vector2 moveDir = agent.velocity.normalized;
+                UpdateFacing(moveDir);
             }
         }
 
-        private void ApplyFacing(int desiredFacingSign)
+        private void UpdateFacing(Vector2 direction)
         {
-            if (desiredFacingSign == facingSign) return;
+            if (spriteRenderer == null) return;
+            if (Mathf.Abs(direction.x) < facingDeadzone) return;
+            if (Time.time < nextFlipAllowedTime) return;
 
-            facingSign = desiredFacingSign;
-            spriteRenderer.flipX = (facingSign == -1);
-
-            // start cooldown only when we actually flip
-            nextFlipAllowedTime = Time.time + flipCooldown;
-        }
-
-        protected void FaceTargetNow()
-        {
-            if (spriteRenderer == null || currentTarget == null) return;
-
-            float dx = currentTarget.transform.position.x - transform.position.x;
-            if (Mathf.Abs(dx) < facingDeadzone) return;
-
-            int desired = (dx >= 0f) ? 1 : -1;
-
-            // Force facing without waiting for cooldown (feels better for attacks)
-            if (desired != facingSign)
+            int desiredSign = direction.x > 0 ? 1 : -1;
+            if (desiredSign != facingSign)
             {
-                facingSign = desired;
-                spriteRenderer.flipX = (facingSign == -1);
+                facingSign = desiredSign;
+                spriteRenderer.flipX = (facingSign < 0);
                 nextFlipAllowedTime = Time.time + flipCooldown;
             }
         }
 
-        // ---------------- Damage / Death ----------------
+        // ---------------- Health / Damage ----------------
 
-        private void OnDamaged(int amount)
+        protected virtual void OnDamaged(int damage)
         {
-            if (isDead) return;
-
-            // Avoid spamming hit triggers on rapid ticks
-            if (Time.time < lastHitAnimTime + hitAnimCooldown) return;
-            lastHitAnimTime = Time.time;
-
             TriggerHitAnim();
-            PlayDamageFlash();
+            StartDamageFlash();
         }
 
-        private void PlayDamageFlash()
+        protected virtual void HandleDeath()
+        {
+            if (isDead) return;
+            isDead = true;
+
+            StopAgent();
+
+            if (animator != null)
+                animator.SetTrigger(AnimDead);
+
+            StartCoroutine(DestroyAfterDelay(2f));
+        }
+
+        private IEnumerator DestroyAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            Destroy(gameObject);
+        }
+
+        private void StartDamageFlash()
         {
             if (spriteRenderer == null) return;
 
             if (currentFlashCoroutine != null)
                 StopCoroutine(currentFlashCoroutine);
 
-            currentFlashCoroutine = StartCoroutine(FlashCoroutine());
+            currentFlashCoroutine = StartCoroutine(DamageFlashRoutine());
         }
 
-        private IEnumerator FlashCoroutine()
+        private IEnumerator DamageFlashRoutine()
         {
             float flashInterval = flashDuration / (flashCount * 2);
 
             for (int i = 0; i < flashCount; i++)
             {
-                // Flash to damage color
                 spriteRenderer.color = damageFlashColor;
                 yield return new WaitForSeconds(flashInterval);
-
-                // Return to original
                 spriteRenderer.color = originalSpriteColor;
                 yield return new WaitForSeconds(flashInterval);
             }
 
-            // Ensure we end on original color
-            spriteRenderer.color = originalSpriteColor;
             currentFlashCoroutine = null;
         }
 
-        protected virtual void HandleDeath()
+        // ---------------- Utility ----------------
+
+        protected void StopAgent()
         {
-            if (animator != null)
+            if (agent != null && agent.isOnNavMesh)
             {
-                animator.SetFloat("Speed", 0f);
-                animator.SetBool("Dead", true);
-            }
-            if (isDead) return;
-            isDead = true;
-
-            if (animator != null)
-                animator.SetBool(AnimDead, true);
-
-            StopAgent();
-
-            // Stop any ongoing flash effect on death
-            if (currentFlashCoroutine != null)
-            {
-                StopCoroutine(currentFlashCoroutine);
-                currentFlashCoroutine = null;
-            }
-
-            // Restore original color
-            if (spriteRenderer != null)
-                spriteRenderer.color = originalSpriteColor;
-        }
-
-        private void StopAgent()
-        {
-            if (agent == null) return;
-
-            agent.isStopped = true;
-
-            // Safety: ResetPath only if agent is active/on navmesh
-            if (agent.enabled && agent.isOnNavMesh && agent.hasPath)
+                agent.isStopped = true;
                 agent.ResetPath();
+            }
         }
 
-        // ---------------- Faction ----------------
-
-        public virtual Faction GetMyFaction()
+        public virtual Faction GetMyFaction() // Changed from protected to public virtual
         {
-            var h = GetComponent<IHealth>();
-            return h != null ? h.GetFaction() : Faction.Neutral;
+            return health != null ? health.GetFaction() : Faction.Neutral;
         }
 
-#if UNITY_EDITOR
-        protected virtual void OnDrawGizmosSelected()
+        protected virtual void OnDrawGizmosSelected() // Changed from private to protected virtual
         {
-            Gizmos.color = Color.red;
+            Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, aggroRange);
 
-            Gizmos.color = Color.yellow;
+            Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, attackRange);
         }
-#endif
-    }
-
-    public enum UnitFaction
-    {
-        Player,
-        Ally,
-        Enemy,
-        Neutral
     }
 }

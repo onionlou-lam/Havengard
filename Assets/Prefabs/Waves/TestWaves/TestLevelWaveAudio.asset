@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ade075067ed97a240a842fe7ecacf662, type: 3}
+  m_Name: TestLevelWaveAudio
+  m_EditorClassIdentifier: 
+  wavesStartSound: {fileID: 8300000, guid: aac5dda49033b4e4090eace72ce6c93d, type: 3}
+  waveStartSound: {fileID: 8300000, guid: aac5dda49033b4e4090eace72ce6c93d, type: 3}
+  waveClearedSound: {fileID: 8300000, guid: 91f2ca4cbb9674e43aafc100ce52f73b, type: 3}
+  allWavesCompleteSound: {fileID: 8300000, guid: c98776b1b3b93114f83f160128ed6e12,
+    type: 3}
+  levelCompleteSound: {fileID: 8300000, guid: 7d69c949890a8e247a9685761da0536c, type: 3}
+  waveEventVolume: 0.8
+  victoryVolume: 1

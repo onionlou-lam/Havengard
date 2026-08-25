@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c6ec0befdb3599429b7d9a03e3bdb98, type: 3}
+  m_Name: TestWaveSet
+  m_EditorClassIdentifier: 
+  setName: TestWaveSet
+  waves:
+  - {fileID: 11400000, guid: 4a89af466d7b13145a09ba87f50802c3, type: 2}
+  - {fileID: 11400000, guid: 23489a7fd1df8cd4d9e009843e54014b, type: 2}
+  - {fileID: 11400000, guid: 81f8c9891f08a3c43bdbf66b07db893f, type: 2}
+  healthMultiplier: 1
+  damageMultiplier: 1
+  speedMultiplier: 1
+  rewardMultiplier: 1
+  useProgressiveScaling: 0
+  scalingPerWave: 0.1

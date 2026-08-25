@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a14b1d8f11aa4a142b8091e7d4294001, type: 3}
+  m_Name: TestWave3
+  m_EditorClassIdentifier: 
+  waveName: Wave 3
+  startCondition: 3
+  startDelay: 10
+  completeCondition: 0
+  groups:
+  - {fileID: 11400000, guid: 191c439b568f6d9459e4f1695fd3ef49, type: 2}
+  - {fileID: 11400000, guid: 1a051b7e5153221479fc84f0dceecfea, type: 2}
+  - {fileID: 11400000, guid: 6bdb83cc057e14844b3827de219af649, type: 2}
+  rewardGold: 400
+  rewardExp: 600
+  rewardCelestium: 400

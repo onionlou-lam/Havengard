@@ -18,7 +18,8 @@ MonoBehaviour:
   completeCondition: 0
   groups:
   - {fileID: 11400000, guid: c067de40c482a7c4a8b443f5b5d9c8b3, type: 2}
-  - {fileID: 11400000, guid: 7cbf05a4b91caf44393e438b2cd7a8f1, type: 2}
+  - {fileID: 11400000, guid: c067de40c482a7c4a8b443f5b5d9c8b3, type: 2}
+  - {fileID: 11400000, guid: c067de40c482a7c4a8b443f5b5d9c8b3, type: 2}
   rewardGold: 5
   rewardExp: 5
   rewardCelestium: 5

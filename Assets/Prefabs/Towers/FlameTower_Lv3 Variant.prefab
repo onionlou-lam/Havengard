@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3626649933410369174
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 357895988039953960, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: unitName
+      value: Flame Tower (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1485705252437900435, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3151603352373398032, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -538913984, guid: e17b3b4fe9e09df4ea2172bf47e94be6,
+        type: 3}
+    - target: {fileID: 3782076866461057146, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Name
+      value: FlameTower_Lv3 Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 5483251840907396059, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Size.x
+      value: 1.0385683
+      objectReference: {fileID: 0}
+    - target: {fileID: 5483251840907396059, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Size.y
+      value: 2.4041934
+      objectReference: {fileID: 0}
+    - target: {fileID: 5483251840907396059, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Offset.x
+      value: 0.012720227
+      objectReference: {fileID: 0}
+    - target: {fileID: 5483251840907396059, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_Offset.y
+      value: -0.0024049282
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7779473917408149848, guid: c9e1613ad55646349b81f0ffc0fb449c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c9e1613ad55646349b81f0ffc0fb449c, type: 3}

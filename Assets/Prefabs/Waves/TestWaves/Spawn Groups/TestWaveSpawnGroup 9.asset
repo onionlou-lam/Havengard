@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65b09e1a70e8f574eb05baeac6558fbe, type: 3}
+  m_Name: TestWaveSpawnGroup 9
+  m_EditorClassIdentifier: 
+  groupName: Group 9
+  delayFromWaveStart: 1
+  spawnInterval: 2
+  zoneSelection: 0
+  spawnOrder: 0
+  entries:
+  - enemyPrefab: {fileID: 5755621701607031728, guid: c10cd665f5ac74c44870f7acf67cd28c,
+      type: 3}
+    count: 10
+  - enemyPrefab: {fileID: 6666581930516987742, guid: 86a79d2f1b0d0d94fa11328a72004279,
+      type: 3}
+    count: 5
+  - enemyPrefab: {fileID: 4627157592179431975, guid: 125dd7623b18ae642b037cfef1034dd1,
+      type: 3}
+    count: 3
+  - enemyPrefab: {fileID: 2358421658021043591, guid: 71f238d3fbe1ab143aaf9be4d30cbbb5,
+      type: 3}
+    count: 1

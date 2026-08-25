@@ -29,8 +29,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 78e1d7bcb78d8c74d9c3ef36e0b5d15f, type: 3}
-        m_Scale: {x: 4, y: 1}
-        m_Offset: {x: 422.43948, y: 0}
+        m_Scale: {x: 1.3570496, y: 1}
+        m_Offset: {x: 313.51257, y: 0}
     m_Ints: []
     m_Floats:
     - PixelSnap: 0

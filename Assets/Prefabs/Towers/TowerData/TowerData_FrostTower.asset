@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e585fd3893b08046a5e218a87d43137, type: 3}
+  m_Name: TowerData_FrostTower
+  m_EditorClassIdentifier: 
+  towerID: frost_tower
+  displayName: Frost Tower
+  description: Medium tower that deals Frost damage and slows enemies.
+  icon: {fileID: 1546510794, guid: f6857f75b1d993b4fb0e89eb93310836, type: 3}
+  gridWidth: 4
+  gridHeight: 4
+  towerPrefab: {fileID: 3782076866461057146, guid: 69ea5c47a1fa1674fb7799ab6cd4ee90,
+    type: 3}
+  levels:
+  - buildCost: 50
+    upgradeCost: 100
+    damage: 5
+    attackRange: 15
+    attackSpeed: 5
+    projectileSpeed: 5
+    levelPrefab: {fileID: 3782076866461057146, guid: 69ea5c47a1fa1674fb7799ab6cd4ee90,
+      type: 3}
+  - buildCost: 0
+    upgradeCost: 150
+    damage: 8
+    attackRange: 15
+    attackSpeed: 5
+    projectileSpeed: 5
+    levelPrefab: {fileID: 6142951481776814986, guid: 250decde1279ced43bf119d2aa87d2dd,
+      type: 3}
+  - buildCost: 0
+    upgradeCost: 200
+    damage: 12
+    attackRange: 15
+    attackSpeed: 5
+    projectileSpeed: 5
+    levelPrefab: {fileID: 6904984113982090598, guid: bc5492114048ac04db62b5846597b51a,
+      type: 3}

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections.Generic;
 using Havengard.Core;
 using Havengard.Core.Progression;
@@ -29,26 +30,26 @@ namespace Havengard.DebugTools
         [SerializeField] private GameObject menuPanel;
 
         [Header("Player Section")]
-        [SerializeField] private InputField goldAmountInput;
-        [SerializeField] private InputField celestiumAmountInput;
-        [SerializeField] private InputField xpAmountInput;
-        [SerializeField] private InputField skillPointsAmountInput;
-        [SerializeField] private InputField levelUpAmountInput;
+        [SerializeField] private TMP_InputField goldAmountInput;
+        [SerializeField] private TMP_InputField celestiumAmountInput;
+        [SerializeField] private TMP_InputField xpAmountInput;
+        [SerializeField] private TMP_InputField skillPointsAmountInput;
+        [SerializeField] private TMP_InputField levelUpAmountInput;
 
         [Header("Combat Section")]
-        [SerializeField] private Dropdown enemyUnitDropdown;
-        [SerializeField] private Dropdown bossUnitDropdown;
+        [SerializeField] private TMP_Dropdown enemyUnitDropdown;
+        [SerializeField] private TMP_Dropdown bossUnitDropdown;
         [SerializeField] private Transform spawnPoint;
 
         [Header("World Section")]
         [SerializeField] private Slider gameSpeedSlider;
-        [SerializeField] private Text gameSpeedText;
-        [SerializeField] private Dropdown sceneDropdown;
+        [SerializeField] private TMP_Text gameSpeedText;
+        [SerializeField] private TMP_Dropdown sceneDropdown;
 
         [Header("Abilities Section")]
         [SerializeField] private Toggle infiniteManaToggle;
         [SerializeField] private Toggle damageNumbersToggle;
-        [SerializeField] private Dropdown abilityTestDropdown;
+        [SerializeField] private TMP_Dropdown abilityTestDropdown;
 
         [Header("Debug Visualization")]
         [SerializeField] private Toggle navMeshToggle;
@@ -701,9 +702,10 @@ namespace Havengard.DebugTools
 
         #region Helper Functions
 
-        private int ParseInputField(InputField field, int defaultValue)
+        private int ParseInputField(TMP_InputField field, int defaultValue)
         {
-            if (field == null) return defaultValue;
+            if (field == null || string.IsNullOrEmpty(field.text)) 
+                return defaultValue;
             
             if (int.TryParse(field.text, out int result))
             {

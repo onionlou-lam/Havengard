@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e585fd3893b08046a5e218a87d43137, type: 3}
+  m_Name: TowerData_FlameTower
+  m_EditorClassIdentifier: 
+  towerID: flame_tower
+  displayName: Flame Tower
+  description: A short range, high damage tower. Deals Fire damage.
+  icon: {fileID: 936653055, guid: e9a22c55ae1db89458c08daa3833ba91, type: 3}
+  gridWidth: 4
+  gridHeight: 4
+  towerPrefab: {fileID: 3782076866461057146, guid: c9e1613ad55646349b81f0ffc0fb449c,
+    type: 3}
+  levels:
+  - buildCost: 50
+    upgradeCost: 100
+    damage: 10
+    attackRange: 10
+    attackSpeed: 5
+    projectileSpeed: 5
+    levelPrefab: {fileID: 3782076866461057146, guid: c9e1613ad55646349b81f0ffc0fb449c,
+      type: 3}
+  - buildCost: 0
+    upgradeCost: 300
+    damage: 20
+    attackRange: 11
+    attackSpeed: 6
+    projectileSpeed: 5
+    levelPrefab: {fileID: 443833508259708652, guid: a5a03f0a2ce74c14b82263b7ab389354,
+      type: 3}
+  - buildCost: 0
+    upgradeCost: 0
+    damage: 0
+    attackRange: 0
+    attackSpeed: 0
+    projectileSpeed: 0
+    levelPrefab: {fileID: 0}

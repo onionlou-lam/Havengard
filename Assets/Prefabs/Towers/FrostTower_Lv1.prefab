@@ -14360,6 +14360,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 256
+  targetDefaultObjectives: 1
   animator: {fileID: 0}
   spriteRenderer: {fileID: 0}
   flipCooldown: 0.15
@@ -14369,8 +14370,8 @@ MonoBehaviour:
   flashDuration: 0.2
   flashCount: 2
   agent: {fileID: 0}
-  unitName: Unit
-  faction: 3
+  unitName: Frost Tower
+  faction: 1
   maxHealth: 100
   projectilePrefab: {fileID: 5383404545631835972, guid: b2a6638a0c81be445876d5a81a91409c,
     type: 3}

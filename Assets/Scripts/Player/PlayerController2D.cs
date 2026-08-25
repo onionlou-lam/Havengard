@@ -107,7 +107,6 @@ public class PlayerController2D : MonoBehaviour
     {
         HandleMovementInput();
         HandleAbilityInput();
-        HandleInteractionInput();
         UpdateAnimations();
     }
 
@@ -385,21 +384,6 @@ public class PlayerController2D : MonoBehaviour
         {
             abilityUser.CancelChanneling();
         }
-    }
-
-    private void HandleInteractionInput()
-    {
-        // E key for interaction
-        if (Input.GetKeyDown(interactKey))
-        {
-            TryInteract();
-        }
-    }
-
-    private void TryInteract()
-    {
-        // TODO: Implement interaction system
-        Debug.Log("Interaction attempted (system to be implemented)");
     }
 
     /// <summary>
