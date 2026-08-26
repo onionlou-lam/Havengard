@@ -32,6 +32,17 @@ namespace Havengard.Building
                 tooltipRect = GetComponent<RectTransform>();
 
             canvas = GetComponentInParent<Canvas>();
+            
+            // ADD THESE CHECKS:
+            if (canvas == null)
+            {
+                Debug.LogError("[TowerTooltip] No Canvas found in parents!");
+            }
+            
+            if (tooltipRect == null)
+            {
+                Debug.LogError("[TowerTooltip] No RectTransform found!");
+            }
         }
 
         private void Update()

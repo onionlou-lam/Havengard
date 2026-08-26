@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669a6717ea6c3db458336a867c44d21c, type: 3}
+  m_Name: Warrior_Leone
+  m_EditorClassIdentifier: 
+  heroName: Leone
+  portrait: {fileID: 21300000, guid: b0e905546af89064f9dec85fd1f15d43, type: 3}
+  faction: 2
+  heroClass: {fileID: 11400000, guid: 57fd9210d117f1a4b9166de36d34b1e8, type: 2}
+  startingUnlockedIndices: 
+  bonusStartingSkillPoints: 0
+  backstory: Insert backstory
+  overrideStats: 0
+  overrideHP: 0
+  overrideAttack: 0
+  overrideDefense: 0
+  overrideResource: 0

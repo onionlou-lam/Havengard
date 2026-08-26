@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Havengard.Resources;
 using Havengard.Waves;
 
@@ -31,6 +31,9 @@ namespace Havengard.Building
         [SerializeField] private KeyCode toggleBuildingModeKey = KeyCode.B;
         [SerializeField] private KeyCode exitBuildingModeKey = KeyCode.Escape;
         [SerializeField] private KeyCode undoKey = KeyCode.Z;
+
+        [Header("Debug")]
+        [SerializeField] private bool debugAlwaysAllowBuildingMode = false;
 
         // State
         private bool isBuildingMode = false;
@@ -93,28 +96,51 @@ namespace Havengard.Building
             placementSystem = new TowerPlacementSystem(buildGrid, towerDatabase);
             actionHistory = new BuildingActionHistory(this, placementSystem);
 
+            // MOVE EVENT SUBSCRIPTION HERE FROM Start():
+            SubscribeToWaveEvents();
+
             Debug.Log("[BuildingMode] Controller initialized");
+        }
+
+        // ADD THIS NEW METHOD:
+        private void SubscribeToWaveEvents()
+        {
+            if (waveManager != null)
+            {
+                var preWavePhase = waveManager.GetComponent<PreWavePhase>();
+                if (preWavePhase == null)
+                {
+                    preWavePhase = FindFirstObjectByType<PreWavePhase>();
+                }
+
+                if (preWavePhase != null)
+                {
+                    // Make sure we're not already subscribed
+                    preWavePhase.OnPhaseStarted.RemoveListener(OnDefencePhaseStarted);
+                    preWavePhase.OnPhaseEnded.RemoveListener(OnDefencePhaseEnded);
+                    
+                    // Subscribe
+                    preWavePhase.OnPhaseStarted.AddListener(OnDefencePhaseStarted);
+                    preWavePhase.OnPhaseEnded.AddListener(OnDefencePhaseEnded);
+                    
+                    Debug.Log("[BuildingMode] ✓ Subscribed to PreWavePhase events");
+                    Debug.Log($"[BuildingMode] PreWavePhase active: {preWavePhase.IsPhaseActive}");
+                }
+                else
+                {
+                    Debug.LogError("[BuildingMode] ✗ PreWavePhase not found!");
+                }
+            }
+            else
+            {
+                Debug.LogError("[BuildingMode] ✗ WaveManager not found!");
+            }
         }
 
         private void Start()
         {
-            // Subscribe to wave events
-            if (waveManager != null)
-            {
-                var preWavePhase = waveManager.GetComponent<PreWavePhase>();
-                if (preWavePhase != null)
-                {
-                    preWavePhase.OnPhaseStarted.AddListener(OnDefencePhaseStarted);
-                    preWavePhase.OnPhaseEnded.AddListener(OnDefencePhaseEnded);
-                    Debug.Log("[BuildingMode] Subscribed to PreWavePhase events");
-                }
-
-                // Subscribe to wave manager events through WaveEvents
-                var waveEvents = waveManager.GetComponent<WaveManager>();
-                // Note: WaveEvents is serialized field in WaveManager, we need to access it differently
-                // For now, we'll use a direct approach by checking WaveManager's state
-            }
-
+            // Event subscription now happens in Awake()
+            
             // Initially hide building systems
             if (buildingCamera != null)
                 buildingCamera.gameObject.SetActive(false);
@@ -126,6 +152,7 @@ namespace Havengard.Building
                 gridVisual.gameObject.SetActive(false);
 
             Debug.Log("[BuildingMode] Start complete - systems hidden");
+            Debug.Log($"[BuildingMode] Can enter building mode: {canEnterBuildingMode}");
         }
 
         private void Update()
@@ -196,22 +223,39 @@ namespace Havengard.Building
                 return;
             }
 
-            if (!canEnterBuildingMode)
+            // ADD DEBUG OVERRIDE:
+            if (!canEnterBuildingMode && !debugAlwaysAllowBuildingMode)
             {
                 Debug.LogWarning("[BuildingMode] Cannot enter building mode - not in defence phase");
+                Debug.Log($"[BuildingMode] canEnterBuildingMode = {canEnterBuildingMode}");
+                Debug.Log($"[BuildingMode] debugAlwaysAllowBuildingMode = {debugAlwaysAllowBuildingMode}");
                 return;
             }
+
+            Debug.Log("[BuildingMode] Entering building mode...");
 
             isBuildingMode = true;
 
             // Switch camera
             if (playerCamera != null)
+            {
                 playerCamera.gameObject.SetActive(false);
+                Debug.Log("[BuildingMode] Player camera deactivated");
+            }
+            else
+            {
+                Debug.LogWarning("[BuildingMode] Player camera is null!");
+            }
 
             if (buildingCamera != null)
             {
                 buildingCamera.gameObject.SetActive(true);
                 buildingCamera.FocusOnGrid();
+                Debug.Log("[BuildingMode] Building camera activated");
+            }
+            else
+            {
+                Debug.LogWarning("[BuildingMode] Building camera is null!");
             }
 
             // Disable player movement
@@ -219,7 +263,10 @@ namespace Havengard.Building
             {
                 var playerController = playerCharacter.GetComponent<PlayerController2D>();
                 if (playerController != null)
+                {
                     playerController.enabled = false;
+                    Debug.Log("[BuildingMode] Player controller disabled");
+                }
             }
 
             // Show UI
@@ -228,6 +275,11 @@ namespace Havengard.Building
                 buildingHUD.gameObject.SetActive(true);
                 buildingHUD.Show();
                 buildingHUD.UpdateGoldDisplay();
+                Debug.Log("[BuildingMode] Building HUD shown");
+            }
+            else
+            {
+                Debug.LogWarning("[BuildingMode] Building HUD is null!");
             }
 
             // Show grid
@@ -235,9 +287,14 @@ namespace Havengard.Building
             {
                 gridVisual.gameObject.SetActive(true);
                 gridVisual.ShowGrid();
+                Debug.Log("[BuildingMode] Grid visual shown");
+            }
+            else
+            {
+                Debug.LogWarning("[BuildingMode] Grid visual is null!");
             }
 
-            Debug.Log("[BuildingMode] Entered Building Mode");
+            Debug.Log("[BuildingMode] ✓ Entered Building Mode successfully");
         }
 
         public void ExitBuildingMode()
@@ -625,6 +682,8 @@ namespace Havengard.Building
 
         private void OnDefencePhaseStarted()
         {
+            Debug.Log("[BuildingMode] ========== DEFENCE PHASE STARTED EVENT RECEIVED ==========");
+            
             canEnterBuildingMode = true;
             currentWaveNumber++;
 
@@ -638,11 +697,14 @@ namespace Havengard.Building
                 tracker.OnWaveStarted();
             }
 
-            Debug.Log($"[BuildingMode] Defence Phase started for wave {currentWaveNumber}");
+            Debug.Log($"[BuildingMode] ✓ Defence Phase started for wave {currentWaveNumber}");
+            Debug.Log($"[BuildingMode] ✓ canEnterBuildingMode = {canEnterBuildingMode}");
         }
 
         private void OnDefencePhaseEnded()
         {
+            Debug.Log("[BuildingMode] ========== DEFENCE PHASE ENDED EVENT RECEIVED ==========");
+            
             canEnterBuildingMode = false;
 
             // Auto-exit building mode if active
@@ -651,9 +713,8 @@ namespace Havengard.Building
                 ExitBuildingMode();
                 Debug.Log("[BuildingMode] Wave starting - auto-exited building mode");
             }
-
-            // Notify all towers that wave ended (happens in WaveManager OnWaveCleared)
-            // We'll handle this separately when wave actually completes
+            
+            Debug.Log($"[BuildingMode] ✓ canEnterBuildingMode = {canEnterBuildingMode}");
         }
 
         public void OnWaveCompleted()

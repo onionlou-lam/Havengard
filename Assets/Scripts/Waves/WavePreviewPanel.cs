@@ -243,6 +243,13 @@ namespace Havengard.Waves.UI
 
         private IEnumerator FadeCoroutine(float from, float to, float duration, System.Action onComplete = null)
         {
+            if (canvasGroup == null)
+            {
+                Debug.LogError("[WavePreviewPanel] CanvasGroup is null! Add CanvasGroup component.");
+                onComplete?.Invoke();
+                yield break;
+            }
+
             float elapsed = 0f;
 
             while (elapsed < duration)

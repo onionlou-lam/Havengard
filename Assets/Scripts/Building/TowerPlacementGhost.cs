@@ -75,37 +75,64 @@ namespace Havengard.Building
                     int index = x + y * towerData.gridWidth;
 
                     GameObject cellObj;
-
+                    SpriteRenderer spriteRenderer;
+                    
                     if (footprintCellPrefab != null)
                     {
                         cellObj = Instantiate(footprintCellPrefab, footprintContainer);
+                        spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
+                        
+                        if (spriteRenderer == null)
+                        {
+                            Debug.LogWarning("[TowerPlacementGhost] Footprint prefab missing SpriteRenderer, creating default");
+                            Destroy(cellObj);
+                            cellObj = CreateDefaultFootprintCell();
+                            spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
+                        }
                     }
                     else
                     {
-                        // Create simple quad if no prefab provided
-                        cellObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                        cellObj.transform.SetParent(footprintContainer);
-                        Destroy(cellObj.GetComponent<Collider>()); // Remove collider
+                        // Create simple sprite-based cell
+                        cellObj = CreateDefaultFootprintCell();
+                        spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
                     }
 
                     cellObj.name = $"FootprintCell_{x}_{y}";
-
-                    var spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
-                    if (spriteRenderer == null)
-                        spriteRenderer = cellObj.AddComponent<SpriteRenderer>();
-
-                    spriteRenderer.sortingLayerName = "UI";
-                    spriteRenderer.sortingOrder = 99;
+                    cellObj.transform.SetParent(footprintContainer);
+                    
+                    if (spriteRenderer != null)
+                    {
+                        spriteRenderer.sortingLayerName = "UI";
+                        spriteRenderer.sortingOrder = 99;
+                    }
 
                     // Position relative to ghost
                     float offsetX = (x - towerData.gridWidth * 0.5f + 0.5f) * grid.CellSize;
                     float offsetY = (y - towerData.gridHeight * 0.5f + 0.5f) * grid.CellSize;
                     cellObj.transform.localPosition = new Vector3(offsetX, offsetY, 0.1f);
-                    cellObj.transform.localScale = Vector3.one * grid.CellSize * 0.9f; // Slightly smaller than cell
+                    cellObj.transform.localScale = Vector3.one * grid.CellSize * 0.9f;
 
                     footprintCells[index] = spriteRenderer;
                 }
             }
+        }
+
+        private GameObject CreateDefaultFootprintCell()
+        {
+            GameObject cellObj = new GameObject("FootprintCell");
+            
+            // Add SpriteRenderer
+            SpriteRenderer sr = cellObj.AddComponent<SpriteRenderer>();
+            
+            // Create a simple white square sprite
+            Texture2D tex = new Texture2D(1, 1);
+            tex.SetPixel(0, 0, Color.white);
+            tex.Apply();
+            
+            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+            sr.sprite = sprite;
+            
+            return cellObj;
         }
 
         public void UpdatePosition(Vector2Int gridPosition)

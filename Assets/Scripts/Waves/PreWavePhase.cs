@@ -99,19 +99,25 @@ namespace Havengard.Waves
             {
                 phaseUI.ShowPhase(upcomingWaveNumber, useTimeLimit, timeLimitSeconds);
             }
-            else
-            {
-                Debug.LogWarning("[PreWavePhase] No UI reference found!");
-            }
 
-            // Show wave preview if enabled WITH TIMER INFO
+            // Show wave preview if enabled
             if (showWavePreview && wavePreviewPanel != null && waveDefinition != null)
             {
+                // CHANGE THIS LINE:
+                // var previewData = WavePreviewData.CreateFromDefinition(waveDefinition, upcomingWaveNumber);
+                // TO:
                 var previewData = WavePreviewData.FromWaveDefinition(waveDefinition, upcomingWaveNumber);
-                wavePreviewPanel.ShowPreview(previewData, useTimeLimit, timeLimitSeconds); // ← CHANGED: Added timer parameters
+                wavePreviewPanel.ShowPreview(previewData, useTimeLimit, timeLimitSeconds);
             }
 
+            // Debug logging
+            Debug.Log($"[PreWavePhase] StartPhase called - About to invoke OnPhaseStarted event");
+            Debug.Log($"[PreWavePhase] OnPhaseStarted listener count: {OnPhaseStarted?.GetPersistentEventCount() ?? 0}");
+            
+            // Invoke event
             OnPhaseStarted?.Invoke();
+            
+            Debug.Log($"[PreWavePhase] ✓ OnPhaseStarted event invoked for wave {upcomingWaveNumber}");
         }
 
         /// <summary>

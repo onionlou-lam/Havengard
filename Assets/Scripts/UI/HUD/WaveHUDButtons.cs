@@ -358,8 +358,17 @@ namespace Havengard.UI
 
         private void OnBuildClicked()
         {
-            Debug.Log("[WaveHUDButtons] Build button clicked - Building system not yet implemented");
-            // TODO: Open building UI when implemented
+            Debug.Log("[WaveHUDButtons] Build button clicked - entering building mode");
+            
+            // Enter building mode
+            if (Havengard.Building.BuildingModeController.Instance != null)
+            {
+                Havengard.Building.BuildingModeController.Instance.EnterBuildingMode();
+            }
+            else
+            {
+                Debug.LogWarning("[WaveHUDButtons] BuildingModeController not found!");
+            }
         }
 
         private void OnStartWaveClicked()
