@@ -41,7 +41,7 @@ namespace Havengard.Combat
             }
 
             if (attackSFX != null)
-                AudioSource.PlayClipAtPoint(attackSFX, transform.position, sfxVolume);
+                PlayManagedSFX(attackSFX, transform.position, sfxVolume);
         }
 
         /// <summary>
@@ -56,7 +56,23 @@ namespace Havengard.Combat
             }
 
             if (hitSFX != null)
-                AudioSource.PlayClipAtPoint(hitSFX, hitPosition, sfxVolume);
+                PlayManagedSFX(hitSFX, hitPosition, sfxVolume);
+        }
+
+        /// <summary>
+        /// Routes SFX through GameAudioManager when available so concurrent-instance limiting
+        /// and pause-awareness apply (important since many enemies may share this component's clips).
+        /// Falls back to raw playback if no manager exists in the scene.
+        /// </summary>
+        private void PlayManagedSFX(AudioClip clip, Vector3 position, float volume)
+        {
+            if (Havengard.Audio.GameAudioManager.Instance != null)
+            {
+                Havengard.Audio.GameAudioManager.Instance.PlaySFX(clip, position, volume);
+                return;
+            }
+
+            AudioSource.PlayClipAtPoint(clip, position, volume);
         }
     }
 }

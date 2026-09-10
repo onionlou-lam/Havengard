@@ -197,7 +197,7 @@ namespace Havengard.Waves.Editor
                 gateObj.transform.position = defaultTargetPosition;
 
                 // Add Health component
-                var health = gateObj.AddComponent<Havengard.Core.HealthSystem.Health>();
+                var health = gateObj.AddComponent<Havengard.Core.HealthManagement.Health>();
                 health.SetFaction(Havengard.Units.Faction.Ally);
                 health.SetStartingMaxHealth(1000);
 

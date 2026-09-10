@@ -12,12 +12,22 @@ namespace Havengard.Combat
         [Tooltip("Offset angle if projectile sprite doesn't face right (0°). E.g., if sprite faces up, use 90")]
         [SerializeField] private float spriteAngleOffset = 90f;
 
+        [Header("Audio (Optional)")]
+        [Tooltip("Looping sound that plays while the projectile is in flight (e.g. a magic hum or fire crackle). Routed through GameAudioManager so it pauses correctly and respects concurrency limits.")]
+        [SerializeField] private AudioClip loopSFX;
+        [SerializeField][Range(0f, 1f)] private float loopVolume = 0.6f;
+        [SerializeField][Range(0f, 1f)] private float loopSpatialBlend = 1f;
+
+        private Havengard.Audio.GameAudioManager.LoopHandle loopHandle;
+
         private Vector3 direction;
         private float speed;
         private float lifetime;
         private GameObject caster;
         private Action<GameObject, bool> onHit; // Added bool parameter for shouldDestroy
         private LayerMask wallLayers;
+        private bool ignoreWallCollision;
+        private Collider2D ownCollider;
 
         // Piercing functionality
         private bool isPiercing;
@@ -41,11 +51,34 @@ namespace Havengard.Combat
             rb = GetComponent<Rigidbody2D>();
             trailRenderer = GetComponent<TrailRenderer>();
             spriteRenderer = GetComponent<SpriteRenderer>();
+            ownCollider = GetComponent<Collider2D>();
 
             if (rb != null)
             {
                 rb.gravityScale = 0f;
             }
+
+            // Start looping flight SFX, if configured. Routed through GameAudioManager so it
+            // automatically pauses/resumes with the game's pause state instead of ignoring
+            // Time.timeScale, and so concurrency limiting applies if many projectiles share the clip.
+            if (loopSFX != null && Havengard.Audio.GameAudioManager.Instance != null)
+            {
+                loopHandle = Havengard.Audio.GameAudioManager.Instance.PlayLoop(loopSFX, transform, loopVolume, loopSpatialBlend);
+            }
+        }
+
+        private void StopLoopSFX()
+        {
+            if (loopHandle.IsValid && Havengard.Audio.GameAudioManager.Instance != null)
+            {
+                Havengard.Audio.GameAudioManager.Instance.StopLoop(loopHandle);
+                loopHandle = Havengard.Audio.GameAudioManager.LoopHandle.Invalid;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            StopLoopSFX();
         }
 
         public void Initialize(
@@ -56,7 +89,8 @@ namespace Havengard.Combat
             Action<GameObject, bool> onHit,
             LayerMask wallLayers = default,
             bool isPiercing = false,
-            int pierceCount = 0)
+            int pierceCount = 0,
+            bool ignoreWallCollision = false)
         {
             this.direction = direction.normalized;
             this.speed = speed;
@@ -66,6 +100,7 @@ namespace Havengard.Combat
             this.wallLayers = wallLayers;
             this.isPiercing = isPiercing;
             this.pierceCount = pierceCount;
+            this.ignoreWallCollision = ignoreWallCollision;
 
             spawnTime = Time.time;
             hasHit = false;
@@ -80,6 +115,18 @@ namespace Havengard.Combat
 
             // Rotate projectile to face direction of travel
             RotateToDirection(this.direction);
+
+            // If fired from atop the wall, ignore collision with all registered wall colliders
+            // so the shot can pass "over" the wall down to enemies below.
+            if (ignoreWallCollision && ownCollider != null)
+            {
+                var wallColliders = WallColliderRegistry.GetAll();
+                for (int i = 0; i < wallColliders.Count; i++)
+                {
+                    if (wallColliders[i] != null)
+                        Physics2D.IgnoreCollision(ownCollider, wallColliders[i], true);
+                }
+            }
 
             // Enable collision after a short delay
             StartCoroutine(EnableCollisionAfterDelay(0.1f));
@@ -100,7 +147,7 @@ namespace Havengard.Combat
                 onHit?.Invoke(hit);
             };
 
-            Initialize(direction, speed, lifetime, caster, wrappedCallback, wallLayers, false, 0);
+            Initialize(direction, speed, lifetime, caster, wrappedCallback, wallLayers, false, 0, false);
         }
 
         private IEnumerator EnableCollisionAfterDelay(float delay)

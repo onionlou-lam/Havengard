@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
 using Havengard.Abilities;
+using Havengard.UI;
 
 public class PlayerController2D : MonoBehaviour
 {
@@ -105,6 +106,10 @@ public class PlayerController2D : MonoBehaviour
 
     void Update()
     {
+        // Don't process movement/ability input while a blocking UI panel is open
+        if (GameplayUIBlocker.IsBlocked)
+            return;
+
         HandleMovementInput();
         HandleAbilityInput();
         UpdateAnimations();

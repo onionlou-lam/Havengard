@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Havengard.Core.Progression;
 using Havengard.Abilities;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
@@ -121,6 +122,12 @@ namespace Havengard.UI
 
         private AudioSource audioSource;
 
+        /// <summary>
+        /// Raised whenever the skill tree is closed (Escape key, close button, etc.)
+        /// so parent menus (e.g. PauseMenuUI) can react and restore their own state.
+        /// </summary>
+        public event Action OnRequestClose;
+
         //-----------------------------------------------------
 
         private void Awake()
@@ -165,7 +172,7 @@ namespace Havengard.UI
 
             // ESC to close
             if (Input.GetKeyDown(KeyCode.Escape))
-                ToggleSkillTree();
+                CloseSkillTree();
 
             // ✅ Update HUD display every frame when skill tree is open
             UpdateHUDDisplay();
@@ -179,36 +186,39 @@ namespace Havengard.UI
             // Update health bar
             if (playerHealthSystem != null && skillTreeHealthBarFill != null)
             {
-                float healthPercent = playerHealthSystem.CurrentHealth / playerHealthSystem.MaxHealth;
+                float maxHealth = playerHealthSystem.MaxHealth;
+                float healthPercent = maxHealth > 0f ? playerHealthSystem.CurrentHealth / maxHealth : 0f;
                 skillTreeHealthBarFill.fillAmount = healthPercent;
 
                 if (skillTreeHealthText != null)
                 {
-                    skillTreeHealthText.text = $"{Mathf.CeilToInt(playerHealthSystem.CurrentHealth)}/{Mathf.CeilToInt(playerHealthSystem.MaxHealth)}";
+                    skillTreeHealthText.text = $"{Mathf.CeilToInt(playerHealthSystem.CurrentHealth)}/{Mathf.CeilToInt(maxHealth)}";
                 }
             }
 
             // Update mana/resource bar
             if (playerResourceSystem != null && skillTreeManaBarFill != null)
             {
-                float resourcePercent = (float)playerResourceSystem.CurrentResource / playerResourceSystem.MaxResource;
+                int maxResource = playerResourceSystem.MaxResource;
+                float resourcePercent = maxResource > 0 ? (float)playerResourceSystem.CurrentResource / maxResource : 0f;
                 skillTreeManaBarFill.fillAmount = resourcePercent;
 
                 if (skillTreeManaText != null)
                 {
-                    skillTreeManaText.text = $"{playerResourceSystem.CurrentResource}/{playerResourceSystem.MaxResource}";
+                    skillTreeManaText.text = $"{playerResourceSystem.CurrentResource}/{maxResource}";
                 }
             }
 
             // Update EXP bar
             if (playerEXPSystem != null && skillTreeExpBarFill != null)
             {
-                float expPercent = (float)playerEXPSystem.CurrentEXP / playerEXPSystem.ExpToNextLevel;  // ← FIXED
+                int expToNextLevel = playerEXPSystem.ExpToNextLevel;
+                float expPercent = expToNextLevel > 0 ? (float)playerEXPSystem.CurrentEXP / expToNextLevel : 0f;
                 skillTreeExpBarFill.fillAmount = expPercent;
 
                 if (skillTreeExpText != null)
                 {
-                    skillTreeExpText.text = $"{playerEXPSystem.CurrentEXP}/{playerEXPSystem.ExpToNextLevel} XP";  // ← FIXED
+                    skillTreeExpText.text = $"{playerEXPSystem.CurrentEXP}/{expToNextLevel} XP";
                 }
             }
         }
@@ -879,51 +889,141 @@ namespace Havengard.UI
 
         //-----------------------------------------------------
 
+        // Public static convenience flag for input blocking
+        public static bool IsOpen { get; private set; }
+
+        private UnityEngine.CanvasGroup EnsureCanvasGroup(GameObject go)
+        {
+            var cg = go.GetComponent<UnityEngine.CanvasGroup>();
+            if (cg == null) cg = go.AddComponent<UnityEngine.CanvasGroup>();
+            return cg;
+        }
+
         public void ToggleSkillTree()
         {
-            bool isActive = !skillTreePanel.activeSelf;
-            skillTreePanel.SetActive(isActive);
-
-            if (isActive)
+            if (skillTreePanel == null)
             {
-                // ✅ Hide Canvas_HUD completely
-                if (hudCanvas != null)
-                    hudCanvas.SetActive(false);
+                Debug.LogError("[SkillTreeUI] skillTreePanel is null!");
+                return;
+            }
 
-                // ✅ Hide additional HUD elements (wave counter, currency, etc.)
-                if (additionalHUDElementsToHide != null)
-                {
-                    foreach (var element in additionalHUDElementsToHide)
-                    {
-                        if (element != null)
-                            element.SetActive(false);
-                    }
-                }
+            if (!skillTreePanel.activeSelf)
+                OpenSkillTree();
+            else
+                CloseSkillTree();
+        }
 
-                Time.timeScale = 0f;
+        public void OpenSkillTree()
+        {
+            if (skillTreePanel == null)
+            {
+                Debug.LogError("[SkillTreeUI] OpenSkillTree called but skillTreePanel is null");
+                return;
+            }
+
+            // If already open, refresh and return
+            if (skillTreePanel.activeSelf && IsOpen)
+            {
+                Debug.Log("[SkillTreeUI] OpenSkillTree: already open, refreshing");
                 RefreshAllNodes();
                 UpdatePlayerInfo();
                 SwitchToTab(currentTabIndex);
+                return;
             }
-            else
+
+            skillTreePanel.SetActive(true);
+            IsOpen = true;
+            GameplayUIBlocker.Push();
+
+            var cg = skillTreePanel.GetComponent<UnityEngine.CanvasGroup>();
+            if (cg == null)
             {
-                // ✅ Show Canvas_HUD again
-                if (hudCanvas != null)
-                    hudCanvas.SetActive(true);
-
-                // ✅ Show additional HUD elements
-                if (additionalHUDElementsToHide != null)
-                {
-                    foreach (var element in additionalHUDElementsToHide)
-                    {
-                        if (element != null)
-                            element.SetActive(true);
-                    }
-                }
-
-                Time.timeScale = 1f;
-                DeselectAllNodes();
+                cg = skillTreePanel.AddComponent<UnityEngine.CanvasGroup>();
             }
+            cg.interactable = true;
+            cg.blocksRaycasts = true;
+            cg.alpha = 1f;
+
+            if (hudCanvas != null) hudCanvas.SetActive(false);
+            if (additionalHUDElementsToHide != null)
+            {
+                foreach (var e in additionalHUDElementsToHide)
+                    if (e != null) e.SetActive(false);
+            }
+
+            // Pause game
+            Time.timeScale = 0f;
+
+            // Ensure initialization happened
+            if (!isInitialized) TryAutoInitialize();
+
+            // Force layout/UI update so input works consistently
+            UnityEngine.Canvas.ForceUpdateCanvases();
+
+            // Clear any selected UI element and also clear pointer selection
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+            {
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            }
+
+            RefreshAllNodes();
+            UpdatePlayerInfo();
+            SwitchToTab(currentTabIndex);
+
+            // Ensure cursor is visible and unlocked for UI
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+
+            if (DEBUG_LOGS) Debug.Log("[SkillTreeUI] OpenSkillTree completed (IsOpen=true)");
+        }
+
+        public void CloseSkillTree()
+        {
+            if (skillTreePanel == null)
+            {
+                Debug.LogError("[SkillTreeUI] CloseSkillTree called but skillTreePanel is null");
+                return;
+            }
+
+            if (!skillTreePanel.activeSelf && !IsOpen)
+            {
+                if (DEBUG_LOGS) Debug.Log("[SkillTreeUI] CloseSkillTree: already closed");
+                return;
+            }
+
+            // Deselect UI state
+            DeselectAllNodes();
+
+            // Restore HUD + extras
+            if (hudCanvas != null) hudCanvas.SetActive(true);
+            if (additionalHUDElementsToHide != null)
+            {
+                foreach (var e in additionalHUDElementsToHide)
+                    if (e != null) e.SetActive(true);
+            }
+
+            // Unpause first so any OnDisable/OnClose code runs with normal time
+            Time.timeScale = 1f;
+
+            var cg = skillTreePanel.GetComponent<UnityEngine.CanvasGroup>();
+            if (cg != null)
+            {
+                cg.interactable = false;
+                cg.blocksRaycasts = false;
+            }
+
+            skillTreePanel.SetActive(false);
+            IsOpen = false;
+            GameplayUIBlocker.Pop();
+
+            // Gameplay uses mouse click-to-move/aim, so keep the cursor visible and unlocked.
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+
+            if (DEBUG_LOGS) Debug.Log("[SkillTreeUI] CloseSkillTree completed (IsOpen=false)");
+
+            // Notify listeners (e.g. PauseMenuUI) that the skill tree was closed
+            OnRequestClose?.Invoke();
         }
 
         private void OnConfirmSkillClicked()
@@ -949,6 +1049,7 @@ namespace Havengard.UI
                             int newLevel = lastClickedNode.GetInvestmentLevel() + 1;
                             lastClickedNode.SetInvestmentLevel(newLevel);
                             
+
                             // Apply investment to ability
                             if (classAbility.ability.investment != null)
                             {
@@ -1014,6 +1115,70 @@ namespace Havengard.UI
             OnNodeClicked(lastClickedAbilityIndex, lastClickedNode);
 
             Debug.Log($"[SkillTreeUI] Unlocked ability: {classAbility.ability.abilityName}");
+        }
+
+        /// <summary>
+        /// Attempt to auto-find player components and initialize the skill tree
+        /// if it hasn't been initialized yet.
+        /// </summary>
+        private bool TryAutoInitialize()
+        {
+            if (isInitialized) return true;
+
+            // Resolve the PLAYER specifically by tag — not FindObjectOfType, which
+            // can return an ally/follower HeroInstance since Expeditions added
+            // HeroInstance to non-player units too.
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj == null)
+            {
+                if (DEBUG_LOGS)
+                    Debug.LogWarning("[SkillTreeUI] Auto-initialize failed: no GameObject tagged 'Player' found");
+                return false;
+            }
+
+            AbilityUser foundAbilityUser = playerObj.GetComponent<AbilityUser>();
+            EXPSystem foundExp = playerObj.GetComponent<EXPSystem>();
+            Havengard.Core.Heroes.HeroInstance foundHero = playerObj.GetComponent<Havengard.Core.Heroes.HeroInstance>();
+
+            if (foundAbilityUser == null || foundExp == null || foundHero == null)
+            {
+                if (DEBUG_LOGS)
+                    Debug.LogWarning($"[SkillTreeUI] Auto-initialize failed: Player object '{playerObj.name}' missing AbilityUser/EXPSystem/HeroInstance " +
+                        $"(AbilityUser={foundAbilityUser != null}, EXPSystem={foundExp != null}, HeroInstance={foundHero != null})");
+                return false;
+            }
+
+            // Try to get PlayerClass(s) from HeroInstance
+            var heroClass = foundHero.Class;
+            if (heroClass == null)
+            {
+                if (DEBUG_LOGS) Debug.LogWarning("[SkillTreeUI] Auto-initialize failed: Player HeroInstance.Class is null");
+                return false;
+            }
+
+            // Assign resource system if missing
+            if (playerResourceSystem == null)
+            {
+                playerResourceSystem = playerObj.GetComponent<ResourceSystem>();
+            }
+
+            // Assign health system if missing (Health is a MonoBehaviour that holds a HealthSystem)
+            if (playerHealthSystem == null)
+            {
+                var healthComponent = playerObj.GetComponent<Health>();
+                if (healthComponent != null)
+                {
+                    playerHealthSystem = healthComponent.GetHealthSystem();
+                }
+            }
+
+            // Initialize SkillTreeUI with the hero's class (single-class overload)
+            Initialize(foundAbilityUser, foundExp, heroClass);
+
+            if (DEBUG_LOGS)
+                Debug.Log($"[SkillTreeUI] Auto-initialized SkillTreeUI from Player object '{playerObj.name}'");
+
+            return isInitialized;
         }
     }
 }

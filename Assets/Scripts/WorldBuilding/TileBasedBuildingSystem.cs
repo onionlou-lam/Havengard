@@ -24,7 +24,15 @@ public class TileBasedBuildingSystem : MonoBehaviour
     {
         _currentBuildingSystem = this;
         _grid = gridLayout.gameObject.GetComponent<Grid>();
-        _selectedObject = placeableObjects[0];
+        
+        if (placeableObjects != null && placeableObjects.Length > 0)
+        {
+            _selectedObject = placeableObjects[0];
+        }
+        else
+        {
+            Debug.LogError("No placeable objects assigned in Inspector!");
+        }
     }
 
     private void Update()

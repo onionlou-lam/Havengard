@@ -166,7 +166,27 @@ namespace Havengard.Abilities
 
             mainCamera = Camera.main;
 
-            // Store original rotation
+            // If rotateToBeam is enabled but no rotationTarget assigned,
+            // create a child "AimPivot" so we don't rotate the root GameObject (preserve top-down orientation).
+            if (rotateToBeam && rotationTarget == null)
+            {
+                var existing = transform.Find("AimPivot");
+                if (existing != null)
+                {
+                    rotationTarget = existing;
+                }
+                else
+                {
+                    var pivotGO = new GameObject("AimPivot");
+                    pivotGO.transform.SetParent(transform, false);
+                    pivotGO.transform.localPosition = Vector3.zero;
+                    // Ensure pivot has neutral rotation (no X tilt)
+                    pivotGO.transform.localRotation = Quaternion.identity;
+                    rotationTarget = pivotGO.transform;
+                }
+            }
+
+            // Store original rotation of rotationTarget (or root) so we can restore later
             if (rotateToBeam)
             {
                 if (rotationTarget != null)
@@ -738,16 +758,20 @@ namespace Havengard.Abilities
 
         private void RotateCasterToDirection(Vector2 direction)
         {
+            // Calculate desired Z angle only
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            Quaternion targetRotation = Quaternion.Euler(0, 0, angle);
 
             if (rotationTarget != null)
             {
-                rotationTarget.rotation = targetRotation;
+                // Preserve existing X/Y, set only Z
+                Vector3 e = rotationTarget.eulerAngles;
+                rotationTarget.rotation = Quaternion.Euler(e.x, e.y, angle);
             }
             else
             {
-                transform.rotation = targetRotation;
+                // Preserve existing X/Y on root transform, set only Z
+                Vector3 e = transform.eulerAngles;
+                transform.rotation = Quaternion.Euler(e.x, e.y, angle);
             }
         }
 
@@ -757,6 +781,7 @@ namespace Havengard.Abilities
 
             if (rotationTarget != null)
             {
+                // Restore full original rotation of the rotationTarget (which we captured at Awake)
                 rotationTarget.rotation = originalRotation;
             }
             else
@@ -792,10 +817,20 @@ namespace Havengard.Abilities
             // Get effective cooldown with stat modifiers
             float cooldown = ability.GetEffectiveCooldown(gameObject);
 
-            if (nextReadyTimes != null && index < nextReadyTimes.Length)
+            // If the same AbilityBase appears multiple times in the list,
+            // apply the same cooldown to each slot that references it so they share a cooldown.
+            if (nextReadyTimes != null && abilities != null)
             {
-                nextReadyTimes[index] = Time.time + cooldown;
-                OnAbilityCooldownStarted?.Invoke(index, cooldown);
+                float readyTime = Time.time + cooldown;
+                for (int j = 0; j < nextReadyTimes.Length && j < abilities.Count; j++)
+                {
+                    if (abilities[j] != null && abilities[j] == ability)
+                    {
+                        nextReadyTimes[j] = readyTime;
+                        // Fire cooldown started event for each index so UI can update each slot
+                        OnAbilityCooldownStarted?.Invoke(j, cooldown);
+                    }
+                }
             }
 
             if (useGlobalCooldown)

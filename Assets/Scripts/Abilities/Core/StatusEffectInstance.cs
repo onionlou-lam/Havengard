@@ -27,7 +27,7 @@ namespace Havengard.Abilities
             // Apply damage ticks
             if (Data.damagePerTick > 0 && Time.time >= nextTickTime)
             {
-                var health = Target.GetComponent<Havengard.Core.HealthSystem.Health>();
+                var health = Target.GetComponent<Havengard.Core.HealthManagement.Health>();
                 if (health != null)
                 {
                     health.TakeDamage((int)Data.damagePerTick, Source);

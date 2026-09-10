@@ -56,9 +56,6 @@ namespace Havengard.Waves.UI
             {
                 startWaveButton.onClick.AddListener(OnStartWaveClicked);
             }
-
-            if (panelRoot != null)
-                panelRoot.SetActive(false);
         }
 
         /// <summary>
@@ -77,7 +74,7 @@ namespace Havengard.Waves.UI
 
             // Set wave info (compact)
             if (waveNumberText != null)
-                waveNumberText.text = $"Wave {data.waveNumber}: {data.waveName}";
+                waveNumberText.text = $"{data.waveName}";
 
             if (totalEnemiesText != null)
                 totalEnemiesText.text = $"{data.totalEnemyCount} Enemies";

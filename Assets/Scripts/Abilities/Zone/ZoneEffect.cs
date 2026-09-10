@@ -1,5 +1,5 @@
 using Havengard.Combat;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using Havengard.Statuses;
 using Havengard.Units;
 using System.Collections;
@@ -36,7 +36,7 @@ namespace Havengard.Abilities
         private bool followsCaster;
         private StatusEffectData statusEffect;
         private int maxStatusStacks;
-        private AudioSource audioSource;
+        private Havengard.Audio.GameAudioManager.LoopHandle loopHandle;
         private bool isDestroying = false;
 
         public void Initialize(GameObject caster, bool followsCaster, StatusEffectData statusEffect = null, int maxStatusStacks = 1)
@@ -53,24 +53,37 @@ namespace Havengard.Abilities
             if (spawnVFX != null)
                 spawnVFX.Play();
 
-            // Play spawn SFX (one-shot, not looping)
+            // Play spawn SFX (one-shot, not looping) — routed through GameAudioManager for
+            // concurrency limiting when many zones spawn at once.
             if (spawnSFX != null)
-                AudioSource.PlayClipAtPoint(spawnSFX, transform.position);
+            {
+                if (Havengard.Audio.GameAudioManager.Instance != null)
+                    Havengard.Audio.GameAudioManager.Instance.PlaySFX(spawnSFX, transform.position);
+                else
+                    AudioSource.PlayClipAtPoint(spawnSFX, transform.position);
+            }
 
-            // Setup looping audio
+            // Setup looping audio via GameAudioManager so it automatically pauses/resumes
+            // with the game's pause state instead of ignoring Time.timeScale.
             if (loopSFX != null)
             {
-                audioSource = GetComponent<AudioSource>();
-                if (audioSource == null)
+                if (Havengard.Audio.GameAudioManager.Instance != null)
                 {
-                    audioSource = gameObject.AddComponent<AudioSource>();
+                    loopHandle = Havengard.Audio.GameAudioManager.Instance.PlayLoop(loopSFX, transform, 1f, 0.5f);
                 }
+                else
+                {
+                    // Fallback: legacy behavior if no manager is present in the scene
+                    var fallbackSource = GetComponent<AudioSource>();
+                    if (fallbackSource == null)
+                        fallbackSource = gameObject.AddComponent<AudioSource>();
 
-                audioSource.clip = loopSFX;
-                audioSource.loop = true;
-                audioSource.playOnAwake = false;
-                audioSource.spatialBlend = 0.5f; // 2D/3D mix
-                audioSource.Play();
+                    fallbackSource.clip = loopSFX;
+                    fallbackSource.loop = true;
+                    fallbackSource.playOnAwake = false;
+                    fallbackSource.spatialBlend = 0.5f;
+                    fallbackSource.Play();
+                }
             }
 
             StartCoroutine(EffectRoutine());
@@ -109,11 +122,20 @@ namespace Havengard.Abilities
             // Proper cleanup before destruction
             isDestroying = true;
 
-            if (audioSource != null && audioSource.isPlaying)
+            if (loopHandle.IsValid && Havengard.Audio.GameAudioManager.Instance != null)
             {
-                audioSource.Stop();
-                audioSource.loop = false;
-                audioSource.clip = null;
+                Havengard.Audio.GameAudioManager.Instance.StopLoop(loopHandle);
+            }
+            else
+            {
+                // Fallback cleanup for legacy AudioSource path
+                var fallbackSource = GetComponent<AudioSource>();
+                if (fallbackSource != null && fallbackSource.isPlaying)
+                {
+                    fallbackSource.Stop();
+                    fallbackSource.loop = false;
+                    fallbackSource.clip = null;
+                }
             }
 
             Destroy(gameObject);
@@ -152,11 +174,23 @@ namespace Havengard.Abilities
         private void OnDestroy()
         {
             // Emergency cleanup if destroyed prematurely
-            if (!isDestroying && audioSource != null && audioSource.isPlaying)
+            if (!isDestroying)
             {
-                audioSource.Stop();
-                audioSource.loop = false;
-                audioSource.clip = null;
+                if (loopHandle.IsValid && Havengard.Audio.GameAudioManager.Instance != null)
+                {
+                    Havengard.Audio.GameAudioManager.Instance.StopLoop(loopHandle);
+                }
+                else
+                {
+                    // Fallback cleanup for legacy AudioSource path
+                    var fallbackSource = GetComponent<AudioSource>();
+                    if (fallbackSource != null && fallbackSource.isPlaying)
+                    {
+                        fallbackSource.Stop();
+                        fallbackSource.loop = false;
+                        fallbackSource.clip = null;
+                    }
+                }
             }
         }
     }

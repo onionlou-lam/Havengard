@@ -41,7 +41,7 @@ Transform:
   m_GameObject: {fileID: 6047541241966609476}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.83, y: -8.82, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -177,8 +177,7 @@ MonoBehaviour:
   useChannelingAudio: 1
   castSoundVolume: 1.5
   impactSoundVolume: 2.5
-  unlockedAbilities: 
-  subSkillSelections: []
+  enableHoldToCast: 1
 --- !u!114 &6181586183396007713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -261,8 +260,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxResource: 1000
   currentResource: 1000
-  regenRate: 5
-  regenDelay: 2
+  useStatsForRegen: 1
+  baseRegenRate: 5
+  baseRegenDelay: 2
 --- !u!114 &6014466841908265175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -277,13 +277,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseStats:
     MaxHP: 0
+    MaxResource: 0
     Attack: 0
     Defense: 0
     AttackSpeed: 0
-    MoveSpeed: 0
     CritChance: 0
     CritMultiplier: 0
-    MaxResource: 0
+    MoveSpeed: 0
+    HealthRegenRate: 0
+    ResourceRegenRate: 5
+    HealthRegenDelay: 5
+    ResourceRegenDelay: 2
+    CooldownReduction: 0
+    DamageMultiplier: 0
+    Lifesteal: 0
+    ResourceGenerationPercent: 0
+    FlatResourceGeneration: 0
 --- !u!212 &4151175064591504417
 SpriteRenderer:
   m_ObjectHideFlags: 0

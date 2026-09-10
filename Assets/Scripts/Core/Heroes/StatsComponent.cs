@@ -56,7 +56,7 @@ namespace Havengard.Core.Character
             if (CurrentStats == null) return;
 
             // Sync health
-            var health = GetComponent<Havengard.Core.HealthSystem.Health>();
+            var health = GetComponent<Havengard.Core.HealthManagement.Health>();
             if (health != null)
             {
                 health.SetMaxHealthFromStats(refill: false);

@@ -304,7 +304,7 @@ namespace Havengard.Save
                     isOnQuest = hero.IsOnQuest
                 };
 
-                var health = hero.GetComponent<Havengard.Core.HealthSystem.Health>();
+                var health = hero.GetComponent<Havengard.Core.HealthManagement.Health>();
                 if (health != null)
                     heroData.currentHealth = health.CurrentHealth;
 
@@ -450,7 +450,7 @@ namespace Havengard.Save
                 if (hero.ExpSystem != null)
                     hero.ExpSystem.SetEXPAndLevel(heroSaveData.currentExp, heroSaveData.level);
 
-                var health = hero.GetComponent<Havengard.Core.HealthSystem.Health>();
+                var health = hero.GetComponent<Havengard.Core.HealthManagement.Health>();
                 if (health != null)
                     health.SetHealth(heroSaveData.currentHealth);
 

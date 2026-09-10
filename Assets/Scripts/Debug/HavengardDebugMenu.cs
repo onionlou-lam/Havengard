@@ -10,7 +10,7 @@ using Havengard.Units;
 using Havengard.Waves;
 using Havengard.Items;
 using Havengard.Core.Heroes;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using UnityEngine.SceneManagement;
 using UnityEngine.AI;
 

@@ -1,5 +1,5 @@
 using UnityEngine;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using Havengard.Core.Heroes;
 using Havengard.Items;
 

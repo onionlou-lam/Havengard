@@ -4,18 +4,20 @@ using UnityEngine.Events;
 namespace Havengard.Waves
 {
     /// <summary>
-    /// Centralized events for wave system
+    /// Container for wave-related events
     /// </summary>
     [System.Serializable]
     public class WaveEvents
     {
-        [Header("Wave Lifecycle")]
-        public UnityEvent OnWavesStarted;           // First wave begins
-        public UnityEvent<int> OnWaveStarted;       // Individual wave starts (wave index)
-        public UnityEvent<int> OnWaveCleared;       // Wave cleared (wave index)
-        public UnityEvent OnAllWavesComplete;       // All waves finished
+        public UnityEvent OnWavesStarted = new UnityEvent();
+        public UnityEvent<int> OnWaveStarted = new UnityEvent<int>();
+        public UnityEvent<int> OnWaveCleared = new UnityEvent<int>();
+        public UnityEvent OnAllWavesComplete = new UnityEvent();
 
-        [Header("Level Complete")]
-        public UnityEvent OnLevelComplete;          // Level victory
+        /// <summary>
+        /// Raised whenever the count of enemies remaining alive in the current wave changes
+        /// (enemy spawned or enemy died). Parameters: (remainingCount, totalToSpawn).
+        /// </summary>
+        public UnityEvent<int, int> OnEnemyCountChanged = new UnityEvent<int, int>();
     }
 }

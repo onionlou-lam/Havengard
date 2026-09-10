@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Havengard.Core.HealthSystem
+namespace Havengard.Core.HealthManagement
 {
     /// <summary>
     /// World-space health bar that follows a Health component.

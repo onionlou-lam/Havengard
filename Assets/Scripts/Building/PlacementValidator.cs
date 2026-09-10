@@ -22,11 +22,24 @@ namespace Havengard.Building
 
             // Check bounds
             if (!grid.IsFootprintWithinBounds(gridPosition, towerData.gridWidth, towerData.gridHeight))
+            {
+                Debug.Log("[PlacementValidator] Out of bounds");
                 return PlacementValidationResult.OutOfBounds;
+            }
+
+            // NEW: Check if on buildable tiles
+            if (!grid.IsFootprintBuildable(gridPosition, towerData.gridWidth, towerData.gridHeight))
+            {
+                Debug.Log("[PlacementValidator] Not on buildable tile");
+                return PlacementValidationResult.NotBuildable;
+            }
 
             // Check occupation
             if (!grid.IsFootprintClear(gridPosition, towerData.gridWidth, towerData.gridHeight))
+            {
+                Debug.Log("[PlacementValidator] Occupied");
                 return PlacementValidationResult.Occupied;
+            }
 
             // Check gold
             var levelData = towerData.GetLevelData(level);
@@ -36,7 +49,10 @@ namespace Havengard.Building
             if (GoldSystem.Instance != null)
             {
                 if (GoldSystem.Instance.Current < levelData.buildCost)
+                {
+                    Debug.Log("[PlacementValidator] Insufficient funds");
                     return PlacementValidationResult.InsufficientFunds;
+                }
             }
 
             return PlacementValidationResult.Valid;
@@ -49,6 +65,7 @@ namespace Havengard.Building
         OutOfBounds,
         Occupied,
         InsufficientFunds,
+        NotBuildable,
         Invalid
     }
 }

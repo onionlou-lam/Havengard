@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TestWave2
   m_EditorClassIdentifier: 
   waveName: Wave 2
-  startCondition: 3
+  startCondition: 2
   startDelay: 10
   completeCondition: 0
   groups:

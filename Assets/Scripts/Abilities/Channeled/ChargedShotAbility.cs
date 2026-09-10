@@ -55,7 +55,7 @@ namespace Havengard.Abilities
 
         private void OnProjectileHit(GameObject target, GameObject caster, float damage)
         {
-            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            var health = target.GetComponent<Havengard.Core.HealthManagement.Health>();
             if (health != null)
             {
                 health.TakeDamage((int)damage, caster);

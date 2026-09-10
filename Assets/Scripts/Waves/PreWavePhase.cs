@@ -49,10 +49,10 @@ namespace Havengard.Waves
             // Auto-find wave preview panel if not assigned
             if (wavePreviewPanel == null)
             {
-                wavePreviewPanel = GetComponentInChildren<WavePreviewPanel>();
+                wavePreviewPanel = GetComponentInChildren<WavePreviewPanel>(true);
                 if (wavePreviewPanel == null)
                 {
-                    wavePreviewPanel = FindFirstObjectByType<WavePreviewPanel>();
+                    wavePreviewPanel = FindFirstObjectByType<WavePreviewPanel>(FindObjectsInactive.Include);
                 }
             }
 

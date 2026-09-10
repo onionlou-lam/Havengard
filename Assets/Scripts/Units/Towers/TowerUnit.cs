@@ -1,7 +1,7 @@
 using UnityEngine;
 using Havengard.Abilities;
 using Havengard.Combat;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 
 namespace Havengard.Units
 {
@@ -26,6 +26,10 @@ namespace Havengard.Units
         [Header("Tower Visuals")]
         [SerializeField] protected Transform turretRotationPivot; // Optional: for rotating the tower sprite toward target
         [SerializeField] protected float rotationSpeed = 5f;
+
+        [Header("Tower Placement")]
+        [Tooltip("Set true if this tower is physically mounted on the wall-top walkway. Its projectiles ignore wall collision.")]
+        [SerializeField] protected bool isMountedOnWall = true;
 
         protected float lastAttackTime;
 
@@ -105,7 +109,11 @@ namespace Havengard.Units
                     projectileSpeed,
                     projectileLifetime,
                     gameObject,
-                    (hit) => OnProjectileHit(projGO, hit)
+                    (hit, shouldDestroy) => OnProjectileHit(projGO, hit),
+                    default,
+                    false,
+                    0,
+                    isMountedOnWall
                 );
 
                 // Enable homing if configured

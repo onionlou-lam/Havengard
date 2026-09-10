@@ -108,8 +108,8 @@ namespace Havengard.Abilities
 
         private void ApplyDamage(GameObject target, GameObject caster, float chargePercent)
         {
-            var casterHealth = caster.GetComponent<Core.HealthSystem.IHealth>();
-            var targetHealth = target.GetComponent<Core.HealthSystem.IHealth>();
+            var casterHealth = caster.GetComponent<Core.HealthManagement.IHealth>();
+            var targetHealth = target.GetComponent<Core.HealthManagement.IHealth>();
 
             if (casterHealth != null && targetHealth != null)
             {
@@ -125,7 +125,7 @@ namespace Havengard.Abilities
                 }
             }
 
-            var health = target.GetComponent<Core.HealthSystem.Health>();
+            var health = target.GetComponent<Core.HealthManagement.Health>();
             if (health != null)
             {
                 float baseDmg = CalculateDamage(caster);

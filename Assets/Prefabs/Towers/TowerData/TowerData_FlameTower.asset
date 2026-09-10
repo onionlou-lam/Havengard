@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e585fd3893b08046a5e218a87d43137, type: 3}
   m_Name: TowerData_FlameTower
   m_EditorClassIdentifier: 
-  towerID: flame_tower
+  towerID: Flame Tower
   displayName: Flame Tower
   description: A short range, high damage tower. Deals Fire damage.
   icon: {fileID: 936653055, guid: e9a22c55ae1db89458c08daa3833ba91, type: 3}

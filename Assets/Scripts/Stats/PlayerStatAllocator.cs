@@ -3,6 +3,8 @@ using Havengard.Core.Character;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Havengard.Core.HealthManagement;
+using Havengard.Abilities; // <-- for ResourceSystem
 
 namespace Havengard.Stats
 {
@@ -18,6 +20,12 @@ namespace Havengard.Stats
         [Header("Power Points")]
         [SerializeField] private int unspentPowerPoints = 0;
         [SerializeField] private int powerPointsPerLevel = 1;
+
+        [Header("Auto level bonuses")]
+        [Tooltip("How much max HP to add automatically per level")]
+        [SerializeField] private int healthPerLevel = 10;
+        [Tooltip("How much max Resource to add automatically per level")]
+        [SerializeField] private int resourcePerLevel = 5;
 
         [Header("Stat Costs")]
         [SerializeField] private int healthCost = 1;
@@ -42,8 +50,11 @@ namespace Havengard.Stats
         };
 
         [Header("References")]
-        [SerializeField] private Havengard.Core.HealthSystem.Health health;
+        [SerializeField] private Havengard.Core.HealthManagement.Health health;
         [SerializeField] private StatsComponent stats;
+
+        // NEW resource system reference
+        [SerializeField] private ResourceSystem resourceSystem;
 
         // Events
         public event Action<int> OnStatPointsChanged;
@@ -56,8 +67,12 @@ namespace Havengard.Stats
 
         private void Awake()
         {
-            if (health == null) health = GetComponent<Havengard.Core.HealthSystem.Health>();
+            if (health == null) health = GetComponent<Havengard.Core.HealthManagement.Health>();
             if (stats == null) stats = GetComponent<StatsComponent>();
+
+            // Try to find ResourceSystem if not assigned
+            if (resourceSystem == null)
+                resourceSystem = GetComponent<ResourceSystem>();
 
             // Subscribe to level up
             var expSystem = GetComponent<Havengard.Core.Progression.EXPSystem>();
@@ -84,7 +99,23 @@ namespace Havengard.Stats
         {
             GrantStatPoints(statPointsPerLevel);
             GrantPowerPoints(powerPointsPerLevel);
-            Debug.Log($"[PlayerStatAllocator] Level {newLevel}! Granted {statPointsPerLevel} stat points and {powerPointsPerLevel} power points");
+
+            // Auto-increase max health/resource on level up
+            if (health != null)
+            {
+                var hs = health.GetHealthSystem();
+                if (hs != null && healthPerLevel > 0)
+                {
+                    hs.IncreaseMaxHealth(healthPerLevel);
+                }
+            }
+
+            if (resourceSystem != null && resourcePerLevel > 0)
+            {
+                resourceSystem.IncreaseMaxResource(resourcePerLevel);
+            }
+
+            Debug.Log($"[PlayerStatAllocator] Level {newLevel}! Granted {statPointsPerLevel} stat points and {powerPointsPerLevel} power points (HP+{healthPerLevel}, Resource+{resourcePerLevel})");
         }
 
         #region Stat Points

@@ -141,37 +141,29 @@ namespace Havengard.UI
         /// </summary>
         public void AssignAbilityToSlot(int slotIndex, AbilityBase ability)
         {
-            if (abilityUser == null || ability == null)
+            if (abilityUser == null)
                 return;
 
             if (slotIndex < 0 || slotIndex >= slots.Length)
                 return;
 
-            // Get current abilities list
-            List<AbilityBase> currentAbilities = abilityUser.GetAllAbilities();
-
-            // Make sure the ability is in the list
-            if (!currentAbilities.Contains(ability))
-            {
-                currentAbilities.Add(ability);
-            }
-
-            // Find the index of this ability
-            int abilityIndex = currentAbilities.IndexOf(ability);
-
-            // Map slot to the ability index we want to use
+            // Map slot to the ability-user index we will write to
             int targetIndex = MapSlotToAbilityUserIndex(slotIndex);
+            if (targetIndex < 0) return;
 
-            // Ensure the list is big enough
+            // Get current abilities list from AbilityUser
+            List<AbilityBase> currentAbilities = abilityUser.GetAllAbilities() ?? new List<AbilityBase>();
+
+            // Ensure the list is big enough to contain the target index
             while (currentAbilities.Count <= targetIndex)
             {
                 currentAbilities.Add(null);
             }
 
-            // Set the ability at the target index
+            // Write the ability at the desired index (do NOT append first - that caused duplicates)
             currentAbilities[targetIndex] = ability;
 
-            // Reassign the full list to AbilityUser
+            // Reassign the list back to AbilityUser
             abilityUser.AssignAbilities(currentAbilities);
 
             // Update the UI slot
@@ -180,7 +172,7 @@ namespace Havengard.UI
                 slots[slotIndex].SetAbility(ability);
             }
 
-            Debug.Log($"[AbilityBarUI] Assigned {ability.abilityName} to slot {slotIndex}");
+            Debug.Log($"[AbilityBarUI] Assigned {ability?.abilityName ?? "NULL"} to slot {slotIndex} -> abilityIndex {targetIndex}");
         }
 
         /// <summary>
@@ -263,15 +255,8 @@ namespace Havengard.UI
         /// </summary>
         private int MapSlotToAbilityUserIndex(int slotIndex)
         {
-            // Default mapping:
-            // Slot 0-3 (1-4 keys) → indices 1-4
-            // Slot 4 (LMB) → index 0
-            // Slot 5 (RMB) → index 5
-
-            if (slotIndex == 4) return 0;  // LMB
-            if (slotIndex == 5) return 5;  // RMB
-            if (slotIndex >= 0 && slotIndex < 4) return slotIndex + 1; // 1-4 keys
-
+            // New identity mapping: UI slot i -> AbilityUser index i
+            if (slotIndex >= 0 && slotIndex < slots.Length) return slotIndex;
             return -1;
         }
 
@@ -303,6 +288,48 @@ namespace Havengard.UI
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Return the mapped AbilityUser index for the given KeyCode (or -1 if none).
+        /// This uses the playerController's abilityKeys array when available.
+        /// </summary>
+        public int GetMappedAbilityIndexForKey(KeyCode key)
+        {
+            if (playerController != null)
+            {
+                KeyCode[] keys = playerController.GetAbilityKeys();
+                if (keys != null)
+                {
+                    for (int i = 0; i < keys.Length; i++)
+                    {
+                        if (keys[i] == key)
+                        {
+                            return GetAbilityUserIndexForUISlot(i);
+                        }
+                    }
+                }
+            }
+
+            // Fallback explicit mapping (if no playerController / custom keys)
+            switch (key)
+            {
+                case KeyCode.Alpha1: return GetAbilityUserIndexForUISlot(0);
+                case KeyCode.Alpha2: return GetAbilityUserIndexForUISlot(1);
+                case KeyCode.Alpha3: return GetAbilityUserIndexForUISlot(2);
+                case KeyCode.Alpha4: return GetAbilityUserIndexForUISlot(3);
+                case KeyCode.Alpha5: return GetAbilityUserIndexForUISlot(4);
+                case KeyCode.Alpha6: return GetAbilityUserIndexForUISlot(5);
+                default: return -1;
+            }
+        }
+
+        /// <summary>
+        /// Returns the AbilityUser index used for a given UI slot index (identity mapping).
+        /// </summary>
+        public int GetAbilityUserIndexForUISlot(int uiSlotIndex)
+        {
+            return (uiSlotIndex >= 0 && uiSlotIndex < slots.Length) ? uiSlotIndex : -1;
         }
     }
 }

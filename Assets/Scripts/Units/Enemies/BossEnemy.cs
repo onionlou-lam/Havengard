@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using Havengard.Abilities;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using Havengard.Combat;
 
 namespace Havengard.Units

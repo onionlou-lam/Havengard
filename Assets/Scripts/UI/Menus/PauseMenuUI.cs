@@ -69,7 +69,13 @@ namespace Havengard.UI
             // Subscribe to ItemCacheUI close event
             if (itemCacheUI != null)
             {
-                itemCacheUI.OnRequestClose += Resume;
+                itemCacheUI.OnRequestClose += ReturnToPauseMenu;
+            }
+
+            // Subscribe to SkillTreeUI close event
+            if (skillTreeUI != null)
+            {
+                skillTreeUI.OnRequestClose += ReturnToPauseMenu;
             }
         }
 
@@ -77,7 +83,12 @@ namespace Havengard.UI
         {
             if (itemCacheUI != null)
             {
-                itemCacheUI.OnRequestClose -= Resume;
+                itemCacheUI.OnRequestClose -= ReturnToPauseMenu;
+            }
+
+            if (skillTreeUI != null)
+            {
+                skillTreeUI.OnRequestClose -= ReturnToPauseMenu;
             }
         }
 
@@ -85,6 +96,13 @@ namespace Havengard.UI
         {
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                // Let sub-panels handle their own Escape key and close via OnRequestClose.
+                // Without this guard, PauseMenuUI and SkillTreeUI/ItemCacheUI would both
+                // react to the same key press in the same frame, causing a state race.
+                if ((itemCacheUI != null && itemCacheUI.IsShowing) ||
+                    (skillTreeUI != null && SkillTreeUI.IsOpen))
+                    return;
+
                 if (isPaused)
                     Resume();
                 else
@@ -97,6 +115,9 @@ namespace Havengard.UI
             pausePanel.SetActive(true);
             Time.timeScale = 0f;
             isPaused = true;
+
+            if (Havengard.Audio.GameAudioManager.Instance != null)
+                Havengard.Audio.GameAudioManager.Instance.PauseAudio();
         }
 
         public void Resume()
@@ -104,6 +125,20 @@ namespace Havengard.UI
             pausePanel.SetActive(false);
             Time.timeScale = 1f;
             isPaused = false;
+
+            if (Havengard.Audio.GameAudioManager.Instance != null)
+                Havengard.Audio.GameAudioManager.Instance.ResumeAudio();
+        }
+
+        /// <summary>
+        /// Re-shows the pause panel after a sub-panel (skill tree, item cache) closes itself.
+        /// Unlike Resume(), this keeps the game paused since we're still inside the pause flow.
+        /// </summary>
+        private void ReturnToPauseMenu()
+        {
+            pausePanel.SetActive(true);
+            Time.timeScale = 0f;
+            isPaused = true;
         }
 
         private void OpenInventory()
@@ -111,6 +146,7 @@ namespace Havengard.UI
             if (itemCacheUI != null)
             {
                 pausePanel.SetActive(false);
+                // isPaused stays true — we're still within the pause flow, just showing a different panel
                 itemCacheUI.Show();
             }
         }
@@ -120,7 +156,9 @@ namespace Havengard.UI
             if (skillTreeUI != null)
             {
                 pausePanel.SetActive(false);
-                skillTreeUI.ToggleSkillTree(); // Opens skill tree (already paused)
+                // isPaused stays true — we're still within the pause flow, just showing a different panel
+                // CALL PUBLIC OpenSkillTree directly instead of ToggleSkillTree
+                skillTreeUI.OpenSkillTree();
             }
             else
             {
@@ -168,29 +206,37 @@ namespace Havengard.UI
 
             if (!SaveManager.Instance.SaveExists())
             {
-                NotificationManager.Instance?.Show("No save file found!", NotificationType.Warning);
+                NotificationManager.Instance?.Show("No save file found!", NotificationType.Error);
                 return;
             }
 
             SaveManager.Instance.LoadGame();
 
-            // Show notification and resume
+            // Show notification
             NotificationManager.Instance?.Show("Game Loaded!", NotificationType.Success);
+
+            // Resume game after loading
             Resume();
         }
 
+        /// <summary>
+        /// Exit to the main menu scene
+        /// </summary>
         private void ExitToMainMenu()
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene("MainMenu");
         }
 
+        /// <summary>
+        /// Exit the game application
+        /// </summary>
         private void ExitGame()
         {
-            Application.Quit();
-
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
 #endif
         }
     }

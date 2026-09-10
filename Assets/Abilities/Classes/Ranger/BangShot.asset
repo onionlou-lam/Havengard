@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9884fd2e1f5c31846a2ad5fba849b004, type: 3}
+  m_Name: BangShot
+  m_EditorClassIdentifier: 
+  abilityName: Bang Shot
+  description: Shoot an arrow with a Bang Bang Bomb attached to the shaft. Deals
+    impact damage and AOE damage.
+  icon: {fileID: 21300000, guid: 0f725e2ef96d4c944903fbf44f966ba5, type: 3}
+  maxLevel: 5
+  damageType: 1
+  canHeal: 0
+  healingRatio: 0
+  baseCooldown: 1
+  resourceCost: 20
+  canHoldToCast: 0
+  scalesWithAttackSpeed: 0
+  baseDamage: 40
+  damagePerLevel: 20
+  lifestealPercent: 0
+  enableResourceGeneration: 0
+  resourceGenerationPercent: 0
+  flatResourceGeneration: 0
+  range: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  requiresTarget: 0
+  castVFX: {fileID: 157306, guid: 7cfa7c8111349fe44b06a87d64ab1dea, type: 3}
+  impactVFX: {fileID: 0}
+  castSFX: {fileID: 8300000, guid: c50a81b498c81364788796ca5419a03e, type: 3}
+  impactSFX: {fileID: 8300000, guid: 922480d80d9c0b94da9c60c75638fdd4, type: 3}
+  customAnimationTrigger: 
+  activeSubSkills: []
+  investment:
+    investmentLevel: 0
+    investmentBonuses: []
+  baseCritChance: 0.05
+  baseCritDamage: 1.5
+  wallPrefab: {fileID: 509400452397600885, guid: cf114e6ed8a755d4eb1d89a230392e32,
+    type: 3}
+  maximumRange: 15
+  wallDuration: 10
+  behaviorType: 1
+  isTargetable: 0
+  wallMaxHealth: 100
+  showHealthBar: 0
+  damagePerTick: 5
+  damageTickRate: 0.5
+  friendlyFire: 0
+  statusEffect: {fileID: 11400000, guid: 8e8928e73d487184a9f2221da5e1ce57, type: 2}
+  maxStatusStacks: 1

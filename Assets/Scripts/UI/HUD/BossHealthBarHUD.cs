@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 
 public class BossHealthBarHUD : MonoBehaviour
 {

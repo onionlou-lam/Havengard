@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fff87aca672d4184484f1302a011e1de, type: 3}
   m_Name: AttackMelee
   m_EditorClassIdentifier: 
-  abilityName: Power Strike
-  description: 
+  abilityName: Melee Attack
+  description: Basic melee attack
   icon: {fileID: 21300000, guid: bcf8bc2bebc947546b5fbc45775ac400, type: 3}
   maxLevel: 5
   damageType: 0
@@ -21,9 +21,14 @@ MonoBehaviour:
   healingRatio: 0
   baseCooldown: 1
   resourceCost: 0
+  canHoldToCast: 0
+  scalesWithAttackSpeed: 0
   baseDamage: 20
   damagePerLevel: 5
   lifestealPercent: 0
+  enableResourceGeneration: 0
+  resourceGenerationPercent: 0
+  flatResourceGeneration: 0
   range: 5
   targetLayers:
     serializedVersion: 2
@@ -33,6 +38,13 @@ MonoBehaviour:
   impactVFX: {fileID: 0}
   castSFX: {fileID: 8300000, guid: 445650d427d9dfb4d9e9ccadc618381c, type: 3}
   impactSFX: {fileID: 0}
+  customAnimationTrigger: 
+  activeSubSkills: []
+  investment:
+    investmentLevel: 0
+    investmentBonuses: []
+  baseCritChance: 0.05
+  baseCritDamage: 1.5
   hitShape: 0
   hitRadius: 2.5
   hitBoxSize: {x: 1.5, y: 1}
@@ -50,8 +62,7 @@ MonoBehaviour:
   enableLunge: 0
   lungeDistance: 2
   lungeDuration: 0.15
-  hitVFXPrefab: {fileID: 5641636321807965521, guid: a636c7d54886f1e478c4fb41d3827289,
-    type: 3}
+  hitVFXPrefab: {fileID: 0}
   casterVFXPrefab: {fileID: 5641636321807965521, guid: a636c7d54886f1e478c4fb41d3827289,
     type: 3}
   spawnVFXOnEachHit: 1

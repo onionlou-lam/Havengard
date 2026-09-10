@@ -215,7 +215,7 @@ namespace Havengard.Abilities
             }
 
             // Hit a valid target (not a wall)
-            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            var health = target.GetComponent<Havengard.Core.HealthManagement.Health>();
             if (health != null)
             {
                 int damageDealt = (int)damage;
@@ -328,7 +328,7 @@ namespace Havengard.Abilities
 
             foreach (var hit in hits)
             {
-                var health = hit.GetComponent<Havengard.Core.HealthSystem.Health>();
+                var health = hit.GetComponent<Havengard.Core.HealthManagement.Health>();
                 if (health != null)
                 {
                     float aoeDamage = CalculateDamage(caster) * damageMultiplier;

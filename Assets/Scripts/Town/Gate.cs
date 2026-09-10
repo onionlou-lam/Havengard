@@ -1,9 +1,9 @@
 using System.Collections;
 using UnityEngine;
 using Havengard.Interactions;
-using Havengard.Core.HealthSystem;
-
-namespace Havengard.Town
+using Havengard.Core.HealthManagement;
+using Havengard.Town;
+namespace Havengard.Combat
 {
     /// <summary>
     /// Represents a gate that can be opened by player interaction.
@@ -43,7 +43,8 @@ namespace Havengard.Town
         [Header("Collision")]
         [SerializeField]
         [Tooltip("Collider that blocks units when gate is closed")]
-        private BoxCollider2D gateBlocker;
+        private BoxCollider2D playerBlocker;
+        private BoxCollider2D enemyBlocker;
 
         [Header("Visual Damage States")]
         [SerializeField]
@@ -132,10 +133,23 @@ namespace Havengard.Town
             }
 
             // Ensure blocker is not a trigger
-            if (gateBlocker != null)
+            if (playerBlocker != null)
             {
-                gateBlocker.isTrigger = false;
+                playerBlocker.isTrigger = false;
             }
+
+            if (enemyBlocker != null)
+            {
+                enemyBlocker.isTrigger = false;
+            }
+
+            // Register blocker colliders as "wall" colliders so wall-top projectile
+            // logic (WallColliderRegistry) treats the gate the same as the tilemap wall.
+            if (playerBlocker != null)
+                WallColliderRegistry.Register(playerBlocker);
+
+            if (enemyBlocker != null)
+                WallColliderRegistry.Register(enemyBlocker);
 
             // Set layer to Interactable
             gameObject.layer = LayerMask.NameToLayer("Interactable");
@@ -188,9 +202,14 @@ namespace Havengard.Town
             PlaySound(gateDestroyedSound);
 
             // Disable gate blocker - units can pass through
-            if (gateBlocker != null)
+            if (playerBlocker != null)
             {
-                gateBlocker.enabled = false;
+                playerBlocker.enabled = false;
+            }
+
+            if (enemyBlocker != null)
+            {
+                enemyBlocker.enabled = true;
             }
 
             // Disable interaction
@@ -301,9 +320,9 @@ namespace Havengard.Town
             }
 
             // Disable blocker collider to allow units to pass
-            if (gateBlocker != null)
+            if (playerBlocker != null)
             {
-                gateBlocker.enabled = false;
+                playerBlocker.enabled = false;
             }
 
             PlaySound(gateOpenSound);
@@ -336,9 +355,9 @@ namespace Havengard.Town
             }
 
             // Re-enable blocker collider
-            if (gateBlocker != null)
+            if (playerBlocker != null)
             {
-                gateBlocker.enabled = true;
+                playerBlocker.enabled = true;
             }
 
             PlaySound(gateCloseSound);
@@ -399,10 +418,10 @@ namespace Havengard.Town
             }
 
             // Draw blocker collider
-            if (gateBlocker != null)
+            if (playerBlocker != null)
             {
                 Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
-                Gizmos.DrawCube(transform.position + (Vector3)gateBlocker.offset, gateBlocker.size);
+                Gizmos.DrawCube(transform.position + (Vector3)playerBlocker.offset, playerBlocker.size);
             }
         }
 #endif

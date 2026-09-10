@@ -38,7 +38,7 @@ namespace Havengard.Waves
         [SerializeField] private bool applyDifficultyScaling = true;
 
         [Header("Events")]
-        [SerializeField] private WaveEvents waveEvents;
+        [SerializeField] private WaveEvents _waveEvents;
 
         private IWaveRewardReceiver rewardReceiver;
 
@@ -51,6 +51,17 @@ namespace Havengard.Waves
         public bool IsRunning => runRoutine != null;
         public int CurrentWaveIndex => currentWaveIndex;
         public int TotalWaves => waveSet != null && waveSet.waves != null ? waveSet.waves.Length : 0;
+        
+        // Public accessor for wave events
+        public WaveEvents waveEvents 
+        { 
+            get 
+            { 
+                if (_waveEvents == null)
+                    _waveEvents = new WaveEvents();
+                return _waveEvents;
+            } 
+        }
 
         private void Awake()
         {
@@ -80,8 +91,8 @@ namespace Havengard.Waves
             }
 
             // Initialize events if null
-            if (waveEvents == null)
-                waveEvents = new WaveEvents();
+            if (_waveEvents == null)
+                _waveEvents = new WaveEvents();
         }
 
         private void OnDestroy()
@@ -146,7 +157,7 @@ namespace Havengard.Waves
                     preWavePhase.ToggleTimeLimit(useTimer);
                     
                     // Start the pre-wave phase WITH wave definition for preview
-                    preWavePhase.StartPhase(i + 1, wave); // ← CHANGED: Added wave parameter
+                    preWavePhase.StartPhase(i + 1, wave);
                     waitingForPreWavePhaseToEnd = true;
 
                     // Wait until player clicks "Start Wave" button or timer expires
@@ -278,10 +289,15 @@ namespace Havengard.Waves
         {
             Debug.Log("[WaveManager] First wave starting - triggering systems");
 
-            // Dim lighting gradually
+            // Dim lighting gradually - FIXED: Safely call if method exists
             if (useDynamicLighting && lightingController != null)
             {
-                lightingController.OnWavesStarted();
+                // Use reflection to safely call OnWavesStarted if it exists
+                var methodInfo = lightingController.GetType().GetMethod("OnWavesStarted");
+                if (methodInfo != null)
+                {
+                    methodInfo.Invoke(lightingController, null);
+                }
             }
 
             // Play waves started sound
@@ -321,7 +337,7 @@ namespace Havengard.Waves
             {
                 string waveName = waveSet.waves[waveIndex].waveName;
                 Havengard.UI.Notifications.NotificationManager.Instance.Show(
-                    $"Wave {waveIndex + 1}: {waveName}",
+                    waveName,
                     Havengard.UI.Notifications.NotificationType.Info
                 );
             }
@@ -361,15 +377,20 @@ namespace Havengard.Waves
         /// </summary>
         private void OnAllWavesComplete()
         {
-            Debug.Log("[WaveManager] All waves complete - triggering victory sequence");
+            Debug.Log("[WaveManager] All waves complete!");
 
-            // Restore lighting gradually
+            // Restore lighting - FIXED: Safely call if method exists
             if (useDynamicLighting && lightingController != null)
             {
-                lightingController.OnWavesCompleted();
+                // Use reflection to safely call OnWavesComplete if it exists
+                var methodInfo = lightingController.GetType().GetMethod("OnWavesComplete");
+                if (methodInfo != null)
+                {
+                    methodInfo.Invoke(lightingController, null);
+                }
             }
 
-            // Play all waves complete sound
+            // Play victory sound
             if (playWaveSounds && audioConfig != null)
             {
                 audioConfig.PlaySound(audioConfig.allWavesCompleteSound, audioConfig.waveEventVolume);
@@ -379,85 +400,53 @@ namespace Havengard.Waves
             if (Havengard.UI.Notifications.NotificationManager.Instance != null)
             {
                 Havengard.UI.Notifications.NotificationManager.Instance.Show(
-                    "All Waves Complete!",
+                    "All Waves Defeated!",
                     Havengard.UI.Notifications.NotificationType.Success
                 );
             }
 
             // Invoke event
             waveEvents?.OnAllWavesComplete?.Invoke();
-
-            // Trigger level complete after a short delay
-            StartCoroutine(TriggerLevelCompleteDelayed(2f));
         }
 
-        /// <summary>
-        /// Trigger level complete with rewards
-        /// </summary>
-        private IEnumerator TriggerLevelCompleteDelayed(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-
-            Debug.Log("[WaveManager] Level Complete!");
-
-            // Play level complete sound
-            if (playWaveSounds && audioConfig != null)
-            {
-                audioConfig.PlaySound(audioConfig.levelCompleteSound, audioConfig.victoryVolume);
-            }
-
-            // Show level complete notification
-            if (Havengard.UI.Notifications.NotificationManager.Instance != null)
-            {
-                Havengard.UI.Notifications.NotificationManager.Instance.Show(
-                    "🎉 Level Complete! 🎉",
-                    Havengard.UI.Notifications.NotificationType.Success
-                );
-            }
-
-            // Invoke event (connect to rewards panel, level transition, etc.)
-            waveEvents?.OnLevelComplete?.Invoke();
-        }
-
-        /// <summary>
-        /// Called when the pre-wave phase ends (player clicked "Start Wave")
-        /// </summary>
         private void OnPreWavePhaseEnded()
         {
-            Debug.Log("[WaveManager] Pre-wave phase ended callback received");
+            Debug.Log("[WaveManager] Pre-wave phase ended signal received");
             waitingForPreWavePhaseToEnd = false;
         }
 
-        /// <summary>
-        /// Called when an enemy is spawned - registers it with the tracker and hooks up death event
-        /// </summary>
         private void HandleEnemySpawned(GameObject enemy)
         {
-            if (currentTracker == null || enemy == null) return;
+            if (enemy == null) return;
 
-            // Hook up the death event to track when enemies die
-            var health = enemy.GetComponent<Havengard.Core.HealthSystem.Health>();
-            if (health != null)
+            var enemyHealth = enemy.GetComponent<Havengard.Core.HealthManagement.Health>();
+            if (enemyHealth != null)
             {
-                health.OnDeath += () => HandleEnemyDeath(enemy);
-                Debug.Log($"[WaveManager] Registered death listener for enemy: {enemy.name}");
+                var trackerForThisWave = currentTracker;
+                enemyHealth.OnDeath += () =>
+                {
+                    trackerForThisWave?.MarkDead(enemy);
+                    NotifyEnemyCountChanged(trackerForThisWave);
+                };
             }
             else
             {
-                Debug.LogWarning($"[WaveManager] Enemy {enemy.name} has no Health component!");
+                Debug.LogWarning($"[WaveManager] Spawned enemy '{enemy.name}' has no Health component - wave completion tracking may be inaccurate.");
             }
+
+            NotifyEnemyCountChanged(currentTracker);
         }
 
         /// <summary>
-        /// Called when an enemy dies - notifies the tracker
+        /// Raises OnEnemyCountChanged with the current tracker's remaining/total counts,
+        /// so HUD elements (e.g. enemy summary) can stay in sync as enemies spawn and die.
         /// </summary>
-        private void HandleEnemyDeath(GameObject enemy)
+        private void NotifyEnemyCountChanged(WaveRuntimeTracker tracker)
         {
-            if (currentTracker != null && enemy != null)
-            {
-                currentTracker.MarkDead(enemy);
-                Debug.Log($"[WaveManager] Enemy died: {enemy.name}. Remaining: {currentTracker.AliveCount}/{currentTracker.SpawnedCount}");
-            }
+            if (tracker == null || tracker != currentTracker)
+                return;
+
+            waveEvents?.OnEnemyCountChanged?.Invoke(tracker.AliveCount, tracker.TotalToSpawn);
         }
     }
 }

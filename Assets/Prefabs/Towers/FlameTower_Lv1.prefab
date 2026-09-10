@@ -147,7 +147,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 256
-  targetDefaultObjectives: 1
+  targetDefaultObjectives: 0
   animator: {fileID: 0}
   spriteRenderer: {fileID: 0}
   flipCooldown: 0.15

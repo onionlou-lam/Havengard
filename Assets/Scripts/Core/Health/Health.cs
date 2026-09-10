@@ -2,7 +2,7 @@ using UnityEngine;
 using Havengard.Units;
 using System;
 
-namespace Havengard.Core.HealthSystem
+namespace Havengard.Core.HealthManagement
 {
     [DisallowMultipleComponent]
     public class Health : MonoBehaviour, IHealth
@@ -135,7 +135,6 @@ namespace Havengard.Core.HealthSystem
             healthSystem.SetMaxHealth(newMax, refill);
         }
         
-        // ADD THIS METHOD FOR SAVE SYSTEM
         /// <summary>
         /// Set health directly (for loading saves)
         /// </summary>

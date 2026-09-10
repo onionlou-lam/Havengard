@@ -1,6 +1,6 @@
 using UnityEngine;
 using DamageNumbersPro;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 
 namespace Havengard.UI
 {

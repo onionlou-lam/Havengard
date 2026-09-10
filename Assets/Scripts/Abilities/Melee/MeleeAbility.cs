@@ -1,4 +1,4 @@
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using Havengard.Units;
 using Havengard.Combat;
 using System.Collections.Generic;
@@ -65,7 +65,10 @@ namespace Havengard.Abilities
             // Play swing SFX
             if (swingSFX != null)
             {
-                PlayAudioWithPitch(swingSFX, user.transform.position, randomizeSwingPitch);
+                if (randomizeSwingPitch)
+                    PlayAbilitySFXRandomPitch(swingSFX, user.transform.position, 1f, minPitch, maxPitch);
+                else
+                    PlayAbilitySFX(swingSFX, user.transform.position);
             }
 
             // Spawn caster VFX
@@ -199,7 +202,7 @@ namespace Havengard.Abilities
             }
 
             // Apply damage
-            var health = target.GetComponent<Havengard.Core.HealthSystem.Health>();
+            var health = target.GetComponent<Havengard.Core.HealthManagement.Health>();
             if (health != null)
             {
                 float damage = CalculateDamage(caster) * damageMultiplier;
@@ -237,7 +240,10 @@ namespace Havengard.Abilities
             // Play hit SFX
             if (hitSFX != null)
             {
-                PlayAudioWithPitch(hitSFX, target.transform.position, randomizeHitPitch);
+                if (randomizeHitPitch)
+                    PlayAbilitySFXRandomPitch(hitSFX, target.transform.position, 1f, minPitch, maxPitch);
+                else
+                    PlayAbilitySFX(hitSFX, target.transform.position);
             }
 
             // Apply knockback
@@ -262,32 +268,10 @@ namespace Havengard.Abilities
             Destroy(vfx, 2f);
         }
 
-        private void PlayAudioWithPitch(AudioClip clip, Vector3 position, bool randomize)
-        {
-            if (randomize)
-            {
-                float pitch = Random.Range(minPitch, maxPitch);
-                // You'll need an audio manager or AudioSource.PlayClipAtPoint with pitch
-                AudioSource.PlayClipAtPoint(clip, position);
-            }
-            else
-            {
-                AudioSource.PlayClipAtPoint(clip, position);
-            }
-        }
-
         public override void Deactivate(AbilityUser user)
         {
             hitTargets.Clear();
         }
-
-#if UNITY_EDITOR
-        private void OnDrawGizmosSelected()
-        {
-            // This won't work on ScriptableObjects, but keeping for reference
-            // You'd need to visualize this in the editor differently
-        }
-#endif
     }
 
     public enum MeleeHitShape

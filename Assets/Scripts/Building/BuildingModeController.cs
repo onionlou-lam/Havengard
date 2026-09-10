@@ -23,6 +23,11 @@ namespace Havengard.Building
         [Header("UI")]
         [SerializeField] private BuildingHUD buildingHUD;
         [SerializeField] private BuildingGridVisual gridVisual;
+        [SerializeField] private BuildingModeUIHelper uiHelper;
+        [SerializeField] private TowerTooltip towerTooltip;
+
+        [Header("UI to Hide")]
+        [SerializeField] private GameObject canvasHUD;
 
         [Header("Placement")]
         [SerializeField] private TowerPlacementGhost ghostPrefab;
@@ -43,6 +48,7 @@ namespace Havengard.Building
         private PlacementValidator placementValidator;
         private TowerPlacementSystem placementSystem;
         private BuildingActionHistory actionHistory;
+        private GameObject currentlySelectedTower = null;
 
         // Current phase tracking
         private int currentWaveNumber = 0;
@@ -91,56 +97,45 @@ namespace Havengard.Building
             if (gridVisual == null)
                 gridVisual = FindFirstObjectByType<BuildingGridVisual>();
 
+            if (towerTooltip == null)
+                towerTooltip = FindFirstObjectByType<TowerTooltip>();
+
+            if (canvasHUD == null)
+            {
+                canvasHUD = GameObject.Find("CANVAS_HUD");
+                if (canvasHUD == null)
+                    canvasHUD = GameObject.Find("Canvas_HUD");
+            }
+
             // Initialize systems
             placementValidator = new PlacementValidator(buildGrid);
             placementSystem = new TowerPlacementSystem(buildGrid, towerDatabase);
             actionHistory = new BuildingActionHistory(this, placementSystem);
 
-            // MOVE EVENT SUBSCRIPTION HERE FROM Start():
+            // Subscribe to wave events
             SubscribeToWaveEvents();
-
-            Debug.Log("[BuildingMode] Controller initialized");
         }
 
-        // ADD THIS NEW METHOD:
         private void SubscribeToWaveEvents()
         {
             if (waveManager != null)
             {
                 var preWavePhase = waveManager.GetComponent<PreWavePhase>();
                 if (preWavePhase == null)
-                {
                     preWavePhase = FindFirstObjectByType<PreWavePhase>();
-                }
 
                 if (preWavePhase != null)
                 {
-                    // Make sure we're not already subscribed
                     preWavePhase.OnPhaseStarted.RemoveListener(OnDefencePhaseStarted);
                     preWavePhase.OnPhaseEnded.RemoveListener(OnDefencePhaseEnded);
-                    
-                    // Subscribe
                     preWavePhase.OnPhaseStarted.AddListener(OnDefencePhaseStarted);
                     preWavePhase.OnPhaseEnded.AddListener(OnDefencePhaseEnded);
-                    
-                    Debug.Log("[BuildingMode] ✓ Subscribed to PreWavePhase events");
-                    Debug.Log($"[BuildingMode] PreWavePhase active: {preWavePhase.IsPhaseActive}");
                 }
-                else
-                {
-                    Debug.LogError("[BuildingMode] ✗ PreWavePhase not found!");
-                }
-            }
-            else
-            {
-                Debug.LogError("[BuildingMode] ✗ WaveManager not found!");
             }
         }
 
         private void Start()
         {
-            // Event subscription now happens in Awake()
-            
             // Initially hide building systems
             if (buildingCamera != null)
                 buildingCamera.gameObject.SetActive(false);
@@ -150,9 +145,6 @@ namespace Havengard.Building
 
             if (gridVisual != null)
                 gridVisual.gameObject.SetActive(false);
-
-            Debug.Log("[BuildingMode] Start complete - systems hidden");
-            Debug.Log($"[BuildingMode] Can enter building mode: {canEnterBuildingMode}");
         }
 
         private void Update()
@@ -192,25 +184,70 @@ namespace Havengard.Building
                     Undo();
             }
 
-            // Placement input
-            if (isBuildingMode && isPlacingTower)
+            // Building mode input
+            if (isBuildingMode)
             {
-                // Mouse click to place
+                // Left click handling - ignore if over UI
                 if (Input.GetMouseButtonDown(0))
                 {
-                    TryPlaceTower();
+                    if (IsPointerOverUIElement())
+                        return;
+
+                    if (isPlacingTower)
+                        TryPlaceTower();
+                    else
+                        TrySelectExistingTower();
                 }
 
-                // Arrow key movement
-                if (Input.GetKeyDown(KeyCode.UpArrow))
-                    MoveGhost(Vector2Int.up);
-                else if (Input.GetKeyDown(KeyCode.DownArrow))
-                    MoveGhost(Vector2Int.down);
-                else if (Input.GetKeyDown(KeyCode.LeftArrow))
-                    MoveGhost(Vector2Int.left);
-                else if (Input.GetKeyDown(KeyCode.RightArrow))
-                    MoveGhost(Vector2Int.right);
+                // Right click to cancel placement
+                if (Input.GetMouseButtonDown(1) && isPlacingTower)
+                {
+                    CancelTowerPlacement();
+                }
+
+                // Arrow key movement (only when placing)
+                if (isPlacingTower)
+                {
+                    if (Input.GetKeyDown(KeyCode.UpArrow))
+                        MoveGhost(Vector2Int.up);
+                    else if (Input.GetKeyDown(KeyCode.DownArrow))
+                        MoveGhost(Vector2Int.down);
+                    else if (Input.GetKeyDown(KeyCode.LeftArrow))
+                        MoveGhost(Vector2Int.left);
+                    else if (Input.GetKeyDown(KeyCode.RightArrow))
+                        MoveGhost(Vector2Int.right);
+                }
             }
+        }
+
+        private bool IsPointerOverUIElement()
+        {
+            var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem == null)
+                return false;
+
+            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                return true;
+
+            var pointerData = new UnityEngine.EventSystems.PointerEventData(eventSystem);
+            pointerData.position = Input.mousePosition;
+
+            var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            eventSystem.RaycastAll(pointerData, results);
+
+            foreach (var result in results)
+            {
+                if (result.gameObject.name == "BuildingHUD" || result.gameObject.name == "TowerContextPanel")
+                    continue;
+
+                if (result.gameObject.GetComponent<UnityEngine.UI.Graphic>() != null ||
+                    result.gameObject.GetComponent<UnityEngine.UI.Button>() != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #region Building Mode State
@@ -218,44 +255,30 @@ namespace Havengard.Building
         public void EnterBuildingMode()
         {
             if (isBuildingMode)
-            {
-                Debug.LogWarning("[BuildingMode] Already in building mode");
                 return;
-            }
 
-            // ADD DEBUG OVERRIDE:
             if (!canEnterBuildingMode && !debugAlwaysAllowBuildingMode)
-            {
-                Debug.LogWarning("[BuildingMode] Cannot enter building mode - not in defence phase");
-                Debug.Log($"[BuildingMode] canEnterBuildingMode = {canEnterBuildingMode}");
-                Debug.Log($"[BuildingMode] debugAlwaysAllowBuildingMode = {debugAlwaysAllowBuildingMode}");
                 return;
-            }
-
-            Debug.Log("[BuildingMode] Entering building mode...");
 
             isBuildingMode = true;
 
+            // Hide PausePanel if it exists
+            GameObject pausePanel = GameObject.Find("PausePanel");
+            if (pausePanel != null)
+                pausePanel.SetActive(false);
+
+            // Hide player HUD
+            if (canvasHUD != null)
+                canvasHUD.SetActive(false);
+
             // Switch camera
             if (playerCamera != null)
-            {
                 playerCamera.gameObject.SetActive(false);
-                Debug.Log("[BuildingMode] Player camera deactivated");
-            }
-            else
-            {
-                Debug.LogWarning("[BuildingMode] Player camera is null!");
-            }
 
             if (buildingCamera != null)
             {
                 buildingCamera.gameObject.SetActive(true);
                 buildingCamera.FocusOnGrid();
-                Debug.Log("[BuildingMode] Building camera activated");
-            }
-            else
-            {
-                Debug.LogWarning("[BuildingMode] Building camera is null!");
             }
 
             // Disable player movement
@@ -263,23 +286,27 @@ namespace Havengard.Building
             {
                 var playerController = playerCharacter.GetComponent<PlayerController2D>();
                 if (playerController != null)
-                {
                     playerController.enabled = false;
-                    Debug.Log("[BuildingMode] Player controller disabled");
-                }
             }
 
             // Show UI
             if (buildingHUD != null)
             {
                 buildingHUD.gameObject.SetActive(true);
+
+                // Ensure BuildingHUD has its own canvas on top
+                Canvas dedicatedCanvas = buildingHUD.GetComponent<Canvas>();
+                if (dedicatedCanvas == null)
+                {
+                    dedicatedCanvas = buildingHUD.gameObject.AddComponent<Canvas>();
+                    if (buildingHUD.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+                        buildingHUD.gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+                }
+                dedicatedCanvas.overrideSorting = true;
+                dedicatedCanvas.sortingOrder = 9999;
+
                 buildingHUD.Show();
                 buildingHUD.UpdateGoldDisplay();
-                Debug.Log("[BuildingMode] Building HUD shown");
-            }
-            else
-            {
-                Debug.LogWarning("[BuildingMode] Building HUD is null!");
             }
 
             // Show grid
@@ -287,14 +314,14 @@ namespace Havengard.Building
             {
                 gridVisual.gameObject.SetActive(true);
                 gridVisual.ShowGrid();
-                Debug.Log("[BuildingMode] Grid visual shown");
-            }
-            else
-            {
-                Debug.LogWarning("[BuildingMode] Grid visual is null!");
             }
 
-            Debug.Log("[BuildingMode] ✓ Entered Building Mode successfully");
+            // Hide gameplay UI
+            if (uiHelper != null)
+                uiHelper.HideUIElements();
+
+            if (BuildingAudioManager.Instance != null)
+                BuildingAudioManager.Instance.PlayEnterBuildingMode();
         }
 
         public void ExitBuildingMode()
@@ -302,11 +329,17 @@ namespace Havengard.Building
             if (!isBuildingMode)
                 return;
 
-            // Cancel any active placement
             if (isPlacingTower)
                 CancelTowerPlacement();
 
+            if (currentlySelectedTower != null)
+                currentlySelectedTower = null;
+
             isBuildingMode = false;
+
+            // Show player HUD again
+            if (canvasHUD != null)
+                canvasHUD.SetActive(true);
 
             // Switch camera back
             if (buildingCamera != null)
@@ -337,15 +370,12 @@ namespace Havengard.Building
                 gridVisual.gameObject.SetActive(false);
             }
 
-            Debug.Log("[BuildingMode] Exited Building Mode");
-        }
+            // Restore gameplay UI
+            if (uiHelper != null)
+                uiHelper.RestoreUIElements();
 
-        public void ToggleBuildingMode()
-        {
-            if (isBuildingMode)
-                ExitBuildingMode();
-            else
-                EnterBuildingMode();
+            if (BuildingAudioManager.Instance != null)
+                BuildingAudioManager.Instance.PlayExitBuildingMode();
         }
 
         #endregion
@@ -355,15 +385,10 @@ namespace Havengard.Building
         public void SelectTower(TowerBuildData towerData)
         {
             if (towerData == null)
-            {
-                Debug.LogWarning("[BuildingMode] Cannot select null tower data");
                 return;
-            }
 
             selectedTowerData = towerData;
             StartTowerPlacement();
-
-            Debug.Log($"[BuildingMode] Selected Tower: {towerData.displayName}");
         }
 
         private void StartTowerPlacement()
@@ -371,21 +396,15 @@ namespace Havengard.Building
             if (selectedTowerData == null || ghostPrefab == null)
                 return;
 
-            // Clean up existing ghost
             if (currentGhost != null)
                 Destroy(currentGhost.gameObject);
 
-            // Create new ghost
             currentGhost = Instantiate(ghostPrefab);
             currentGhost.Initialize(selectedTowerData, buildGrid, placementValidator);
             currentGhost.gameObject.SetActive(true);
 
             isPlacingTower = true;
-
-            // Update ghost position immediately
             UpdateGhostPlacement();
-
-            Debug.Log($"[BuildingMode] Started placement for: {selectedTowerData.displayName}");
         }
 
         public void CancelTowerPlacement()
@@ -399,7 +418,8 @@ namespace Havengard.Building
             isPlacingTower = false;
             selectedTowerData = null;
 
-            Debug.Log("[BuildingMode] Cancelled tower placement");
+            if (towerTooltip != null)
+                towerTooltip.HideTooltip();
         }
 
         private void UpdateGhostPlacement()
@@ -407,13 +427,8 @@ namespace Havengard.Building
             if (currentGhost == null)
                 return;
 
-            // Get mouse position in world space
             Vector3 mouseWorldPos = GetMouseWorldPosition();
-
-            // Convert to grid position
             Vector2Int gridPos = buildGrid.WorldToGrid(mouseWorldPos);
-
-            // Update ghost
             currentGhost.UpdatePosition(gridPos);
         }
 
@@ -424,7 +439,6 @@ namespace Havengard.Building
 
             Vector2Int currentGridPos = currentGhost.CurrentGridPosition;
             Vector2Int newGridPos = currentGridPos + direction;
-
             currentGhost.UpdatePosition(newGridPos);
         }
 
@@ -435,67 +449,101 @@ namespace Havengard.Building
 
             Vector2Int gridPos = currentGhost.CurrentGridPosition;
 
+            // Check if clicking on existing tower
+            GameObject existingTower = buildGrid.GetTowerAtCell(gridPos);
+            if (existingTower != null)
+            {
+                var tracker = existingTower.GetComponent<TowerInvestmentTracker>();
+                if (tracker != null)
+                {
+                    CancelTowerPlacement();
+                    SelectExistingTower(existingTower);
+                    return;
+                }
+            }
+
             // Validate placement
             var validationResult = placementValidator.ValidatePlacement(selectedTowerData, gridPos, 0);
-
             if (validationResult != PlacementValidationResult.Valid)
             {
-                Debug.Log($"[BuildingMode] Placement Invalid: {validationResult}");
-                PlayInvalidPlacementFeedback();
+                if (BuildingAudioManager.Instance != null)
+                    BuildingAudioManager.Instance.PlayPlacementInvalid();
+
                 return;
             }
 
-            // Place tower
             var levelData = selectedTowerData.GetLevelData(0);
             if (levelData == null)
-            {
-                Debug.LogError("[BuildingMode] No level data for tower");
                 return;
-            }
 
             // Spend gold
             if (GoldSystem.Instance != null)
             {
                 if (!GoldSystem.Instance.SpendGold(levelData.buildCost))
                 {
-                    Debug.LogWarning("[BuildingMode] Failed to spend gold");
+                    if (BuildingAudioManager.Instance != null)
+                        BuildingAudioManager.Instance.PlayInsufficientGold();
+
                     return;
                 }
             }
 
-            // Place the tower
+            // Place tower
             GameObject placedTower = placementSystem.PlaceTower(selectedTowerData, gridPos, currentWaveNumber);
-
             if (placedTower != null)
             {
-                // Record action for undo
                 actionHistory.RecordPlacement(placedTower, selectedTowerData, gridPos, levelData.buildCost);
 
-                // Update economy display
                 if (buildingHUD != null)
                     buildingHUD.UpdateGoldDisplay();
 
-                Debug.Log($"[BuildingMode] Built {selectedTowerData.displayName} at {gridPos} for {levelData.buildCost} Gold");
-                Debug.Log($"[Building] Wave Investment: {actionHistory.GetCurrentPhaseInvestment()}");
-                Debug.Log($"[Building] Total Tower Investment: {placementSystem.GetTotalInvestment()}");
-
-                // Continue placing same tower type
-                // User can click Escape or select another tower to change
+                if (BuildingAudioManager.Instance != null)
+                    BuildingAudioManager.Instance.PlayTowerPlaced();
             }
             else
             {
-                Debug.LogError("[BuildingMode] Failed to place tower");
-
-                // Refund gold
+                // Refund gold if placement failed
                 if (GoldSystem.Instance != null)
                     GoldSystem.Instance.AddGold(levelData.buildCost);
+
+                if (BuildingAudioManager.Instance != null)
+                    BuildingAudioManager.Instance.PlayPlacementInvalid();
             }
         }
 
-        private void PlayInvalidPlacementFeedback()
+        private void TrySelectExistingTower()
         {
-            // TODO: Add audio/visual feedback for invalid placement
-            // For now, just a log
+            if (buildingCamera == null || buildGrid == null)
+                return;
+
+            Vector3 mouseWorldPos = GetMouseWorldPosition();
+            Vector2Int gridPos = buildGrid.WorldToGrid(mouseWorldPos);
+            GameObject tower = buildGrid.GetTowerAtCell(gridPos);
+
+            if (tower != null)
+            {
+                var tracker = tower.GetComponent<TowerInvestmentTracker>();
+                if (tracker != null)
+                {
+                    SelectExistingTower(tower);
+                    return;
+                }
+            }
+
+            // Clicked empty space - deselect
+            if (buildingHUD != null)
+                buildingHUD.DeselectTower();
+        }
+
+        public void SelectExistingTower(GameObject towerObject)
+        {
+            if (towerObject == null)
+                return;
+
+            currentlySelectedTower = towerObject;
+
+            if (buildingHUD != null)
+                buildingHUD.ShowTowerContextPanel(towerObject);
         }
 
         #endregion
@@ -509,50 +557,38 @@ namespace Havengard.Building
 
             var tracker = towerObject.GetComponent<TowerInvestmentTracker>();
             if (tracker == null)
-            {
-                Debug.LogWarning("[BuildingMode] Tower has no investment tracker");
                 return;
-            }
 
             var towerData = towerDatabase.GetTowerByID(tracker.towerID);
             if (towerData == null)
-            {
-                Debug.LogWarning($"[BuildingMode] Tower data not found for ID: {tracker.towerID}");
                 return;
-            }
 
             int nextLevel = tracker.currentLevel + 1;
             if (nextLevel >= towerData.MaxLevel)
             {
-                Debug.Log("[BuildingMode] Tower is already max level");
+                if (BuildingAudioManager.Instance != null)
+                    BuildingAudioManager.Instance.PlayMaxLevelReached();
+
                 return;
             }
 
             var levelData = towerData.GetLevelData(nextLevel);
             if (levelData == null)
-            {
-                Debug.LogWarning($"[BuildingMode] No level data for level {nextLevel}");
                 return;
-            }
 
-            // Check gold
             if (GoldSystem.Instance != null)
             {
-                if (GoldSystem.Instance.Current < levelData.upgradeCost)
+                if (!GoldSystem.Instance.SpendGold(levelData.upgradeCost))
                 {
-                    Debug.Log("[BuildingMode] Insufficient gold for upgrade");
+                    if (BuildingAudioManager.Instance != null)
+                        BuildingAudioManager.Instance.PlayInsufficientGold();
+
                     return;
                 }
-
-                // Spend gold
-                if (!GoldSystem.Instance.SpendGold(levelData.upgradeCost))
-                    return;
             }
 
-            // Apply upgrade
             tracker.AddUpgradeCost(levelData.upgradeCost);
 
-            // Update tower stats
             var towerUnit = towerObject.GetComponent<Havengard.Units.TowerUnit>();
             if (towerUnit != null)
             {
@@ -564,18 +600,16 @@ namespace Havengard.Building
                 );
             }
 
-            // Record action for undo
             actionHistory.RecordUpgrade(towerObject, levelData.upgradeCost);
 
-            // Update UI
             if (buildingHUD != null)
             {
                 buildingHUD.UpdateGoldDisplay();
                 buildingHUD.RefreshTowerContextPanel(towerObject);
             }
 
-            Debug.Log($"[BuildingMode] Upgraded {towerData.displayName} to Level {nextLevel + 1} for {levelData.upgradeCost} Gold");
-            Debug.Log($"[Building] Total Tower Investment: {placementSystem.GetTotalInvestment()}");
+            if (BuildingAudioManager.Instance != null)
+                BuildingAudioManager.Instance.PlayTowerUpgraded();
         }
 
         public void SellTower(GameObject towerObject)
@@ -585,43 +619,28 @@ namespace Havengard.Building
 
             var tracker = towerObject.GetComponent<TowerInvestmentTracker>();
             if (tracker == null)
-            {
-                Debug.LogWarning("[BuildingMode] Tower has no investment tracker");
                 return;
-            }
 
             int sellValue = tracker.GetSellValue();
 
-            // Refund gold
+            if (currentlySelectedTower == towerObject)
+                currentlySelectedTower = null;
+
             if (GoldSystem.Instance != null)
                 GoldSystem.Instance.AddGold(sellValue);
 
-            // Free grid cells
             buildGrid.FreeCells(tracker.gridPosition, tracker.gridWidth, tracker.gridHeight);
-
-            // Remove from placement system tracking
             placementSystem.RemoveTower(towerObject);
-
-            // Destroy tower
             Destroy(towerObject);
 
-            // Update UI
             if (buildingHUD != null)
             {
                 buildingHUD.UpdateGoldDisplay();
                 buildingHUD.DeselectTower();
             }
 
-            Debug.Log($"[BuildingMode] Sold tower for {sellValue} Gold");
-            Debug.Log($"[Building] Total Tower Investment: {placementSystem.GetTotalInvestment()}");
-        }
-
-        public void SelectExistingTower(GameObject towerObject)
-        {
-            if (buildingHUD != null)
-            {
-                buildingHUD.ShowTowerContextPanel(towerObject);
-            }
+            if (BuildingAudioManager.Instance != null)
+                BuildingAudioManager.Instance.PlayTowerSold();
         }
 
         #endregion
@@ -634,46 +653,29 @@ namespace Havengard.Building
             {
                 actionHistory.Undo();
 
-                // Update UI
                 if (buildingHUD != null)
                 {
                     buildingHUD.UpdateGoldDisplay();
                     buildingHUD.DeselectTower();
                 }
 
-                Debug.Log("[BuildingMode] Undo: Removed last action");
-            }
-            else
-            {
-                Debug.Log("[BuildingMode] Nothing to undo");
+                if (BuildingAudioManager.Instance != null)
+                    BuildingAudioManager.Instance.PlayUndo();
             }
         }
 
         public void ResetCurrentPhase()
         {
-            int towersRemoved = actionHistory.GetCurrentPhaseTowerCount();
-            int refundAmount = actionHistory.GetCurrentPhaseInvestment();
-
-            if (towersRemoved == 0)
-            {
-                Debug.Log("[BuildingMode] No towers to reset");
-                return;
-            }
-
-            // Show confirmation dialog (for now, just execute)
-            // TODO: Integrate with confirmation dialog UI
-
             actionHistory.ResetCurrentPhase();
 
-            // Update UI
             if (buildingHUD != null)
             {
                 buildingHUD.UpdateGoldDisplay();
                 buildingHUD.DeselectTower();
             }
 
-            Debug.Log($"[BuildingMode] Reset current defence-phase placements");
-            Debug.Log($"[BuildingMode] Removed {towersRemoved} towers, refunded {refundAmount} Gold");
+            if (BuildingAudioManager.Instance != null)
+                BuildingAudioManager.Instance.PlayReset();
         }
 
         #endregion
@@ -682,84 +684,44 @@ namespace Havengard.Building
 
         private void OnDefencePhaseStarted()
         {
-            Debug.Log("[BuildingMode] ========== DEFENCE PHASE STARTED EVENT RECEIVED ==========");
-            
             canEnterBuildingMode = true;
             currentWaveNumber++;
-
-            // Reset action history for new phase
             actionHistory.StartNewPhase();
 
-            // Notify all existing towers of new wave
             var allTowers = FindObjectsByType<TowerInvestmentTracker>(FindObjectsSortMode.None);
             foreach (var tracker in allTowers)
             {
                 tracker.OnWaveStarted();
             }
-
-            Debug.Log($"[BuildingMode] ✓ Defence Phase started for wave {currentWaveNumber}");
-            Debug.Log($"[BuildingMode] ✓ canEnterBuildingMode = {canEnterBuildingMode}");
         }
 
         private void OnDefencePhaseEnded()
         {
-            Debug.Log("[BuildingMode] ========== DEFENCE PHASE ENDED EVENT RECEIVED ==========");
-            
             canEnterBuildingMode = false;
 
-            // Auto-exit building mode if active
             if (isBuildingMode)
-            {
                 ExitBuildingMode();
-                Debug.Log("[BuildingMode] Wave starting - auto-exited building mode");
-            }
-            
-            Debug.Log($"[BuildingMode] ✓ canEnterBuildingMode = {canEnterBuildingMode}");
-        }
-
-        public void OnWaveCompleted()
-        {
-            // Called when wave ends (not defence phase)
-            var allTowers = FindObjectsByType<TowerInvestmentTracker>(FindObjectsSortMode.None);
-            foreach (var tracker in allTowers)
-            {
-                tracker.OnWaveEnded();
-            }
-
-            Debug.Log("[BuildingMode] Wave completed - tower stats updated");
         }
 
         #endregion
 
-        #region Public Accessors for UI
+        #region Public Accessors
 
-        /// <summary>
-        /// Check if undo is available
-        /// </summary>
         public bool CanUndo()
         {
             return actionHistory != null && actionHistory.CanUndo();
         }
 
-        /// <summary>
-        /// Get current phase investment amount
-        /// </summary>
         public int GetCurrentPhaseInvestment()
         {
             return actionHistory != null ? actionHistory.GetCurrentPhaseInvestment() : 0;
         }
 
-        /// <summary>
-        /// Get current phase tower count
-        /// </summary>
         public int GetCurrentPhaseTowerCount()
         {
             return actionHistory != null ? actionHistory.GetCurrentPhaseTowerCount() : 0;
         }
 
-        /// <summary>
-        /// Get total investment across all towers
-        /// </summary>
         public int GetTotalInvestment()
         {
             return placementSystem != null ? placementSystem.GetTotalInvestment() : 0;
@@ -784,7 +746,6 @@ namespace Havengard.Building
 
         private void OnDestroy()
         {
-            // Cleanup
             if (currentGhost != null)
                 Destroy(currentGhost.gameObject);
         }

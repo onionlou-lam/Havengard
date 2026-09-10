@@ -1,7 +1,7 @@
 using System;
 using Havengard.Units;
 
-namespace Havengard.Core.HealthSystem
+namespace Havengard.Core.HealthManagement
 {
     public interface IHealth
     {

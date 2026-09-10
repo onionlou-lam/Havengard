@@ -50,7 +50,8 @@ MonoBehaviour:
   startSize_min: 0.9
   startSize_max: 1.1
   ignoreLayerMask: 0
-  sourcePrefab: {fileID: 5627860478487111644, guid: 4c972d686b276c149ba7576010ee5f54, type: 3}
+  sourcePrefab: {fileID: 5627860478487111644, guid: 4c972d686b276c149ba7576010ee5f54,
+    type: 3}
   lifetime_min: 3
   lifetime_max: 3
   startPosOffset: {x: 0.2, y: 0, z: 0}

@@ -1,6 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Havengard.Building
 {
     /// <summary>
@@ -14,6 +18,10 @@ namespace Havengard.Building
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private int gridWidth = 50;
         [SerializeField] private int gridHeight = 50;
+
+        [Header("Tilemap Integration")]
+        [SerializeField] private UnityEngine.Tilemaps.Tilemap buildableTilemap;
+        [SerializeField] private bool requireBuildableTile = true;
 
         private Dictionary<Vector2Int, GridCell> cells = new Dictionary<Vector2Int, GridCell>();
 
@@ -163,44 +171,149 @@ namespace Havengard.Building
         public GameObject GetTowerAtCell(Vector2Int gridPosition)
         {
             if (cells.TryGetValue(gridPosition, out GridCell cell))
-                return cell.OccupyingTower;
+            {
+                if (cell.OccupyingTower != null)
+                {
+                    Debug.Log($"[BuildGrid] Found tower at {gridPosition}: {cell.OccupyingTower.name}");
+                    return cell.OccupyingTower;
+                }
+            }
+            
             return null;
         }
 
-#if UNITY_EDITOR
-        private void OnDrawGizmosSelected()
+        /// <summary>
+        /// Get all occupied cells (for debugging)
+        /// </summary>
+        public int GetOccupiedCellCount()
         {
-            // Draw grid bounds
-            Gizmos.color = Color.cyan;
-            Vector3 bottomLeft = new Vector3(origin.x, origin.y, 0f);
-            Vector3 bottomRight = new Vector3(origin.x + gridWidth * cellSize, origin.y, 0f);
-            Vector3 topRight = new Vector3(origin.x + gridWidth * cellSize, origin.y + gridHeight * cellSize, 0f);
-            Vector3 topLeft = new Vector3(origin.x, origin.y + gridHeight * cellSize, 0f);
+            int count = 0;
+            foreach (var cell in cells.Values)
+            {
+                if (cell.IsOccupied)
+                    count++;
+            }
+            return count;
+        }
 
+        /// <summary>
+        /// Check if a grid position is on a buildable tile
+        /// </summary>
+        public bool IsBuildableTile(Vector2Int gridPosition)
+        {
+            if (!requireBuildableTile || buildableTilemap == null)
+                return true; // Allow building everywhere if no tilemap set
+
+            // Convert grid position to tilemap cell position
+            Vector3 worldPos = GridToWorld(gridPosition);
+            Vector3Int tilemapCell = buildableTilemap.WorldToCell(worldPos);
+
+            // Check if tile exists at this position
+            UnityEngine.Tilemaps.TileBase tile = buildableTilemap.GetTile(tilemapCell);
+
+            bool isBuildable = tile != null;
+            
+            if (!isBuildable)
+            {
+                Debug.Log($"[BuildGrid] Position {gridPosition} is not buildable (tilemap cell: {tilemapCell}, tile: {tile})");
+            }
+
+            return isBuildable;
+        }
+
+        /// <summary>
+        /// Check if entire footprint is on buildable tiles
+        /// </summary>
+        public bool IsFootprintBuildable(Vector2Int gridPosition, int width, int height)
+        {
+            if (!requireBuildableTile || buildableTilemap == null)
+                return true;
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    Vector2Int cell = new Vector2Int(gridPosition.x + x, gridPosition.y + y);
+                    if (!IsBuildableTile(cell))
+                        return false;
+                }
+            }
+            return true;
+        }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmos()  // Changed from OnDrawGizmosSelected to always show
+        {
+            // Draw grid bounds - THICK CYAN OUTLINE
+            Gizmos.color = Color.cyan;
+            float z = transform.position.z;
+            
+            Vector3 bottomLeft = new Vector3(origin.x, origin.y, z);
+            Vector3 bottomRight = new Vector3(origin.x + gridWidth * cellSize, origin.y, z);
+            Vector3 topRight = new Vector3(origin.x + gridWidth * cellSize, origin.y + gridHeight * cellSize, z);
+            Vector3 topLeft = new Vector3(origin.x, origin.y + gridHeight * cellSize, z);
+
+            // Draw thick border
+            Debug.DrawLine(bottomLeft, bottomRight, Color.cyan);
+            Debug.DrawLine(bottomRight, topRight, Color.cyan);
+            Debug.DrawLine(topRight, topLeft, Color.cyan);
+            Debug.DrawLine(topLeft, bottomLeft, Color.cyan);
+
+            // Also draw with Gizmos
             Gizmos.DrawLine(bottomLeft, bottomRight);
             Gizmos.DrawLine(bottomRight, topRight);
             Gizmos.DrawLine(topRight, topLeft);
             Gizmos.DrawLine(topLeft, bottomLeft);
 
-            // Draw grid lines (only in play mode to avoid clutter)
-            if (Application.isPlaying)
+            // Draw corner markers
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(bottomLeft, cellSize * 0.5f);
+            Gizmos.DrawWireSphere(bottomRight, cellSize * 0.5f);
+            Gizmos.DrawWireSphere(topRight, cellSize * 0.5f);
+            Gizmos.DrawWireSphere(topLeft, cellSize * 0.5f);
+
+            // Draw grid lines (only every 5th to reduce clutter in scene view)
+            Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
+            
+            for (int x = 0; x <= gridWidth; x += 5)
             {
-                Gizmos.color = new Color(0f, 1f, 1f, 0.1f);
+                Vector3 start = new Vector3(origin.x + x * cellSize, origin.y, z);
+                Vector3 end = new Vector3(origin.x + x * cellSize, origin.y + gridHeight * cellSize, z);
+                Gizmos.DrawLine(start, end);
+            }
 
-                // Vertical lines
-                for (int x = 0; x <= gridWidth; x++)
-                {
-                    Vector3 start = new Vector3(origin.x + x * cellSize, origin.y, 0f);
-                    Vector3 end = new Vector3(origin.x + x * cellSize, origin.y + gridHeight * cellSize, 0f);
-                    Gizmos.DrawLine(start, end);
+            for (int y = 0; y <= gridHeight; y += 5)
+            {
+                Vector3 start = new Vector3(origin.x, origin.y + y * cellSize, z);
+                Vector3 end = new Vector3(origin.x + gridWidth * cellSize, origin.y + y * cellSize, z);
+                Gizmos.DrawLine(start, end);
+            }
+
+            // Draw label using Handles (requires UnityEditor)
+            Handles.Label(
+                new Vector3(origin.x + (gridWidth * cellSize) / 2, origin.y + gridHeight * cellSize + 2f, z),
+                $"BuildGrid: {gridWidth}x{gridHeight}\nOrigin: {origin}\nCell Size: {cellSize}",
+                new GUIStyle() 
+                { 
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = new GUIStyleState() { textColor = Color.cyan },
+                    fontSize = 14,
+                    fontStyle = FontStyle.Bold
                 }
+            );
 
-                // Horizontal lines
-                for (int y = 0; y <= gridHeight; y++)
+            // Draw occupied cells in play mode
+            if (Application.isPlaying && cells != null && cells.Count > 0)
+            {
+                Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
+                foreach (var cell in cells.Values)
                 {
-                    Vector3 start = new Vector3(origin.x, origin.y + y * cellSize, 0f);
-                    Vector3 end = new Vector3(origin.x + gridWidth * cellSize, origin.y + y * cellSize, 0f);
-                    Gizmos.DrawLine(start, end);
+                    if (cell.IsOccupied)
+                    {
+                        Vector3 cellCenter = GridToWorld(cell.GridPosition);
+                        cellCenter.z = z;
+                        Gizmos.DrawCube(cellCenter, new Vector3(cellSize * 0.9f, cellSize * 0.9f, 0.2f));
+                    }
                 }
             }
         }

@@ -30,20 +30,43 @@ namespace Havengard.Building
         [Header("Close")]
         [SerializeField] private Button closeButton;
 
+        [Header("Dialogs")]
+        [SerializeField] private BuildingConfirmationDialog confirmationDialog;
+
         private GameObject currentTower;
         private TowerBuildData currentTowerData;
 
-        private void Awake()
+        private void Start()
         {
-            // Setup button listeners
+            SetupButtonListeners();
+
+            if (confirmationDialog == null)
+            {
+                var hud = GetComponentInParent<BuildingHUD>();
+                if (hud != null)
+                    confirmationDialog = hud.GetComponentInChildren<BuildingConfirmationDialog>();
+            }
+        }
+
+        private void SetupButtonListeners()
+        {
             if (upgradeButton != null)
+            {
+                upgradeButton.onClick.RemoveAllListeners();
                 upgradeButton.onClick.AddListener(OnUpgradeClicked);
+            }
 
             if (sellButton != null)
+            {
+                sellButton.onClick.RemoveAllListeners();
                 sellButton.onClick.AddListener(OnSellClicked);
+            }
 
             if (closeButton != null)
+            {
+                closeButton.onClick.RemoveAllListeners();
                 closeButton.onClick.AddListener(OnCloseClicked);
+            }
         }
 
         public void ShowTowerInfo(GameObject tower)
@@ -52,59 +75,66 @@ namespace Havengard.Building
                 return;
 
             currentTower = tower;
+            SetupButtonListeners();
 
             var tracker = tower.GetComponent<TowerInvestmentTracker>();
             if (tracker == null)
-            {
-                Debug.LogWarning("[TowerContextPanel] Tower has no investment tracker");
                 return;
+
+            var database = GetTowerDatabase();
+            if (database != null)
+            {
+                currentTowerData = database.GetTowerByID(tracker.towerID);
             }
 
-            // Get tower data from database
-            var database = FindFirstObjectByType<BuildingModeController>()?.GetComponent<BuildingModeController>();
-            // Note: We need access to the database, for now we'll get it from the tracker's ID
-            
+            // Update icon
+            if (towerIcon != null && currentTowerData != null && currentTowerData.icon != null)
+            {
+                towerIcon.sprite = currentTowerData.icon;
+                towerIcon.enabled = true;
+            }
+            else if (towerIcon != null)
+            {
+                towerIcon.enabled = false;
+            }
+
             // Display basic info
             if (towerNameText != null)
-            {
-                towerNameText.text = tracker.towerID;
-            }
+                towerNameText.text = currentTowerData != null ? currentTowerData.displayName : tracker.towerID;
 
             if (levelText != null)
-            {
                 levelText.text = $"Level {tracker.currentLevel + 1}";
-            }
 
-            // Display stats (from TowerUnit)
+            // Display stats
             var towerUnit = tower.GetComponent<Havengard.Units.TowerUnit>();
             if (towerUnit != null && statsText != null)
-            {
-                statsText.text = BuildStatsText(towerUnit);
-            }
+                statsText.text = BuildStatsText(towerUnit, tracker);
 
             // Display damage statistics
             if (damageStatsText != null)
-            {
                 damageStatsText.text = BuildDamageStatsText(tracker);
-            }
 
-            // Update upgrade section
+            // Update sections
             UpdateUpgradeSection(tracker);
-
-            // Update sell section
             UpdateSellSection(tracker);
         }
 
-        private string BuildStatsText(Havengard.Units.TowerUnit towerUnit)
+        private string BuildStatsText(Havengard.Units.TowerUnit towerUnit, TowerInvestmentTracker tracker)
         {
-            // Note: TowerUnit fields are protected, we need to expose them or use reflection
-            // For now, showing placeholder
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            
+
             sb.AppendLine("<b>Current Stats:</b>");
-            sb.AppendLine("Damage: N/A"); // Would need towerUnit.projectileDamage
-            sb.AppendLine("Range: N/A");  // Would need towerUnit.attackRange
-            sb.AppendLine("Attack Speed: N/A"); // Would need towerUnit.attackCooldown
+
+            if (currentTowerData != null)
+            {
+                var levelData = currentTowerData.GetLevelData(tracker.currentLevel);
+                if (levelData != null)
+                {
+                    sb.AppendLine($"Damage: {levelData.damage}");
+                    sb.AppendLine($"Range: {levelData.attackRange}");
+                    sb.AppendLine($"Attack Speed: {levelData.attackSpeed}/s");
+                }
+            }
 
             return sb.ToString();
         }
@@ -114,16 +144,12 @@ namespace Havengard.Building
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
             sb.AppendLine($"<b>Total Damage:</b> {tracker.totalDamageDealt:F0}");
-            
+
             if (tracker.previousWaveDamageDealt > 0)
-            {
                 sb.AppendLine($"<b>Previous Wave:</b> {tracker.previousWaveDamageDealt:F0}");
-            }
 
             if (tracker.currentWaveDamageDealt > 0)
-            {
                 sb.AppendLine($"<b>This Wave:</b> {tracker.currentWaveDamageDealt:F0}");
-            }
 
             sb.AppendLine();
             sb.AppendLine($"<b>Total Investment:</b> {tracker.totalInvestment} Gold");
@@ -137,19 +163,16 @@ namespace Havengard.Building
                 return;
 
             var controller = BuildingModeController.Instance;
-            if (controller == null || controller.Grid == null)
+            if (controller == null)
             {
                 upgradeSection.SetActive(false);
                 return;
             }
 
-            // Get database from controller
             TowerBuildDatabase database = GetTowerDatabase();
-            
+
             if (database != null)
-            {
                 currentTowerData = database.GetTowerByID(tracker.towerID);
-            }
 
             if (currentTowerData == null)
             {
@@ -164,21 +187,16 @@ namespace Havengard.Building
             {
                 upgradeSection.SetActive(true);
                 upgradeButton.interactable = false;
-                
+
                 if (upgradeButtonText != null)
-                {
                     upgradeButtonText.text = "MAX LEVEL";
-                }
 
                 if (upgradeStatsPreviewText != null)
-                {
                     upgradeStatsPreviewText.text = "";
-                }
 
                 return;
             }
 
-            // Get next level data
             var nextLevelData = currentTowerData.GetLevelData(nextLevel);
             if (nextLevelData == null)
             {
@@ -190,18 +208,14 @@ namespace Havengard.Building
 
             // Check affordability
             bool canAfford = true;
-            if (Havengard.Resources.GoldSystem.Instance != null)
-            {
-                canAfford = Havengard.Resources.GoldSystem.Instance.Current >= nextLevelData.upgradeCost;
-            }
+            if (GoldSystem.Instance != null)
+                canAfford = GoldSystem.Instance.Current >= nextLevelData.upgradeCost;
 
             upgradeButton.interactable = canAfford;
 
             // Update button text
             if (upgradeButtonText != null)
-            {
                 upgradeButtonText.text = $"Upgrade to Level {nextLevel + 1}\nCost: {nextLevelData.upgradeCost} Gold";
-            }
 
             // Show stat preview
             if (upgradeStatsPreviewText != null)
@@ -209,17 +223,6 @@ namespace Havengard.Building
                 var currentLevelData = currentTowerData.GetLevelData(tracker.currentLevel);
                 upgradeStatsPreviewText.text = BuildUpgradePreviewText(currentLevelData, nextLevelData);
             }
-        }
-
-        private TowerBuildDatabase GetTowerDatabase()
-        {
-            var controller = BuildingModeController.Instance;
-            if (controller != null)
-            {
-                return controller.TowerDatabase;
-            }
-
-            return null;
         }
 
         private string BuildUpgradePreviewText(TowerLevelData current, TowerLevelData next)
@@ -245,11 +248,18 @@ namespace Havengard.Building
             int sellValue = tracker.GetSellValue();
 
             if (sellButtonText != null)
-            {
                 sellButtonText.text = $"Sell Tower\nRefund: {sellValue} Gold";
-            }
 
             sellButton.interactable = true;
+        }
+
+        private TowerBuildDatabase GetTowerDatabase()
+        {
+            var controller = BuildingModeController.Instance;
+            if (controller != null)
+                return controller.TowerDatabase;
+
+            return null;
         }
 
         private void OnUpgradeClicked()
@@ -261,8 +271,6 @@ namespace Havengard.Building
             if (controller != null)
             {
                 controller.UpgradeTower(currentTower);
-                
-                // Refresh display
                 ShowTowerInfo(currentTower);
             }
         }
@@ -272,12 +280,31 @@ namespace Havengard.Building
             if (currentTower == null)
                 return;
 
-            // Show confirmation dialog
-            // For now, just sell directly
-            var controller = BuildingModeController.Instance;
-            if (controller != null)
+            var tracker = currentTower.GetComponent<TowerInvestmentTracker>();
+            if (tracker == null)
+                return;
+
+            int sellValue = tracker.GetSellValue();
+            string towerName = currentTowerData != null ? currentTowerData.displayName : tracker.towerID;
+
+            if (confirmationDialog != null)
             {
-                controller.SellTower(currentTower);
+                confirmationDialog.ShowSellConfirmation(
+                    towerName,
+                    sellValue,
+                    onConfirm: () =>
+                    {
+                        var controller = BuildingModeController.Instance;
+                        if (controller != null)
+                            controller.SellTower(currentTower);
+                    }
+                );
+            }
+            else
+            {
+                var controller = BuildingModeController.Instance;
+                if (controller != null)
+                    controller.SellTower(currentTower);
             }
         }
 
@@ -285,9 +312,7 @@ namespace Havengard.Building
         {
             var hud = GetComponentInParent<BuildingHUD>();
             if (hud != null)
-            {
                 hud.DeselectTower();
-            }
         }
     }
 }

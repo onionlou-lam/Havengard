@@ -323,6 +323,65 @@ public abstract class AbilityBase : ScriptableObject
         return UnityEngine.Random.value < critChance;
     }
 
+    #region Shared Audio Helpers
+
+    /// <summary>
+    /// Plays a one-shot SFX at a world position, routed through GameAudioManager when present.
+    /// Use this from any AbilityBase subclass instead of calling AudioSource.PlayClipAtPoint
+    /// directly, so concurrency limiting (many enemies sharing the same ability asset) and
+    /// pause-awareness apply automatically.
+    /// Falls back to raw Unity playback if no GameAudioManager exists in the scene.
+    /// </summary>
+    protected void PlayAbilitySFX(AudioClip clip, Vector3 position, float volume = 1f, float pitch = 1f)
+    {
+        if (clip == null)
+            return;
+
+        if (Havengard.Audio.GameAudioManager.Instance != null)
+        {
+            Havengard.Audio.GameAudioManager.Instance.PlaySFX(clip, position, volume, pitch);
+            return;
+        }
+
+        AudioSource.PlayClipAtPoint(clip, position, volume);
+    }
+
+    /// <summary>
+    /// Plays a one-shot SFX with randomized pitch (e.g. swings, footsteps, impacts) to avoid
+    /// repetitive-sounding audio when the same ability fires often.
+    /// </summary>
+    protected void PlayAbilitySFXRandomPitch(AudioClip clip, Vector3 position, float volume = 1f, float minPitch = 0.9f, float maxPitch = 1.1f)
+    {
+        if (clip == null)
+            return;
+
+        if (Havengard.Audio.GameAudioManager.Instance != null)
+        {
+            Havengard.Audio.GameAudioManager.Instance.PlaySFXRandomPitch(clip, position, volume, minPitch, maxPitch);
+            return;
+        }
+
+        float pitch = Random.Range(minPitch, maxPitch);
+        AudioSource.PlayClipAtPoint(clip, position, volume);
+    }
+
+    /// <summary>
+    /// Convenience helper for the common cast/impact SFX fields defined on AbilityBase itself
+    /// (castSFX, impactSFX). Subclasses with their own SFX fields (e.g. MeleeAbility's
+    /// swingSFX/hitSFX) should call PlayAbilitySFX/PlayAbilitySFXRandomPitch directly.
+    /// </summary>
+    protected void PlayCastSFX(Vector3 position)
+    {
+        PlayAbilitySFX(castSFX, position);
+    }
+
+    protected void PlayImpactSFX(Vector3 position)
+    {
+        PlayAbilitySFX(impactSFX, position);
+    }
+
+    #endregion
+
     public abstract void Activate(AbilityUser user, Vector3 targetPosition, GameObject targetEnemy);
     public abstract void Deactivate(AbilityUser user);
 }

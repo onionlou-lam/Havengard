@@ -1,6 +1,6 @@
 using UnityEngine;
 using Havengard.Core.Character;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 
 namespace Havengard.Core.Health
 {
@@ -17,13 +17,13 @@ namespace Havengard.Core.Health
         [Tooltip("Base regen delay if not using stats (seconds)")]
         [SerializeField] private float baseRegenDelay = 5f;
 
-        private HealthSystem.Health health;
+        private HealthManagement.Health health;
         private StatsComponent statsComponent;
         private float lastDamageTime;
 
         private void Awake()
         {
-            health = GetComponent<HealthSystem.Health>();
+            health = GetComponent<HealthManagement.Health>();
             statsComponent = GetComponent<StatsComponent>();
 
             if (health != null)

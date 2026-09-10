@@ -135,14 +135,6 @@ namespace Havengard.Building
             }
         }
 
-        private void OnClicked()
-        {
-            if (parentPanel != null && towerData != null)
-            {
-                parentPanel.OnTowerSelected(towerData);
-            }
-        }
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (tooltip != null && towerData != null)
@@ -153,9 +145,29 @@ namespace Havengard.Building
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            // DON'T hide tooltip on exit - let it stay for placement
+            // Only hide if not currently placing this tower
             if (tooltip != null)
             {
-                tooltip.HideTooltip();
+                var controller = BuildingModeController.Instance;
+                if (controller == null || controller.SelectedTowerData != towerData || !controller.IsPlacingTower)
+                {
+                    tooltip.HideTooltip();
+                }
+            }
+        }
+
+        private void OnClicked()
+        {
+            if (parentPanel != null && towerData != null)
+            {
+                parentPanel.OnTowerSelected(towerData);
+                
+                // Keep tooltip showing after selection
+                if (tooltip != null)
+                {
+                    tooltip.ShowTooltip(towerData);
+                }
             }
         }
     }

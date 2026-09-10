@@ -40,7 +40,7 @@ namespace Havengard.Abilities
             {
                 // Heal allies
                 float healing = CalculateHealing(user.gameObject, CurrentLevel);
-                var targetHealth = affectedTarget.GetComponent<Havengard.Core.HealthSystem.Health>();
+                var targetHealth = affectedTarget.GetComponent<Havengard.Core.HealthManagement.Health>();
                 if (targetHealth != null)
                 {
                     targetHealth.Heal((int)healing);
@@ -61,7 +61,7 @@ namespace Havengard.Abilities
                     damage *= damageToUndeadMultiplier;
                 }
 
-                var targetHealth = affectedTarget.GetComponent<Havengard.Core.HealthSystem.Health>();
+                var targetHealth = affectedTarget.GetComponent<Havengard.Core.HealthManagement.Health>();
                 if (targetHealth != null)
                 {
                     targetHealth.Damage((int)damage);

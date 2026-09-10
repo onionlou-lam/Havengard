@@ -1,5 +1,5 @@
 using Havengard.Units;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 
 namespace Havengard.Combat
 {

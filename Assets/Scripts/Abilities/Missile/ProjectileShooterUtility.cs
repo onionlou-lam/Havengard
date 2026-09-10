@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.AI;
-using Havengard.Core.HealthSystem;
+using Havengard.Core.HealthManagement;
 using Havengard.Abilities;
 using Havengard.Units;
 using Havengard.Combat;
+using Havengard.Player;
 
 namespace Havengard.Combat
 {
@@ -36,12 +37,14 @@ namespace Havengard.Combat
         private Faction faction;
         private NavMeshAgent agent;
         private AttackEffectHandler attackEffects;
+        private PlayerWallState wallState;
 
         private void Awake()
         {
             faction = GetComponent<IHealth>()?.GetFaction() ?? Faction.Neutral;
             agent = GetComponent<NavMeshAgent>();
             attackEffects = GetComponent<AttackEffectHandler>();
+            wallState = GetComponent<PlayerWallState>();
 
             if (wallMask == 0)
                 wallMask = LayerMask.GetMask("Walls");
@@ -95,13 +98,19 @@ namespace Havengard.Combat
             var proj = projGO.GetComponent<Projectile>();
             if (proj != null)
             {
+                bool ignoreWallCollision = wallState != null && wallState.IsOnWall;
+
                 // Use generic Initialize with callback
                 proj.Initialize(
                     dir,
                     projectileSpeed,
                     projectileLifetime,
                     gameObject,
-                    (hit) => OnProjectileHit(projGO, hit)
+                    (hit, shouldDestroy) => OnProjectileHit(projGO, hit),
+                    wallMask,
+                    false,
+                    0,
+                    ignoreWallCollision
                 );
             }
 

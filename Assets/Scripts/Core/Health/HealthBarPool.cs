@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Havengard.Core.HealthSystem
+namespace Havengard.Core.HealthManagement
 {
     public class HealthBarPool : MonoBehaviour
     {
