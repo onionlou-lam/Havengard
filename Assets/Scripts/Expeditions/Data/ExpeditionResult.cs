@@ -14,6 +14,17 @@ namespace Havengard.Expeditions
         public bool success = true;
         public List<HeroInstance> participatingHeroes;
 
+        /// <summary>
+        /// The success chance roll that was used to determine the outcome (0-1).
+        /// Useful for debugging/logging.
+        /// </summary>
+        public float rolledValue;
+
+        /// <summary>
+        /// The success chance threshold that was required to succeed (0-1).
+        /// </summary>
+        public float successChance;
+
         // Future reward fields
         public int goldReward;
         public int celestiumReward;
@@ -25,7 +36,7 @@ namespace Havengard.Expeditions
         {
             expeditionId = expId;
             participatingHeroes = heroes;
-            success = true; // Default to success for now
+            success = true; // Default to success; overwritten by ExpeditionManager's success roll
         }
     }
 }

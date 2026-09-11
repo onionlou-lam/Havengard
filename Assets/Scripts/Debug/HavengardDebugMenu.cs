@@ -233,11 +233,27 @@ namespace Havengard.DebugTools
 
         private void CacheReferences()
         {
-            // GameManager systems
+            // GameManager systems (preferred source)
             if (GameManager.Instance != null)
             {
                 goldSystem = GameManager.Instance.goldSystem;
                 celestiumSystem = GameManager.Instance.celestiumSystem;
+            }
+
+            // Fallback: GoldSystem/CelestiumSystem are their own singletons.
+            // GameManager may not exist in this scene, or may not have wired them up yet.
+            if (goldSystem == null)
+            {
+                goldSystem = GoldSystem.Instance;
+                if (goldSystem == null)
+                    goldSystem = FindFirstObjectByType<GoldSystem>();
+            }
+
+            if (celestiumSystem == null)
+            {
+                celestiumSystem = CelestiumSystem.Instance;
+                if (celestiumSystem == null)
+                    celestiumSystem = FindFirstObjectByType<CelestiumSystem>();
             }
 
             // Find player hero
@@ -269,6 +285,15 @@ namespace Havengard.DebugTools
             {
                 menuPanel.SetActive(isMenuOpen);
             }
+
+            // Re-cache references every time the menu opens.
+            // This handles cases where GameManager/GoldSystem/CelestiumSystem/HeroInstance
+            // were not yet initialized when this script's Start() ran (e.g. loaded a moment later,
+            // or on a different scene after a scene change since this object persists).
+            if (isMenuOpen)
+            {
+                CacheReferences();
+            }
             
             Debug.Log($"[HavengardDebugMenu] Menu {(isMenuOpen ? "OPENED" : "CLOSED")}");
         }
@@ -281,7 +306,12 @@ namespace Havengard.DebugTools
             
             if (goldSystem == null)
             {
-                Debug.LogWarning("[DebugMenu] GoldSystem not found!");
+                CacheReferences();
+            }
+
+            if (goldSystem == null)
+            {
+                Debug.LogWarning("[DebugMenu] GoldSystem not found! Make sure a GoldSystem exists in the scene (usually via GameManager).");
                 return;
             }
 
@@ -296,7 +326,12 @@ namespace Havengard.DebugTools
             
             if (celestiumSystem == null)
             {
-                Debug.LogWarning("[DebugMenu] CelestiumSystem not found!");
+                CacheReferences();
+            }
+
+            if (celestiumSystem == null)
+            {
+                Debug.LogWarning("[DebugMenu] CelestiumSystem not found! Make sure a CelestiumSystem exists in the scene (usually via GameManager).");
                 return;
             }
 
@@ -308,7 +343,9 @@ namespace Havengard.DebugTools
         public void AddXP()
         {
             Debug.Log("[DebugMenu] AddXP() called!");
-            
+
+            if (playerHero == null) CacheReferences();
+
             if (playerHero == null || playerHero.ExpSystem == null)
             {
                 Debug.LogWarning("[DebugMenu] Player hero or EXP system not found!");
@@ -323,7 +360,9 @@ namespace Havengard.DebugTools
         public void AddSkillPoints()
         {
             Debug.Log("[DebugMenu] AddSkillPoints() called!");
-            
+
+            if (playerHero == null) CacheReferences();
+
             if (playerHero == null || playerHero.ExpSystem == null)
             {
                 Debug.LogWarning("[DebugMenu] Player hero or EXP system not found!");
@@ -338,7 +377,9 @@ namespace Havengard.DebugTools
         public void LevelUp()
         {
             Debug.Log("[DebugMenu] LevelUp() called!");
-            
+
+            if (playerHero == null) CacheReferences();
+
             if (playerHero == null || playerHero.ExpSystem == null)
             {
                 Debug.LogWarning("[DebugMenu] Player hero or EXP system not found!");
@@ -359,7 +400,9 @@ namespace Havengard.DebugTools
         public void ResetSkills()
         {
             Debug.Log("[DebugMenu] ResetSkills() called!");
-            
+
+            if (playerHero == null) CacheReferences();
+
             if (playerHero == null)
             {
                 Debug.LogWarning("[DebugMenu] Player hero not found!");
@@ -404,7 +447,9 @@ namespace Havengard.DebugTools
         public void SpawnEnemyUnit()
         {
             Debug.Log("[DebugMenu] SpawnEnemyUnit() called!");
-            
+
+            if (unitSpawner == null) CacheReferences();
+
             if (unitSpawner == null || enemyPrefabs.Count == 0)
             {
                 Debug.LogWarning("[DebugMenu] Unit spawner or enemy prefabs not configured!");
@@ -423,7 +468,9 @@ namespace Havengard.DebugTools
         public void SpawnBossUnit()
         {
             Debug.Log("[DebugMenu] SpawnBossUnit() called!");
-            
+
+            if (unitSpawner == null) CacheReferences();
+
             if (unitSpawner == null || bossPrefabs.Count == 0)
             {
                 Debug.LogWarning("[DebugMenu] Unit spawner or boss prefabs not configured!");

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using TMPro;
 using Havengard.Resources;
 
@@ -14,14 +15,22 @@ namespace Havengard.UI
         [SerializeField] private string goldPrefix = "Gold: ";
         [SerializeField] private string celestiumPrefix = "Celestium: ";
 
+        private bool subscribedToGold;
+        private bool subscribedToCelestium;
+        private Coroutine waitForSystemsRoutine;
+
         private void OnEnable()
         {
-            // Subscribe
-            if (GoldSystem.Instance != null)
-                GoldSystem.Instance.OnGoldChanged += HandleGoldChanged;
+            TrySubscribe();
 
-            if (CelestiumSystem.Instance != null)
-                CelestiumSystem.Instance.OnCelestiumChanged += HandleCelestiumChanged;
+            // If either system wasn't ready yet, keep trying until it is.
+            if (!subscribedToGold || !subscribedToCelestium)
+            {
+                if (waitForSystemsRoutine != null)
+                    StopCoroutine(waitForSystemsRoutine);
+
+                waitForSystemsRoutine = StartCoroutine(WaitForSystemsAndSubscribe());
+            }
 
             // Immediate refresh (so it shows correct values on scene load)
             RefreshAll();
@@ -29,12 +38,64 @@ namespace Havengard.UI
 
         private void OnDisable()
         {
-            // Unsubscribe
-            if (GoldSystem.Instance != null)
+            if (waitForSystemsRoutine != null)
+            {
+                StopCoroutine(waitForSystemsRoutine);
+                waitForSystemsRoutine = null;
+            }
+
+            Unsubscribe();
+        }
+
+        private void TrySubscribe()
+        {
+            if (!subscribedToGold && GoldSystem.Instance != null)
+            {
+                GoldSystem.Instance.OnGoldChanged += HandleGoldChanged;
+                subscribedToGold = true;
+            }
+
+            if (!subscribedToCelestium && CelestiumSystem.Instance != null)
+            {
+                CelestiumSystem.Instance.OnCelestiumChanged += HandleCelestiumChanged;
+                subscribedToCelestium = true;
+            }
+        }
+
+        private void Unsubscribe()
+        {
+            if (subscribedToGold && GoldSystem.Instance != null)
                 GoldSystem.Instance.OnGoldChanged -= HandleGoldChanged;
 
-            if (CelestiumSystem.Instance != null)
+            if (subscribedToCelestium && CelestiumSystem.Instance != null)
                 CelestiumSystem.Instance.OnCelestiumChanged -= HandleCelestiumChanged;
+
+            subscribedToGold = false;
+            subscribedToCelestium = false;
+        }
+
+        /// <summary>
+        /// Keeps checking each frame until GoldSystem/CelestiumSystem singletons exist,
+        /// then subscribes and refreshes immediately. Handles cases where this HUD's
+        /// OnEnable ran before those systems finished initializing (e.g. GameManager.Awake
+        /// creating them, or scene load order).
+        /// </summary>
+        private IEnumerator WaitForSystemsAndSubscribe()
+        {
+            while (!subscribedToGold || !subscribedToCelestium)
+            {
+                TrySubscribe();
+
+                if (subscribedToGold && subscribedToCelestium)
+                {
+                    RefreshAll();
+                    break;
+                }
+
+                yield return null;
+            }
+
+            waitForSystemsRoutine = null;
         }
 
         private void RefreshAll()

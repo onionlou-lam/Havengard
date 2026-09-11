@@ -20,12 +20,17 @@ namespace Havengard.Expeditions.UI
         [SerializeField] private Image progressFill;
         [SerializeField] private TextMeshProUGUI progressText;
 
+        [Header("Follower Activity Animation")]
+        [Tooltip("Optional - plays a small follower activity animation (e.g. attacking, scouting) while an expedition is active here.")]
+        [SerializeField] private DungeonMissionAnimationUI missionAnimation;
+
         [Header("Hover")]
         [SerializeField] private GameObject hoverHighlight;
         [SerializeField] private float hoverScale = 1.1f;
 
         private Vector3 originalScale;
         private ExpeditionInstance activeExpedition;
+        private bool wasActiveLastUpdate;
 
         private void Start()
         {
@@ -36,6 +41,9 @@ namespace Havengard.Expeditions.UI
 
             if (activeIndicator != null)
                 activeIndicator.SetActive(false);
+
+            if (missionAnimation != null)
+                missionAnimation.StopAnimation();
 
             // Subscribe to expedition updates
             if (ExpeditionManager.Instance != null)
@@ -92,6 +100,21 @@ namespace Havengard.Expeditions.UI
                 if (progressText != null)
                     progressText.text = "";
             }
+
+            // Update follower activity animation only on state transitions
+            if (missionAnimation != null)
+            {
+                if (hasActiveExpedition && !wasActiveLastUpdate)
+                {
+                    missionAnimation.PlayForMissionType(activeExpedition.missionType);
+                }
+                else if (!hasActiveExpedition && wasActiveLastUpdate)
+                {
+                    missionAnimation.StopAnimation();
+                }
+            }
+
+            wasActiveLastUpdate = hasActiveExpedition;
 
             // Update icon sprite
             if (iconImage != null && expeditionData.mapIcon != null)

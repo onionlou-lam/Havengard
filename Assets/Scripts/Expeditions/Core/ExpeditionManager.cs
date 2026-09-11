@@ -292,8 +292,12 @@ namespace Havengard.Expeditions
                 follower.CompleteQuest(); // Reuse existing quest system
             }
 
-            // Create result
+            // Create result and evaluate success/failure
             var result = new ExpeditionResult(expedition.expeditionId, expedition.assignedFollowers);
+            EvaluateExpeditionSuccess(expedition, result);
+
+            Debug.Log($"[ExpeditionManager] Result: {(result.success ? "SUCCESS" : "FAILURE")} " +
+                      $"(rolled {result.rolledValue:F2} vs chance {result.successChance:F2})");
 
             // Trigger events
             OnExpeditionCompleted?.Invoke(expedition, result);
@@ -307,8 +311,37 @@ namespace Havengard.Expeditions
             // Remove from active list
             activeExpeditions.Remove(expedition);
 
-            // Future: Process rewards
-            // ProcessRewards(result);
+            // Process rewards (only meaningful on success by default)
+            ProcessRewards(result);
+        }
+
+        /// <summary>
+        /// Rolls for expedition success based on ExpeditionData.baseSuccessChance.
+        /// Populates the result with the outcome, the rolled value, and the chance used.
+        /// Override EvaluateDungeonEffects/EvaluateFollowerEffects to modify the chance
+        /// before the roll is performed.
+        /// </summary>
+        private void EvaluateExpeditionSuccess(ExpeditionInstance expedition, ExpeditionResult result)
+        {
+            float successChance = Mathf.Clamp01(expedition.expeditionData.baseSuccessChance);
+
+            // Extension points - can modify successChance based on party/dungeon effects
+            successChance = ModifySuccessChance(expedition, successChance);
+
+            float roll = Random.value;
+
+            result.successChance = successChance;
+            result.rolledValue = roll;
+            result.success = roll <= successChance;
+        }
+
+        /// <summary>
+        /// Extension point for modifying the success chance before the roll.
+        /// Combine follower bonuses, dungeon modifiers, etc. here.
+        /// </summary>
+        protected virtual float ModifySuccessChance(ExpeditionInstance expedition, float baseChance)
+        {
+            return baseChance;
         }
 
         /// <summary>
@@ -327,7 +360,7 @@ namespace Havengard.Expeditions
         protected virtual void ProcessRewards(ExpeditionResult result)
         {
             // Future implementation:
-            // - Grant gold/celestium/exp
+            // - Grant gold/celestium/exp (only if result.success == true)
             // - Apply follower-specific effects
             // - Generate items
             // - Trigger quest progression
