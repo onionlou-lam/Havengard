@@ -4,6 +4,8 @@ using UnityEngine;
 using Havengard.Core.Heroes;
 using Havengard.Core.HealthManagement;
 using Havengard.Waves;
+using Havengard.Resources;
+using Havengard.Items;
 
 namespace Havengard.Expeditions
 {
@@ -225,22 +227,49 @@ namespace Havengard.Expeditions
             int currentWave = waveManager != null ? waveManager.CurrentWaveIndex : 0;
             var instance = new ExpeditionInstance(data, followers, currentWave);
 
+            // Apply duration reduction from participating followers' expedition modifiers
+            int effectiveDuration = GetEffectiveDuration(data, followers);
+            instance.durationInDays = effectiveDuration;
+
             // Mark followers as on expedition
             foreach (var follower in followers)
             {
-                follower.StartQuest(data.durationInDays); // Reuse existing quest system
+                follower.StartQuest(effectiveDuration); // Reuse existing quest system
             }
 
             activeExpeditions.Add(instance);
 
             Debug.Log($"[ExpeditionManager] Started expedition: {data.displayName}");
             Debug.Log($"[ExpeditionManager] Party size: {followers.Count}/{data.maximumPartySize}");
+            Debug.Log($"[ExpeditionManager] Duration: {effectiveDuration} day(s) (base {data.durationInDays})");
             Debug.Log($"[ExpeditionManager] Active followers: {GetActiveExpeditionFollowerCount()}/{maxActiveExpeditionFollowers}");
 
             OnExpeditionStarted?.Invoke(instance);
             OnExpeditionsUpdated?.Invoke();
 
             return true;
+        }
+
+        /// <summary>
+        /// Calculates the effective mission duration after applying the best
+        /// duration-reduction bonus among participating followers.
+        /// Duration reductions do not stack additively across the whole party;
+        /// the strongest single reduction is used, and duration is clamped to at least 1 day.
+        /// </summary>
+        protected virtual int GetEffectiveDuration(ExpeditionData data, List<HeroInstance> followers)
+        {
+            int bestReduction = 0;
+            foreach (var follower in followers)
+            {
+                var mods = follower.GetComponent<HeroExpeditionModifiers>();
+                if (mods == null) continue;
+
+                int reduction = mods.GetDurationReductionDays();
+                if (reduction > bestReduction)
+                    bestReduction = reduction;
+            }
+
+            return Mathf.Max(1, data.durationInDays - bestReduction);
         }
 
         /// <summary>
@@ -312,14 +341,13 @@ namespace Havengard.Expeditions
             activeExpeditions.Remove(expedition);
 
             // Process rewards (only meaningful on success by default)
-            ProcessRewards(result);
+            ProcessRewards(result, expedition);
         }
 
         /// <summary>
         /// Rolls for expedition success based on ExpeditionData.baseSuccessChance.
         /// Populates the result with the outcome, the rolled value, and the chance used.
-        /// Override EvaluateDungeonEffects/EvaluateFollowerEffects to modify the chance
-        /// before the roll is performed.
+        /// Override ModifySuccessChance to inject additional bonuses before the roll is performed.
         /// </summary>
         private void EvaluateExpeditionSuccess(ExpeditionInstance expedition, ExpeditionResult result)
         {
@@ -337,11 +365,22 @@ namespace Havengard.Expeditions
 
         /// <summary>
         /// Extension point for modifying the success chance before the roll.
-        /// Combine follower bonuses, dungeon modifiers, etc. here.
+        /// Sums each participating follower's HeroExpeditionModifiers success chance bonus
+        /// for the expedition's mission type (including "all mission types" bonuses).
         /// </summary>
         protected virtual float ModifySuccessChance(ExpeditionInstance expedition, float baseChance)
         {
-            return baseChance;
+            float chance = baseChance;
+
+            foreach (var follower in expedition.assignedFollowers)
+            {
+                var mods = follower.GetComponent<HeroExpeditionModifiers>();
+                if (mods == null) continue;
+
+                chance += mods.GetSuccessChanceBonus(expedition.missionType);
+            }
+
+            return Mathf.Clamp01(chance);
         }
 
         /// <summary>
@@ -355,38 +394,65 @@ namespace Havengard.Expeditions
         }
 
         /// <summary>
-        /// Extension point for future reward processing
+        /// Grants gold/celestium/exp rewards (boosted by follower reward multipliers) and rolls
+        /// for bonus item rewards (boosted by follower bonus item chance) on a successful expedition.
         /// </summary>
-        protected virtual void ProcessRewards(ExpeditionResult result)
+        protected virtual void ProcessRewards(ExpeditionResult result, ExpeditionInstance expedition)
         {
-            // Future implementation:
-            // - Grant gold/celestium/exp (only if result.success == true)
-            // - Apply follower-specific effects
-            // - Generate items
-            // - Trigger quest progression
-        }
+            if (!result.success)
+            {
+                return;
+            }
 
-        /// <summary>
-        /// Extension point for evaluating follower effects
-        /// </summary>
-        protected virtual void EvaluateFollowerEffects(ExpeditionInstance expedition)
-        {
-            // Future implementation:
-            // - 2x Gold effect
-            // - Reduced duration effect
-            // - Class-specific bonuses
-            // etc.
-        }
+            var data = expedition.expeditionData;
 
-        /// <summary>
-        /// Extension point for evaluating dungeon effects
-        /// </summary>
-        protected virtual void EvaluateDungeonEffects(ExpeditionInstance expedition)
-        {
-            // Future implementation:
-            // - Success chance modifiers based on party composition
-            // - Special events
-            // etc.
+            // Sum reward multipliers across all participating followers
+            float goldMultiplier = 1f;
+            float celestiumMultiplier = 1f;
+            float bonusItemChance = 0f;
+
+            foreach (var follower in expedition.assignedFollowers)
+            {
+                var mods = follower.GetComponent<HeroExpeditionModifiers>();
+                if (mods == null) continue;
+
+                goldMultiplier += mods.GetGoldRewardMultiplier();
+                celestiumMultiplier += mods.GetCelestiumRewardMultiplier();
+                bonusItemChance = Mathf.Clamp01(bonusItemChance + mods.GetBonusItemChance());
+            }
+
+            result.goldReward = Mathf.RoundToInt(data.baseGoldReward * goldMultiplier);
+            result.celestiumReward = Mathf.RoundToInt(data.baseCelestiumReward * celestiumMultiplier);
+            result.experienceReward = data.baseExperienceReward;
+
+            if (result.goldReward > 0 && GoldSystem.Instance != null)
+            {
+                GoldSystem.Instance.AddGold(result.goldReward);
+            }
+
+            if (result.celestiumReward > 0 && CelestiumSystem.Instance != null)
+            {
+                CelestiumSystem.Instance.AddCelestium(result.celestiumReward);
+            }
+
+            if (result.experienceReward > 0)
+            {
+                foreach (var follower in expedition.assignedFollowers)
+                {
+                    follower.GrantEXP(result.experienceReward);
+                }
+            }
+
+            // Roll for bonus item reward
+            if (data.bonusItemDropTable != null && bonusItemChance > 0f && Random.value <= bonusItemChance)
+            {
+                var bonusItem = data.bonusItemDropTable.GetRandomItem();
+                if (bonusItem != null)
+                {
+                    result.bonusItemRewards.Add(bonusItem);
+                    Debug.Log($"[ExpeditionManager] Bonus item awarded: {bonusItem.itemName}");
+                }
+            }
         }
 
         //public ExpeditionSaveData GetSaveData() { /* ... */ }

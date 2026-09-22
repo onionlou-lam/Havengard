@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Havengard.Core.Heroes;
+using Havengard.Items;
 
 namespace Havengard.Expeditions
 {
@@ -25,11 +26,16 @@ namespace Havengard.Expeditions
         /// </summary>
         public float successChance;
 
-        // Future reward fields
+        // Reward fields
         public int goldReward;
         public int celestiumReward;
         public int experienceReward;
-        // public List<Item> itemRewards;
+
+        /// <summary>
+        /// Bonus items rolled from participating heroes' bonus item chance modifiers.
+        /// Populated by ExpeditionManager.ProcessRewards on success.
+        /// </summary>
+        public List<ItemData> bonusItemRewards = new List<ItemData>();
         // public string specialOutcome;
 
         public ExpeditionResult(string expId, List<HeroInstance> heroes)

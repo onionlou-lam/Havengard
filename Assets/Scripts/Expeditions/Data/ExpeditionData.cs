@@ -1,4 +1,5 @@
 using UnityEngine;
+using Havengard.Items;
 
 namespace Havengard.Expeditions
 {
@@ -33,10 +34,18 @@ namespace Havengard.Expeditions
         public MissionType missionType = MissionType.Scouting;
         public bool isMainStoryMission = false;
 
-        [Header("Future Systems")]
-        [Tooltip("Base success chance (0-1). Not yet implemented.")]
+        [Header("Success Chance")]
+        [Tooltip("Base success chance (0-1) before follower expedition modifiers are applied.")]
         [Range(0f, 1f)]
         public float baseSuccessChance = 1f;
+
+        [Header("Rewards")]
+        public int baseGoldReward = 0;
+        public int baseCelestiumReward = 0;
+        public int baseExperienceReward = 0;
+
+        [Tooltip("Optional drop table used to roll bonus item rewards, granted based on participating followers' bonus item chance.")]
+        public ItemDropTable bonusItemDropTable;
 
         [Header("Availability")]
         public bool isAvailable = true;
@@ -44,6 +53,5 @@ namespace Havengard.Expeditions
 
         // Extension points for future systems
         // public ExpeditionEffect[] dungeonEffects;
-        // public ExpeditionReward[] baseRewards;
     }
 }

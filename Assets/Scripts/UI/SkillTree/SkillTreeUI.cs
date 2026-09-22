@@ -20,6 +20,9 @@ namespace Havengard.UI
 
         [Header("UI References")]
         [SerializeField] private GameObject skillTreePanel;
+        [Tooltip("The root Canvas (Screen Space - Camera) that SkillTreePanel lives under. " +
+                 "Must be enabled before the panel can render/receive input.")]
+        [SerializeField] private Canvas skillTreeCanvas;
         [SerializeField] private RectTransform leftPanel;
         [SerializeField] private RectTransform rightPanel;
 
@@ -931,6 +934,12 @@ namespace Havengard.UI
                 return;
             }
 
+            // The skill tree lives on its own root Canvas (Screen Space - Camera) so its
+            // particle effects render correctly. That canvas is disabled while closed, so
+            // it must be re-enabled here before the panel underneath it can render/accept input.
+            if (skillTreeCanvas != null)
+                skillTreeCanvas.enabled = true;
+
             skillTreePanel.SetActive(true);
             IsOpen = true;
             GameplayUIBlocker.Push();
@@ -1016,6 +1025,11 @@ namespace Havengard.UI
             IsOpen = false;
             GameplayUIBlocker.Pop();
 
+            // Disable the dedicated skill tree canvas now that the panel is closed,
+            // so its GraphicRaycaster/camera aren't active while hidden.
+            if (skillTreeCanvas != null)
+                skillTreeCanvas.enabled = false;
+
             // Gameplay uses mouse click-to-move/aim, so keep the cursor visible and unlocked.
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
@@ -1062,6 +1076,7 @@ namespace Havengard.UI
                             UpdatePlayerInfo();
                             OnNodeClicked(lastClickedAbilityIndex, lastClickedNode);
                             
+
                             PlaySound(unlockSound);
                         }
                     }
@@ -1148,7 +1163,7 @@ namespace Havengard.UI
                 return false;
             }
 
-            // Try to get PlayerClass(s) from HeroInstance
+            // Try to get PlayerClass(es) from HeroInstance
             var heroClass = foundHero.Class;
             if (heroClass == null)
             {

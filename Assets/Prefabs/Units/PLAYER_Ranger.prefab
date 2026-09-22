@@ -25,6 +25,7 @@ GameObject:
   - component: {fileID: 4768207578363287935}
   - component: {fileID: 1125430330778778478}
   - component: {fileID: 8040730124106577246}
+  - component: {fileID: -435738133009784118}
   m_Layer: 6
   m_Name: PLAYER_Ranger
   m_TagString: Player
@@ -418,3 +419,15 @@ MonoBehaviour:
   showStatusKey: 274
   expToGrant: 100
   abilityIndexToUnlock: 0
+--- !u!114 &-435738133009784118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6047541241966609476}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23b7c13a4cb8b024e95d67b086f14b59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

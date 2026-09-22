@@ -12,6 +12,7 @@ namespace Havengard.UI
         [Header("Canvas References")]
         [SerializeField] private Canvas hudCanvas;
         [SerializeField] private Canvas menusCanvas;
+        [SerializeField] private Canvas skillTreeCanvas;
         [SerializeField] private Canvas preWaveCanvas;
         [SerializeField] private Canvas tooltipsCanvas;
 
@@ -47,6 +48,11 @@ namespace Havengard.UI
             if (menusCanvas != null)
                 menusCanvas.enabled = true;
 
+            // Skill tree canvas is its own root (Screen Space - Camera) so particle
+            // effects render correctly; only enabled while the skill tree is open
+            if (skillTreeCanvas != null)
+                skillTreeCanvas.enabled = false;
+
             // Pre-wave starts hidden
             if (preWaveCanvas != null)
                 preWaveCanvas.enabled = true;
@@ -62,6 +68,8 @@ namespace Havengard.UI
                 inventoryPanel.SetActive(false);
             if (itemCachePanel != null)
                 itemCachePanel.SetActive(false);
+            if (skillTreePanel != null)
+                skillTreePanel.SetActive(false);
         }
 
         #region HUD Control
@@ -129,6 +137,10 @@ namespace Havengard.UI
         public void ShowSkillTree()
         {
             HideAllMenuPanels();
+
+            if (skillTreeCanvas != null)
+                skillTreeCanvas.enabled = true;
+
             if (skillTreePanel != null)
                 skillTreePanel.SetActive(true);
 
@@ -142,6 +154,9 @@ namespace Havengard.UI
         {
             if (skillTreePanel != null)
                 skillTreePanel.SetActive(false);
+
+            if (skillTreeCanvas != null)
+                skillTreeCanvas.enabled = false;
 
             if (autoHideHUDWhenMenusOpen && !IsAnyMenuOpen())
                 ShowHUD();
@@ -178,6 +193,8 @@ namespace Havengard.UI
                 itemCachePanel.SetActive(false);
             if (skillTreePanel != null)
                 skillTreePanel.SetActive(false);
+            if (skillTreeCanvas != null)
+                skillTreeCanvas.enabled = false;
         }
 
         private bool IsAnyMenuOpen()
