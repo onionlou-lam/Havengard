@@ -35,6 +35,14 @@ public abstract class AbilityBase : ScriptableObject
     public float baseDamage = 10f;
     public float damagePerLevel = 5f;
 
+    [Header("Basic Attack Scaling")]
+    [Tooltip("If true, this ability's damage is based on the character's assigned Basic Attack instead of (or in addition to) baseDamage. Useful for abilities like 'Aimed Shot' or 'Power Strike' that are meant to hit harder versions of the basic attack.")]
+    public bool scalesWithBasicAttack = false;
+    [Tooltip("Percentage of the basic attack's calculated damage to use (1.5 = 150%)")]
+    public float basicAttackDamagePercent = 1f;
+    [Tooltip("Flat bonus damage added on top of the basic-attack-scaled damage")]
+    public float basicAttackFlatBonus = 0f;
+
     [Header("Lifesteal")]
     [Range(0f, 1f)]
     public float lifestealPercent = 0f;
@@ -91,7 +99,32 @@ public abstract class AbilityBase : ScriptableObject
     {
         if (level < 0) level = currentLevel;
 
-        float damage = baseDamage + (damagePerLevel * (level - 1));
+        float damage;
+
+        if (scalesWithBasicAttack && caster != null)
+        {
+            // Base off the character's assigned basic attack instead of this ability's
+            // own baseDamage. This lets abilities like "Aimed Shot" or "Power Strike"
+            // automatically track whatever basic attack the hero/unit has equipped,
+            // including all of its own modifiers (investment, stats, sub-skills).
+            var abilityUser = caster.GetComponent<Havengard.Abilities.AbilityUser>();
+            var basicAttack = abilityUser != null ? abilityUser.BasicAttack : null;
+
+            if (basicAttack != null)
+            {
+                float basicAttackDamage = basicAttack.CalculateDamage(caster, level: -1, isCrit: false);
+                damage = (basicAttackDamage * basicAttackDamagePercent) + basicAttackFlatBonus;
+            }
+            else
+            {
+                // Fallback if no basic attack is assigned - behave as a normal ability
+                damage = baseDamage + (damagePerLevel * (level - 1));
+            }
+        }
+        else
+        {
+            damage = baseDamage + (damagePerLevel * (level - 1));
+        }
 
         // ✅ Apply investment bonuses
         float investmentBonus = investment.GetTotalModifier(StatModifier.StatType.Damage);

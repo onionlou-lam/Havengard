@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42ecad6873358a842a25f2285a545116, type: 3}
+  m_Name: RewardIconLibrary_Default
+  m_EditorClassIdentifier: 
+  goldIcon: {fileID: 21300000, guid: 771792c383e4a3440b758b63b92115d1, type: 3}
+  celestiumIcon: {fileID: 21300000, guid: 1584e86fb77c85c40be7f18ad506f1cb, type: 3}
+  experienceIcon: {fileID: 21300000, guid: b9456e868b8ab3544a70f14f8f4f34e1, type: 3}
+  successIcon: {fileID: 21300000, guid: 0ec29d24b9fe3bc4a9ba85e597cb5244, type: 3}
+  failureIcon: {fileID: 21300000, guid: ecf2d835a6771984eb8c6c24bca52e45, type: 3}

@@ -177,8 +177,8 @@ MonoBehaviour:
   useChannelingAudio: 1
   castSoundVolume: 1.5
   impactSoundVolume: 2.5
-  unlockedAbilities: 
-  subSkillSelections: []
+  enableHoldToCast: 1
+  basicAttack: {fileID: 11400000, guid: ce35fedf772d92c4598e16c324bb8c32, type: 2}
 --- !u!114 &4888844785730104419
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -261,8 +261,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxResource: 1000
   currentResource: 1000
-  regenRate: 5
-  regenDelay: 2
+  useStatsForRegen: 1
+  baseRegenRate: 5
+  baseRegenDelay: 2
 --- !u!114 &6290319201570917251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -277,13 +278,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseStats:
     MaxHP: 0
+    MaxResource: 0
     Attack: 0
     Defense: 0
     AttackSpeed: 0
-    MoveSpeed: 0
     CritChance: 0
     CritMultiplier: 0
-    MaxResource: 0
+    MoveSpeed: 0
+    HealthRegenRate: 0
+    ResourceRegenRate: 5
+    HealthRegenDelay: 5
+    ResourceRegenDelay: 2
+    CooldownReduction: 0
+    DamageMultiplier: 0
+    Lifesteal: 0
+    ResourceGenerationPercent: 0
+    FlatResourceGeneration: 0
 --- !u!212 &4029986724057280305
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -336,7 +346,7 @@ SpriteRenderer:
   m_Size: {x: 0.32, y: 0.32}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!95 &7685380127094653509

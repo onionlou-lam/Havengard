@@ -16,6 +16,7 @@ namespace Havengard.Expeditions.UI
         [SerializeField] private Canvas expeditionMapCanvas;
         [SerializeField] private GameObject mapPanel;
         [SerializeField] private ExpeditionSetupPanel setupPanel;
+        [SerializeField] private ExpeditionResultPanel resultPanel;
         [SerializeField] private FollowerListUI followerListUI;
 
         [Header("HUD Display")]
@@ -138,6 +139,9 @@ namespace Havengard.Expeditions.UI
             if (setupPanel != null)
                 setupPanel.ClosePanel();
 
+            if (resultPanel != null)
+                resultPanel.ClosePanel();
+
             // Resume game
             // Time.timeScale = 1f;
         }
@@ -157,13 +161,39 @@ namespace Havengard.Expeditions.UI
         }
 
         /// <summary>
-        /// Opens the expedition setup panel for a specific dungeon
+        /// Opens the appropriate panel for a specific dungeon in a single click:
+        /// - If the expedition has completed and its result hasn't been viewed yet,
+        ///   opens the reward/result panel.
+        /// - Otherwise opens the expedition setup panel.
         /// </summary>
         public void OpenExpeditionSetup(ExpeditionData data)
         {
+            if (data == null) return;
+
+            var pendingResult = ExpeditionManager.Instance != null
+                ? ExpeditionManager.Instance.GetPendingResult(data)
+                : null;
+
+            if (pendingResult != null)
+            {
+                OpenExpeditionResult(pendingResult);
+                return;
+            }
+
             if (setupPanel != null)
             {
                 setupPanel.OpenPanel(data);
+            }
+        }
+
+        /// <summary>
+        /// Opens the reward/result panel for a completed expedition.
+        /// </summary>
+        public void OpenExpeditionResult(ExpeditionInstance expedition)
+        {
+            if (resultPanel != null)
+            {
+                resultPanel.ShowResult(expedition);
             }
         }
 

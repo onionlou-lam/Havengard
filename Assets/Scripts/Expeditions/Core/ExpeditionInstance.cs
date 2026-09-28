@@ -20,6 +20,19 @@ namespace Havengard.Expeditions
         public ExpeditionStatus status;
         public bool isMainStoryMission;
 
+        /// <summary>
+        /// The result of this expedition once completed. Null while still active.
+        /// Kept here (rather than only passed via event) so a completed-but-unviewed
+        /// result can still be shown to the player later (e.g. next time they open the map).
+        /// </summary>
+        public ExpeditionResult pendingResult;
+
+        /// <summary>
+        /// True once the player has viewed the ExpeditionResultPanel for this completed expedition.
+        /// Used to drive the "unclaimed reward" glow/indicator on the dungeon icon.
+        /// </summary>
+        public bool resultViewed;
+
         public ExpeditionInstance(ExpeditionData data, List<HeroInstance> followers, int currentWave)
         {
             expeditionId = data.id;
@@ -63,6 +76,15 @@ namespace Havengard.Expeditions
         {
             if (durationInDays <= 0) return 1f;
             return Mathf.Clamp01((float)daysElapsed / durationInDays);
+        }
+
+        /// <summary>
+        /// True when this expedition has completed and the player has not yet
+        /// viewed the reward/result popup for it.
+        /// </summary>
+        public bool HasUnviewedResult()
+        {
+            return status == ExpeditionStatus.Completed && pendingResult != null && !resultViewed;
         }
     }
 }

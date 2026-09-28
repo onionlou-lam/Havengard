@@ -330,10 +330,7 @@ public class PlayerController2D : MonoBehaviour
         // Mouse Button 1 (MB1/Left Click) - ability targeting/casting at slot 0
         if (Input.GetMouseButtonDown(0))
         {
-            if (IsSkillAssignedToSlot(0))
-            {
-                abilityUser.UseAbility(0, mouseWorldPos, null, false);
-            }
+            abilityUser.TryUseBasicAttack(mouseWorldPos);
         }
 
         // Hold MB1 for hold-to-cast

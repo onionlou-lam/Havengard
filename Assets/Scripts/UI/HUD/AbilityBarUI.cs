@@ -166,10 +166,11 @@ namespace Havengard.UI
             // Reassign the list back to AbilityUser
             abilityUser.AssignAbilities(currentAbilities);
 
-            // Update the UI slot
+            // Update the UI slot - falls back to basic attack icon if this is the
+            // primary slot and it was just cleared (ability == null)
             if (slots[slotIndex] != null)
             {
-                slots[slotIndex].SetAbility(ability);
+                slots[slotIndex].SetAbility(ResolveDisplayAbility(targetIndex, ability));
             }
 
             Debug.Log($"[AbilityBarUI] Assigned {ability?.abilityName ?? "NULL"} to slot {slotIndex} -> abilityIndex {targetIndex}");
@@ -214,11 +215,12 @@ namespace Havengard.UI
             // Reassign to AbilityUser
             abilityUser.AssignAbilities(currentAbilities);
 
-            // Update UI
+            // Update UI - either slot may need to fall back to the basic attack icon
+            // if it is the primary slot and just became empty
             if (slots[slotIndexA] != null)
-                slots[slotIndexA].SetAbility(abilityB);
+                slots[slotIndexA].SetAbility(ResolveDisplayAbility(indexA, abilityB));
             if (slots[slotIndexB] != null)
-                slots[slotIndexB].SetAbility(abilityA);
+                slots[slotIndexB].SetAbility(ResolveDisplayAbility(indexB, abilityA));
 
             Debug.Log($"[AbilityBarUI] Swapped slot {slotIndexA} with slot {slotIndexB}");
         }
@@ -237,17 +239,31 @@ namespace Havengard.UI
                 if (slots[i] != null)
                 {
                     int abilityUserIndex = MapSlotToAbilityUserIndex(i);
-                    if (abilityUserIndex >= 0 && abilityUserIndex < currentAbilities.Count)
-                    {
-                        AbilityBase ability = currentAbilities[abilityUserIndex];
-                        slots[i].SetAbility(ability);
-                    }
-                    else
-                    {
-                        slots[i].SetAbility(null);
-                    }
+                    AbilityBase ability = (abilityUserIndex >= 0 && abilityUserIndex < currentAbilities.Count)
+                        ? currentAbilities[abilityUserIndex]
+                        : null;
+
+                    slots[i].SetAbility(ResolveDisplayAbility(abilityUserIndex, ability));
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves what ability should actually be displayed for a given AbilityUser index.
+        /// The primary (LMB) slot falls back to the assigned BasicAttackAbility whenever no
+        /// override ability occupies that index - this is what makes the basic attack icon
+        /// show by default and automatically "revert" when a dragged-in ability is moved
+        /// to a different slot.
+        /// </summary>
+        private AbilityBase ResolveDisplayAbility(int abilityUserIndex, AbilityBase assignedAbility)
+        {
+            if (assignedAbility != null)
+                return assignedAbility;
+
+            if (abilityUser != null && abilityUserIndex == abilityUser.PrimarySlotIndex)
+                return abilityUser.BasicAttack;
+
+            return null;
         }
 
         /// <summary>

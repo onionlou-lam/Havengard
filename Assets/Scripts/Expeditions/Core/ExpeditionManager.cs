@@ -305,7 +305,10 @@ namespace Havengard.Expeditions
         }
 
         /// <summary>
-        /// Completes an expedition and processes results
+        /// Completes an expedition and processes results.
+        /// The expedition instance is kept in the active list (with status Completed)
+        /// until the player views/acknowledges the result via AcknowledgeExpeditionResult,
+        /// so the dungeon icon can present the reward on the very next click.
         /// </summary>
         private void CompleteExpedition(ExpeditionInstance expedition)
         {
@@ -328,6 +331,14 @@ namespace Havengard.Expeditions
             Debug.Log($"[ExpeditionManager] Result: {(result.success ? "SUCCESS" : "FAILURE")} " +
                       $"(rolled {result.rolledValue:F2} vs chance {result.successChance:F2})");
 
+            // Process rewards (only meaningful on success by default) before exposing the result,
+            // so the pending result already reflects granted rewards when the UI reads it.
+            ProcessRewards(result, expedition);
+
+            // Store the result on the instance so it can be revealed on the player's next click
+            expedition.pendingResult = result;
+            expedition.resultViewed = false;
+
             // Trigger events
             OnExpeditionCompleted?.Invoke(expedition, result);
 
@@ -337,11 +348,9 @@ namespace Havengard.Expeditions
                 OnMainStoryExpeditionCompleted?.Invoke(expedition);
             }
 
-            // Remove from active list
-            activeExpeditions.Remove(expedition);
-
-            // Process rewards (only meaningful on success by default)
-            ProcessRewards(result, expedition);
+            // Note: the expedition instance is intentionally NOT removed from activeExpeditions here.
+            // It stays around (status == Completed) until AcknowledgeExpeditionResult is called,
+            // which is when it's actually removed from the list.
         }
 
         /// <summary>
@@ -391,6 +400,37 @@ namespace Havengard.Expeditions
             return activeExpeditions.FirstOrDefault(exp =>
                 exp.status == ExpeditionStatus.Active &&
                 exp.assignedFollowers.Contains(hero));
+        }
+
+        /// <summary>
+        /// Gets the completed-but-unviewed expedition instance for a given dungeon, if any.
+        /// Used by the UI to route a single click to the reward/result popup instead of setup.
+        /// </summary>
+        public ExpeditionInstance GetPendingResult(ExpeditionData data)
+        {
+            if (data == null) return null;
+
+            return activeExpeditions.FirstOrDefault(exp =>
+                exp.expeditionData == data && exp.HasUnviewedResult());
+        }
+
+        /// <summary>
+        /// Marks the given completed expedition's result as viewed and removes it
+        /// from the active expedition list. Call this once the reward popup has been shown
+        /// (or dismissed) to the player.
+        /// </summary>
+        public void AcknowledgeExpeditionResult(ExpeditionInstance expedition)
+        {
+            if (expedition == null) return;
+
+            expedition.resultViewed = true;
+
+            if (expedition.status == ExpeditionStatus.Completed)
+            {
+                activeExpeditions.Remove(expedition);
+            }
+
+            OnExpeditionsUpdated?.Invoke();
         }
 
         /// <summary>

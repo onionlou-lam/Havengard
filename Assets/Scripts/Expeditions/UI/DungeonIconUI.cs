@@ -20,6 +20,13 @@ namespace Havengard.Expeditions.UI
         [SerializeField] private Image progressFill;
         [SerializeField] private TextMeshProUGUI progressText;
 
+        [Header("Pending Reward Indicator")]
+        [Tooltip("Shown when this dungeon has a completed expedition with an unviewed reward, prompting the player to click and claim it.")]
+        [SerializeField] private GameObject pendingRewardBadge;
+        [Tooltip("Optional pulsing scale animation applied to the pending reward badge to draw attention.")]
+        [SerializeField] private float badgePulseSpeed = 3f;
+        [SerializeField] private float badgePulseScale = 0.15f;
+
         [Header("Follower Activity Animation")]
         [Tooltip("Optional - plays a small follower activity animation (e.g. attacking, scouting) while an expedition is active here.")]
         [SerializeField] private DungeonMissionAnimationUI missionAnimation;
@@ -29,7 +36,9 @@ namespace Havengard.Expeditions.UI
         [SerializeField] private float hoverScale = 1.1f;
 
         private Vector3 originalScale;
+        private Vector3 badgeOriginalScale;
         private ExpeditionInstance activeExpedition;
+        private ExpeditionInstance pendingResultExpedition;
         private bool wasActiveLastUpdate;
 
         private void Start()
@@ -41,6 +50,12 @@ namespace Havengard.Expeditions.UI
 
             if (activeIndicator != null)
                 activeIndicator.SetActive(false);
+
+            if (pendingRewardBadge != null)
+            {
+                badgeOriginalScale = pendingRewardBadge.transform.localScale;
+                pendingRewardBadge.SetActive(false);
+            }
 
             if (missionAnimation != null)
                 missionAnimation.StopAnimation();
@@ -69,6 +84,13 @@ namespace Havengard.Expeditions.UI
             {
                 UpdateProgress();
             }
+
+            // Pulse the pending reward badge to draw the player's attention
+            if (pendingRewardBadge != null && pendingRewardBadge.activeSelf)
+            {
+                float pulse = ExpeditionDisplayUtility.GetBadgePulseScale(badgePulseSpeed, badgePulseScale);
+                pendingRewardBadge.transform.localScale = badgeOriginalScale * pulse;
+            }
         }
 
         /// <summary>
@@ -83,10 +105,16 @@ namespace Havengard.Expeditions.UI
             activeExpedition = ExpeditionManager.Instance.ActiveExpeditions
                 .FirstOrDefault(exp => exp.expeditionData == expeditionData && exp.status == ExpeditionStatus.Active);
 
+            pendingResultExpedition = ExpeditionManager.Instance.GetPendingResult(expeditionData);
+
             bool hasActiveExpedition = activeExpedition != null;
+            bool hasPendingReward = pendingResultExpedition != null;
 
             if (activeIndicator != null)
                 activeIndicator.SetActive(hasActiveExpedition);
+
+            if (pendingRewardBadge != null)
+                pendingRewardBadge.SetActive(hasPendingReward);
 
             if (hasActiveExpedition)
             {
@@ -135,7 +163,7 @@ namespace Havengard.Expeditions.UI
 
             if (progressText != null)
             {
-                progressText.text = $"Day {activeExpedition.daysElapsed}/{activeExpedition.durationInDays}";
+                progressText.text = ExpeditionDisplayUtility.GetProgressLabel(activeExpedition);
             }
         }
 
@@ -144,6 +172,18 @@ namespace Havengard.Expeditions.UI
             if (expeditionData == null)
             {
                 Debug.LogWarning("[DungeonIconUI] No expedition data assigned");
+                return;
+            }
+
+            // A completed-but-unviewed reward always takes priority - single click reveals it
+            if (pendingResultExpedition != null)
+            {
+                Debug.Log($"[DungeonIconUI] Claiming reward for: {expeditionData.displayName}");
+
+                if (ExpeditionMapController.Instance != null)
+                {
+                    ExpeditionMapController.Instance.OpenExpeditionResult(pendingResultExpedition);
+                }
                 return;
             }
 

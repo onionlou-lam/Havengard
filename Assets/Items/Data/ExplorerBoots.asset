@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93c1dd49bfb908441981c5b9f42798c4, type: 3}
+  m_Name: ExplorerBoots
+  m_EditorClassIdentifier: 
+  itemName: Explorer Boots
+  description: Reduces the time taken to complete an expedition mission by 1 day.
+  icon: {fileID: 21300000, guid: f83d5ee3d307fdf419eb0be2ca1b06ee, type: 3}
+  rarity: 1
+  itemType: 0
+  maxLevel: 1
+  autoStackOnPickup: 0
+  disenchantValue: 30
+  dropWeight: 1
+  effects:
+  - {fileID: 11400000, guid: 6947730cf237f7240821eeb5f156f75d, type: 2}
+  pickupSprite: {fileID: 21300000, guid: 3483086c70d83d64d8303ad0b0c0021a, type: 3}
+  rarityColor: {r: 0.29411766, g: 0.5882353, b: 1, a: 1}
+  pickupVFX: {fileID: 0}
+  pickupSFX: {fileID: 8300000, guid: 3737adb7336b00445b866c58fd642b2b, type: 3}

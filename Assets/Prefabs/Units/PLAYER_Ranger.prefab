@@ -179,6 +179,7 @@ MonoBehaviour:
   castSoundVolume: 1.5
   impactSoundVolume: 2.5
   enableHoldToCast: 1
+  basicAttack: {fileID: 11400000, guid: b6bdfc59677116a4aa7901a74a34c84f, type: 2}
 --- !u!114 &6181586183396007713
 MonoBehaviour:
   m_ObjectHideFlags: 0

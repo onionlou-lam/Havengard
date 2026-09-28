@@ -17,7 +17,7 @@ MonoBehaviour:
   description: ' A dangerous cave system filled with hostile creatures. Only experienced
     heroes should attempt this raid.'
   mapIcon: {fileID: 285084830, guid: df61cdb40606f1e4ab256d9ce0466b4f, type: 3}
-  previewImage: {fileID: 0}
+  previewImage: {fileID: 285084830, guid: df61cdb40606f1e4ab256d9ce0466b4f, type: 3}
   recommendedLevel: 3
   hasRequiredLevel: 1
   requiredLevel: 1
@@ -27,5 +27,9 @@ MonoBehaviour:
   missionType: 1
   isMainStoryMission: 0
   baseSuccessChance: 1
+  baseGoldReward: 100
+  baseCelestiumReward: 50
+  baseExperienceReward: 100
+  bonusItemDropTable: {fileID: 11400000, guid: 51c9e5393f3b75b489415e26e724cddd, type: 2}
   isAvailable: 1
   isUnlocked: 1

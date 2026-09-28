@@ -25,6 +25,20 @@ namespace Havengard.Expeditions.UI
         [SerializeField] private TextMeshProUGUI missionTypeText;
         [SerializeField] private Image previewImage;
 
+        [Header("Potential Rewards")]
+        [Tooltip("Icon/value lookup for gold, celestium and experience rewards.")]
+        [SerializeField] private RewardIconLibrary iconLibrary;
+        [SerializeField] private GameObject goldRewardRoot;
+        [SerializeField] private Image goldIconImage;
+        [SerializeField] private TextMeshProUGUI goldValueText;
+        [SerializeField] private GameObject celestiumRewardRoot;
+        [SerializeField] private Image celestiumIconImage;
+        [SerializeField] private TextMeshProUGUI celestiumValueText;
+        [SerializeField] private GameObject experienceRewardRoot;
+        [SerializeField] private Image experienceIconImage;
+        [SerializeField] private TextMeshProUGUI experienceValueText;
+        [SerializeField] private TextMeshProUGUI successChanceText;
+
         [Header("Party Info")]
         [SerializeField] private TextMeshProUGUI selectedFollowersText;
         [SerializeField] private Transform followerPortraitContainer;
@@ -67,6 +81,7 @@ namespace Havengard.Expeditions.UI
                 panelRoot.SetActive(true);
 
             UpdateDungeonInfo();
+            UpdateRewardDisplay();
             UpdatePartyInfo();
             UpdateStartButton();
 
@@ -176,6 +191,45 @@ namespace Havengard.Expeditions.UI
 
             if (previewImage != null && currentExpedition.previewImage != null)
                 previewImage.sprite = currentExpedition.previewImage;
+        }
+
+        /// <summary>
+        /// Updates the potential reward display (gold/celestium/EXP values and icons,
+        /// plus the base success chance before follower modifiers are applied).
+        /// </summary>
+        private void UpdateRewardDisplay()
+        {
+            if (currentExpedition == null) return;
+
+            bool hasGold = currentExpedition.baseGoldReward > 0;
+            if (goldRewardRoot != null) goldRewardRoot.SetActive(hasGold);
+            if (hasGold)
+            {
+                if (goldValueText != null) goldValueText.text = currentExpedition.baseGoldReward.ToString();
+                if (goldIconImage != null && iconLibrary != null && iconLibrary.goldIcon != null)
+                    goldIconImage.sprite = iconLibrary.goldIcon;
+            }
+
+            bool hasCelestium = currentExpedition.baseCelestiumReward > 0;
+            if (celestiumRewardRoot != null) celestiumRewardRoot.SetActive(hasCelestium);
+            if (hasCelestium)
+            {
+                if (celestiumValueText != null) celestiumValueText.text = currentExpedition.baseCelestiumReward.ToString();
+                if (celestiumIconImage != null && iconLibrary != null && iconLibrary.celestiumIcon != null)
+                    celestiumIconImage.sprite = iconLibrary.celestiumIcon;
+            }
+
+            bool hasExperience = currentExpedition.baseExperienceReward > 0;
+            if (experienceRewardRoot != null) experienceRewardRoot.SetActive(hasExperience);
+            if (hasExperience)
+            {
+                if (experienceValueText != null) experienceValueText.text = $"{currentExpedition.baseExperienceReward} EXP";
+                if (experienceIconImage != null && iconLibrary != null && iconLibrary.experienceIcon != null)
+                    experienceIconImage.sprite = iconLibrary.experienceIcon;
+            }
+
+            if (successChanceText != null)
+                successChanceText.text = $"Base Success Chance: {Mathf.RoundToInt(currentExpedition.baseSuccessChance * 100f)}%";
         }
 
         /// <summary>

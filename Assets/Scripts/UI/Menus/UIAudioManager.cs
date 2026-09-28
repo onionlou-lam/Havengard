@@ -16,6 +16,8 @@ namespace Havengard.Audio
         [SerializeField] private AudioClip panelCloseSound;
         [SerializeField] private AudioClip errorSound;
         [SerializeField] private AudioClip successSound;
+        [SerializeField] private AudioClip failureSound;
+        [SerializeField] private AudioClip rewardChimeSound;
 
         [Header("Settings")]
         [SerializeField] private AudioSource audioSource;
@@ -88,6 +90,22 @@ namespace Havengard.Audio
         public void PlaySuccess()
         {
             PlaySound(successSound);
+        }
+
+        /// <summary>
+        /// Play failure/sad sound (e.g. expedition failed)
+        /// </summary>
+        public void PlayFailure()
+        {
+            PlaySound(failureSound);
+        }
+
+        /// <summary>
+        /// Play a rewarding chime, e.g. per reward item revealed in a results panel
+        /// </summary>
+        public void PlayRewardChime()
+        {
+            PlaySound(rewardChimeSound);
         }
 
         /// <summary>

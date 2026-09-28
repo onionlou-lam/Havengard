@@ -78,6 +78,24 @@ namespace Havengard.Abilities
         private bool[] isHoldingAbility;
         private float[] lastHoldCastTime;
 
+        [Header("Basic Attack (Always Bound to Primary Mouse Button)")]
+        [SerializeField] private BasicAttackAbility basicAttack;
+        [Tooltip("AbilityUser index that can override the basic attack when an ability is dragged onto the primary (LMB) slot")]
+        [SerializeField] private int primarySlotIndex = 4;
+        private float nextBasicAttackReadyTime;
+
+        public BasicAttackAbility BasicAttack => basicAttack;
+        public int PrimarySlotIndex => primarySlotIndex;
+
+        /// <summary>
+        /// Returns the ability currently overriding the primary (LMB) slot, or null if
+        /// no override is assigned - in which case the basic attack is used by default.
+        /// </summary>
+        public AbilityBase GetPrimarySlotOverride()
+        {
+            return GetAbility(primarySlotIndex);
+        }
+
         #region Sub-Skill Management
 
         /// <summary>
@@ -934,6 +952,33 @@ namespace Havengard.Abilities
         {
             if (isHoldingAbility == null || index < 0 || index >= isHoldingAbility.Length) return;
             isHoldingAbility[index] = false;
+        }
+
+        public bool TryUseBasicAttack(Vector3 targetPosition, GameObject explicitTarget = null)
+        {
+            // If the player has dragged a real ability onto the primary (LMB) slot,
+            // that ability takes priority over the basic attack. If it's later moved
+            // to a different slot, this index becomes null again and we fall back
+            // to the basic attack automatically - no extra bookkeeping needed.
+            AbilityBase overrideAbility = GetPrimarySlotOverride();
+            if (overrideAbility != null)
+            {
+                return UseAbility(primarySlotIndex, targetPosition, explicitTarget, false);
+            }
+
+            if (basicAttack == null) return false;
+            if (Time.time < nextBasicAttackReadyTime) return false;
+
+            // Reuses the same effective-cooldown pipeline (attack speed, CDR, sub-skills)
+            float cooldown = basicAttack.GetEffectiveCooldown(gameObject);
+            nextBasicAttackReadyTime = Time.time + cooldown;
+
+            // Delegate to Activate so hit-detection, VFX/SFX, and projectile firing
+            // (melee or ranged) all run exactly as configured on the ability asset.
+            basicAttack.Activate(this, targetPosition, explicitTarget);
+
+            OnAbilityUsed?.Invoke(-1, basicAttack); // -1 = basic attack, not a numbered slot
+            return true;
         }
     }
 }
