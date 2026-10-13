@@ -34,6 +34,11 @@ namespace Havengard.Expeditions.UI
             }
         }
 
+        private void OnEnable()
+        {
+            RefreshFollowerList();
+        }
+
         /// <summary>
         /// Refreshes the follower list from ExpeditionManager
         /// </summary>

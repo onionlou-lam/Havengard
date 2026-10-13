@@ -11,6 +11,7 @@ using Havengard.Waves;
 using Havengard.Items;
 using Havengard.Core.Heroes;
 using Havengard.Core.HealthManagement;
+using Havengard.Expeditions;
 using UnityEngine.SceneManagement;
 using UnityEngine.AI;
 
@@ -66,6 +67,7 @@ namespace Havengard.DebugTools
         private UnitSpawner unitSpawner;
         private HeroInstance playerHero;
         private AbilityUser playerAbilityUser;
+        private ExpeditionManager expeditionManager;
         private bool infiniteManaEnabled;
         private bool damageNumbersEnabled = true;
 
@@ -274,7 +276,15 @@ namespace Havengard.DebugTools
                 unitSpawner = spawnerObj.AddComponent<UnitSpawner>();
             }
 
-            Debug.Log($"[HavengardDebugMenu] References cached - Gold: {goldSystem != null}, Celestium: {celestiumSystem != null}, Player: {playerHero != null}");
+            // Expedition manager (singleton, usually persistent via DontDestroyOnLoad)
+            if (expeditionManager == null)
+            {
+                expeditionManager = ExpeditionManager.Instance;
+                if (expeditionManager == null)
+                    expeditionManager = FindFirstObjectByType<ExpeditionManager>();
+            }
+
+            Debug.Log($"[HavengardDebugMenu] References cached - Gold: {goldSystem != null}, Celestium: {celestiumSystem != null}, Player: {playerHero != null}, Expeditions: {expeditionManager != null}");
         }
 
         private void ToggleMenu()
@@ -539,6 +549,28 @@ namespace Havengard.DebugTools
             {
                 Debug.LogWarning("[DebugMenu] WaveManager not found!");
             }
+        }
+
+        /// <summary>
+        /// Force-completes every currently active expedition immediately,
+        /// bypassing their remaining day/wave count. Uses ExpeditionManager's
+        /// normal completion pipeline so rewards, follower return, and events
+        /// all behave exactly as if the expedition finished naturally.
+        /// </summary>
+        public void CompleteAllExpeditions()
+        {
+            Debug.Log("[DebugMenu] CompleteAllExpeditions() called!");
+
+            if (expeditionManager == null) CacheReferences();
+
+            if (expeditionManager == null)
+            {
+                Debug.LogWarning("[DebugMenu] ExpeditionManager not found!");
+                return;
+            }
+
+            expeditionManager.ForceCompleteAllActiveExpeditions();
+            Debug.Log("[DebugMenu] All active expeditions force-completed.");
         }
 
         #endregion

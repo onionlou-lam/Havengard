@@ -46,9 +46,21 @@ public class HealthBarSpawner : MonoBehaviour
         spawnedBar.Init(health, offset);
     }
 
+    private void OnDisable()
+    {
+        if (spawnedBar != null)
+        {
+            Destroy(spawnedBar.gameObject);
+            spawnedBar = null;
+        }
+    }
+
     private void OnDestroy()
     {
         if (spawnedBar != null)
+        {
             Destroy(spawnedBar.gameObject);
+            spawnedBar = null;
+        }
     }
 }

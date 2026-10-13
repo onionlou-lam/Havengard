@@ -18,6 +18,7 @@ namespace Havengard.Audio
         [SerializeField] private AudioClip successSound;
         [SerializeField] private AudioClip failureSound;
         [SerializeField] private AudioClip rewardChimeSound;
+        [SerializeField] private AudioClip expeditionStartSound;
 
         [Header("Settings")]
         [SerializeField] private AudioSource audioSource;
@@ -106,6 +107,14 @@ namespace Havengard.Audio
         public void PlayRewardChime()
         {
             PlaySound(rewardChimeSound);
+        }
+
+        /// <summary>
+        /// One-shot played when the player starts an expedition
+        /// </summary>
+        public void PlayExpeditionStart()
+        {
+            PlaySound(expeditionStartSound);
         }
 
         /// <summary>

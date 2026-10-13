@@ -305,6 +305,36 @@ namespace Havengard.Expeditions
         }
 
         /// <summary>
+        /// DEBUG/DEV ONLY: Immediately completes all currently active expeditions,
+        /// regardless of how many days remain. Reuses the normal completion pipeline
+        /// (success roll, rewards, follower return, events) so behaviour matches a
+        /// natural completion via wave progression.
+        /// </summary>
+        public void ForceCompleteAllActiveExpeditions()
+        {
+            var toComplete = activeExpeditions
+                .Where(exp => exp.status == ExpeditionStatus.Active)
+                .ToList();
+
+            if (toComplete.Count == 0)
+            {
+                Debug.Log("[ExpeditionManager] ForceCompleteAllActiveExpeditions: No active expeditions to complete.");
+                return;
+            }
+
+            Debug.Log($"[ExpeditionManager] ForceCompleteAllActiveExpeditions: Force-completing {toComplete.Count} expedition(s).");
+
+            foreach (var expedition in toComplete)
+            {
+                // Snap to full duration so IsComplete()/UI progress reads as 100%.
+                expedition.daysElapsed = expedition.durationInDays;
+                CompleteExpedition(expedition);
+            }
+
+            OnExpeditionsUpdated?.Invoke();
+        }
+
+        /// <summary>
         /// Completes an expedition and processes results.
         /// The expedition instance is kept in the active list (with status Completed)
         /// until the player views/acknowledges the result via AcknowledgeExpeditionResult,
@@ -495,7 +525,15 @@ namespace Havengard.Expeditions
             }
         }
 
-        //public ExpeditionSaveData GetSaveData() { /* ... */ }
-        //public void LoadSaveData(ExpeditionSaveData data) { /* ... */ }
+        /// <summary>
+        /// Gets the currently running (Active) expedition for a given dungeon, if any.
+        /// </summary>
+        public ExpeditionInstance GetActiveExpedition(ExpeditionData data)
+        {
+            if (data == null) return null;
+
+            return activeExpeditions.FirstOrDefault(exp =>
+                exp.expeditionData == data && exp.status == ExpeditionStatus.Active);
+        }
     }
 }

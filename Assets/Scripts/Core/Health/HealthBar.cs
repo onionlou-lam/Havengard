@@ -16,6 +16,15 @@ namespace Havengard.Core.HealthManagement
         private Health target;
         private bool subscribed;
 
+        private void Awake()
+        {
+            if (fillImage == null)
+            {
+                Debug.LogError($"HealthBar on {name} is missing its fillImage reference!", this);
+                gameObject.SetActive(false);
+            }
+        }
+
         public void Init(Health health, Vector3 worldOffset)
         {
             Unhook();
@@ -37,7 +46,11 @@ namespace Havengard.Core.HealthManagement
 
         private void LateUpdate()
         {
-            if (!target) return;
+            if (!target || !target.gameObject.activeInHierarchy)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
             transform.position = target.transform.position + offset;
             transform.rotation = Quaternion.identity;
         }

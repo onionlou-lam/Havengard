@@ -31,6 +31,11 @@ namespace Havengard.Expeditions.UI
             }
         }
 
+        private void OnEnable()
+        {
+            RefreshMissionList(); // in FollowerListUI use RefreshFollowerList();
+        }
+
         private void OnDestroy()
         {
             if (ExpeditionManager.Instance != null)

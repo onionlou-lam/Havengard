@@ -1,7 +1,8 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System.Collections.Generic;
+using Havengard.Audio;
 using Havengard.Core.Heroes;
 
 namespace Havengard.Expeditions.UI
@@ -49,8 +50,20 @@ namespace Havengard.Expeditions.UI
         [SerializeField] private Button closeButton;
         [SerializeField] private TextMeshProUGUI startButtonText;
 
+        [Header("In Progress Display")]
+        [Tooltip("Optional - shown only while an expedition is running at this dungeon.")]
+        [SerializeField] private GameObject inProgressRoot;
+        [SerializeField] private TextMeshProUGUI inProgressText;
+        [SerializeField] private Image inProgressFill;
+
+        [Header("In Progress Styling")]
+        [SerializeField] private Color inProgressTextColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+
+        private Color defaultStartTextColor = Color.white;
+
         private ExpeditionData currentExpedition;
         private List<HeroInstance> selectedFollowers = new List<HeroInstance>();
+        private ExpeditionInstance activeExpedition;
 
         private void Start()
         {
@@ -60,7 +73,27 @@ namespace Havengard.Expeditions.UI
             if (closeButton != null)
                 closeButton.onClick.AddListener(ClosePanel);
 
-            ClosePanel();
+            if (ExpeditionManager.Instance != null)
+                ExpeditionManager.Instance.OnExpeditionsUpdated += OnExpeditionsUpdated;
+
+            if (currentExpedition == null)
+                ClosePanel();
+        }
+
+        private void OnDestroy()
+        {
+            if (ExpeditionManager.Instance != null)
+                ExpeditionManager.Instance.OnExpeditionsUpdated -= OnExpeditionsUpdated;
+        }
+
+        private void OnExpeditionsUpdated()
+        {
+            if (!IsOpen || currentExpedition == null) return;
+
+            activeExpedition = ExpeditionManager.Instance.GetActiveExpedition(currentExpedition);
+            UpdateDungeonInfo();
+            UpdatePartyInfo();
+            UpdateStartButton();
         }
 
         /// <summary>
@@ -76,16 +109,21 @@ namespace Havengard.Expeditions.UI
 
             currentExpedition = data;
             selectedFollowers.Clear();
+            activeExpedition = ExpeditionManager.Instance != null
+                ? ExpeditionManager.Instance.GetActiveExpedition(data)
+                : null;
 
             if (panelRoot != null)
                 panelRoot.SetActive(true);
 
             UpdateDungeonInfo();
             UpdateRewardDisplay();
+            UpdateInProgressDisplay();
             UpdatePartyInfo();
             UpdateStartButton();
 
-            Debug.Log($"[ExpeditionSetupPanel] Opened for: {data.displayName}");
+            Debug.Log($"[ExpeditionSetupPanel] Opened for: {data.displayName}" +
+                      (activeExpedition != null ? " (in progress)" : ""));
         }
 
         /// <summary>
@@ -97,6 +135,7 @@ namespace Havengard.Expeditions.UI
                 panelRoot.SetActive(false);
 
             currentExpedition = null;
+            activeExpedition = null;
             selectedFollowers.Clear();
         }
 
@@ -184,7 +223,11 @@ namespace Havengard.Expeditions.UI
                 partySizeText.text = $"Recommended Party: {currentExpedition.recommendedPartySize}   Maximum: {currentExpedition.maximumPartySize}";
 
             if (durationText != null)
-                durationText.text = $"Estimated Completion: {currentExpedition.durationInDays} {(currentExpedition.durationInDays == 1 ? "Day" : "Days")}";
+            {
+                durationText.text = activeExpedition != null
+                    ? $"In Progress: {ExpeditionDisplayUtility.GetProgressLabel(activeExpedition)}"
+                    : $"Estimated Completion: {currentExpedition.durationInDays} {(currentExpedition.durationInDays == 1 ? "Day" : "Days")}";
+            }
 
             if (missionTypeText != null)
                 missionTypeText.text = $"Mission Type: {currentExpedition.missionType}";
@@ -233,37 +276,56 @@ namespace Havengard.Expeditions.UI
         }
 
         /// <summary>
+        /// Updates the in-progress display
+        /// </summary>
+        private void UpdateInProgressDisplay()
+        {
+            bool inProgress = activeExpedition != null;
+
+            if (inProgressRoot != null)
+                inProgressRoot.SetActive(inProgress);
+
+            if (!inProgress) return;
+
+            if (inProgressText != null)
+                inProgressText.text = $"In Progress - {ExpeditionDisplayUtility.GetProgressLabel(activeExpedition)}";
+
+            if (inProgressFill != null)
+                inProgressFill.fillAmount = activeExpedition.GetProgress();
+        }
+
+        /// <summary>
         /// Updates the party information display
         /// </summary>
         private void UpdatePartyInfo()
         {
             if (currentExpedition == null) return;
 
+            // In progress: show the followers actually on the mission
+            var displayedFollowers = activeExpedition != null
+                ? activeExpedition.assignedFollowers
+                : selectedFollowers;
+
             if (selectedFollowersText != null)
             {
-                selectedFollowersText.text = $"Selected: {selectedFollowers.Count} / {currentExpedition.maximumPartySize}";
+                selectedFollowersText.text = activeExpedition != null
+                    ? $"On Mission: {displayedFollowers.Count} / {currentExpedition.maximumPartySize}"
+                    : $"Selected: {selectedFollowers.Count} / {currentExpedition.maximumPartySize}";
             }
 
-            // Update portrait display
             if (followerPortraitContainer != null)
             {
-                // Clear existing portraits
                 foreach (Transform child in followerPortraitContainer)
-                {
                     Destroy(child.gameObject);
-                }
 
-                // Create portraits for selected followers
-                foreach (var follower in selectedFollowers)
+                foreach (var follower in displayedFollowers)
                 {
-                    if (followerPortraitPrefab != null && follower.Data != null)
+                    if (followerPortraitPrefab != null && follower != null && follower.Data != null)
                     {
                         var portraitObj = Instantiate(followerPortraitPrefab, followerPortraitContainer);
                         var image = portraitObj.GetComponent<Image>();
                         if (image != null && follower.Data.portrait != null)
-                        {
                             image.sprite = follower.Data.portrait;
-                        }
                     }
                 }
             }
@@ -276,6 +338,17 @@ namespace Havengard.Expeditions.UI
         {
             if (startExpeditionButton == null || currentExpedition == null) return;
 
+            if (activeExpedition != null)
+            {
+                startExpeditionButton.interactable = false;
+                if (startButtonText != null)
+                {
+                    startButtonText.text = "Mission in progress...";
+                    startButtonText.color = inProgressTextColor;
+                }
+                return;
+            }
+
             bool canStart = ExpeditionManager.Instance.CanStartExpedition(
                 currentExpedition,
                 selectedFollowers,
@@ -286,10 +359,8 @@ namespace Havengard.Expeditions.UI
 
             if (startButtonText != null)
             {
-                if (canStart)
-                    startButtonText.text = "Start Expedition";
-                else
-                    startButtonText.text = reason;
+                startButtonText.text = canStart ? "Start Expedition" : reason;
+                startButtonText.color = defaultStartTextColor;
             }
         }
 
@@ -305,9 +376,10 @@ namespace Havengard.Expeditions.UI
 
             if (success)
             {
+                if (UIAudioManager.Instance != null)
+                    UIAudioManager.Instance.PlayExpeditionStart();
+
                 ClosePanel();
-                // Optionally close the map
-                // ExpeditionMapController.Instance.CloseMap();
             }
         }
 

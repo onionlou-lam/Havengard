@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 669a6717ea6c3db458336a867c44d21c, type: 3}
   m_Name: Ranger_Ilmar_PLAYER
   m_EditorClassIdentifier: 
-  heroName: Ilmar
+  heroName: Ilmar (Player)
   portrait: {fileID: 21300000, guid: aec72c271304d9141b3e045820dfe106, type: 3}
   faction: 1
   heroClass: {fileID: 11400000, guid: 93f1c8f0562c78440a42f20d39f44a86, type: 2}
@@ -25,3 +25,4 @@ MonoBehaviour:
   overrideAttack: 0
   overrideDefense: 0
   overrideResource: 0
+  idleSprite: {fileID: 1725101046, guid: 8041c51eb0637494e803f5b5867699c9, type: 3}

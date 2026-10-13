@@ -63,7 +63,8 @@ namespace Havengard.Expeditions.UI
             if (closeButton != null)
                 closeButton.onClick.AddListener(ClosePanel);
 
-            if (panelRoot != null)
+            // Only hide if it hasn't already been opened (Start can run late on an initially-inactive object)
+            if (currentExpedition == null && panelRoot != null)
                 panelRoot.SetActive(false);
         }
 
@@ -217,13 +218,23 @@ namespace Havengard.Expeditions.UI
                 var reactionObj = Instantiate(followerReactionPrefab, followerReactionContainer);
                 spawnedFollowerReactions.Add(reactionObj);
 
-                var portrait = reactionObj.GetComponentInChildren<Image>();
-                if (portrait != null && follower.Data.portrait != null)
-                    portrait.sprite = follower.Data.portrait;
-
                 var reaction = reactionObj.GetComponentInChildren<FollowerMissionReaction>();
                 if (reaction != null)
+                {
+                    reaction.Initialize(follower.Data.idleSprite != null ? follower.Data.idleSprite : follower.Data.portrait);
+
+                    int level = follower.ExpSystem != null ? follower.ExpSystem.CurrentLevel : 1;
+                    reaction.SetFollowerInfo(follower.Data.heroName, level);
+
                     reaction.PlayReaction(success);
+                }
+                else
+                {
+                    // No animated reaction on this prefab: fall back to a static portrait
+                    var portrait = reactionObj.GetComponentInChildren<Image>();
+                    if (portrait != null && follower.Data.portrait != null)
+                        portrait.sprite = follower.Data.portrait;
+                }
             }
         }
 

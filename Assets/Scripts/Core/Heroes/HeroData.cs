@@ -31,5 +31,7 @@ namespace Havengard.Core.Heroes
         public int overrideAttack;
         public int overrideDefense;
         public int overrideResource;
+
+        public Sprite idleSprite;
     }
 }

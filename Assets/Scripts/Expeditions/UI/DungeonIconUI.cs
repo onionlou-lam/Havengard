@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using TMPro;
+using System.Collections;
 using System.Linq;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Havengard.Expeditions.UI
 {
@@ -34,6 +35,13 @@ namespace Havengard.Expeditions.UI
         [Header("Hover")]
         [SerializeField] private GameObject hoverHighlight;
         [SerializeField] private float hoverScale = 1.1f;
+        [Tooltip("How long the highlight takes to shrink and fade after the mouse leaves.")]
+        [SerializeField] private float hoverFadeDuration = 0.2f;
+        [Tooltip("Scale the highlight shrinks to while fading out.")]
+        [SerializeField] private float hoverExitScale = 0.6f;
+
+        [Header("In Progress Styling")]
+        [SerializeField] private Color inProgressTextColor = new Color(0.55f, 0.55f, 0.55f, 1f);
 
         private Vector3 originalScale;
         private Vector3 badgeOriginalScale;
@@ -41,12 +49,27 @@ namespace Havengard.Expeditions.UI
         private ExpeditionInstance pendingResultExpedition;
         private bool wasActiveLastUpdate;
 
+        private CanvasGroup hoverCanvasGroup;
+        private Vector3 hoverOriginalScale = Vector3.one;
+        private Coroutine hoverFadeRoutine;
+
+        private Color defaultStartTextColor = Color.white;
+
         private void Start()
         {
             originalScale = transform.localScale;
 
             if (hoverHighlight != null)
+            {
+                hoverOriginalScale = hoverHighlight.transform.localScale;
+                hoverCanvasGroup = hoverHighlight.GetComponent<CanvasGroup>();
+                if (hoverCanvasGroup == null)
+                    hoverCanvasGroup = hoverHighlight.AddComponent<CanvasGroup>();
+
+                hoverCanvasGroup.blocksRaycasts = false;
+                hoverCanvasGroup.alpha = 0f;
                 hoverHighlight.SetActive(false);
+            }
 
             if (activeIndicator != null)
                 activeIndicator.SetActive(false);
@@ -187,17 +210,9 @@ namespace Havengard.Expeditions.UI
                 return;
             }
 
-            // Check if there's already an active expedition here
-            if (activeExpedition != null && activeExpedition.status == ExpeditionStatus.Active)
-            {
-                Debug.Log($"[DungeonIconUI] Expedition already active at {expeditionData.displayName}");
-                // Could show a different panel here showing active expedition details
-                return;
-            }
-
+            // Active expeditions still open the panel - it displays them in "in progress" mode
             Debug.Log($"[DungeonIconUI] Selected dungeon: {expeditionData.displayName}");
 
-            // Open the expedition setup panel
             if (ExpeditionMapController.Instance != null)
             {
                 ExpeditionMapController.Instance.OpenExpeditionSetup(expeditionData);
@@ -207,17 +222,50 @@ namespace Havengard.Expeditions.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (hoverHighlight != null)
+            {
+                if (hoverFadeRoutine != null)
+                    StopCoroutine(hoverFadeRoutine);
+
+                hoverHighlight.transform.localScale = hoverOriginalScale;
+                hoverCanvasGroup.alpha = 1f;
                 hoverHighlight.SetActive(true);
+            }
 
             transform.localScale = originalScale * hoverScale;
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (hoverHighlight != null)
-                hoverHighlight.SetActive(false);
-
             transform.localScale = originalScale;
+
+            if (hoverHighlight != null && hoverHighlight.activeSelf && isActiveAndEnabled)
+            {
+                if (hoverFadeRoutine != null)
+                    StopCoroutine(hoverFadeRoutine);
+
+                hoverFadeRoutine = StartCoroutine(FadeOutHover());
+            }
+        }
+
+        private IEnumerator FadeOutHover()
+        {
+            float elapsed = 0f;
+            Vector3 startScale = hoverHighlight.transform.localScale;
+            Vector3 endScale = hoverOriginalScale * hoverExitScale;
+
+            while (elapsed < hoverFadeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / hoverFadeDuration);
+
+                hoverCanvasGroup.alpha = 1f - t;
+                hoverHighlight.transform.localScale = Vector3.Lerp(startScale, endScale, t);
+                yield return null;
+            }
+
+            hoverHighlight.SetActive(false);
+            hoverHighlight.transform.localScale = hoverOriginalScale;
+            hoverFadeRoutine = null;
         }
 
         public ExpeditionData ExpeditionData => expeditionData;
