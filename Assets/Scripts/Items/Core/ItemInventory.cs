@@ -326,5 +326,22 @@ namespace Havengard.Items
                 }
             }
         }
+        
+        /// <summary>
+        /// Raise an owned item's level (used by vendors).
+        /// </summary>
+        public bool TryUpgradeItem(ItemData itemData, int levels = 1)
+        {
+            ItemSlot slot = FindItemSlot(itemData);
+            if (slot == null || slot.currentLevel >= itemData.maxLevel) return false;
+
+            RemoveItemEffects(slot.itemData, slot.currentLevel);
+            slot.currentLevel = Mathf.Min(slot.currentLevel + levels, itemData.maxLevel);
+            ApplyItemEffects(slot.itemData, slot.currentLevel);
+
+            OnItemLevelUp?.Invoke(itemData, slot.currentLevel);
+            OnInventoryChanged?.Invoke();
+            return true;
+        }
     }
 }

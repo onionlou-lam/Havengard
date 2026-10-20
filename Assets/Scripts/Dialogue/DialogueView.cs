@@ -12,8 +12,8 @@ namespace Havengard.Dialogue
         [Header("UI")]
         [SerializeField] private GameObject root;
         [SerializeField] private Image portraitImage;
-        [SerializeField] private Text speakerText;
-        [SerializeField] private Text bodyText;
+        [SerializeField] private TMPro.TextMeshProUGUI speakerText;
+        [SerializeField] private TMPro.TextMeshProUGUI bodyText;
         [SerializeField] private GameObject continueIndicator;
 
         [Header("Choices")]
@@ -36,11 +36,13 @@ namespace Havengard.Dialogue
         private bool lineComplete;
         private bool choicesShowing;
         private readonly List<GameObject> spawnedChoices = new List<GameObject>();
+        private int openedFrame = -1;
 
         private void Awake() { if (root != null) root.SetActive(false); }
 
         public void Open()
         {
+            openedFrame = Time.frameCount;
             root.SetActive(true);
             ClearChoices();
             if (audioPlayer != null) audioPlayer.PlayOpen();
@@ -93,7 +95,7 @@ namespace Havengard.Dialogue
 
         private void Update()
         {
-            if (!root.activeSelf || choicesShowing) return;
+            if (!root.activeSelf || choicesShowing || Time.frameCount == openedFrame) return;
 
             if (Input.GetKeyDown(advanceKey) || Input.GetKeyDown(alternateAdvanceKey) || Input.GetMouseButtonDown(0))
             {

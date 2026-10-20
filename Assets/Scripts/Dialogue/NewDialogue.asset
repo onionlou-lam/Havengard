@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7033d41cfbce3a4fa47c8de19ef1d1e, type: 3}
+  m_Name: NewDialogue
+  m_EditorClassIdentifier: 
+  speakerName: Merchant
+  portrait: {fileID: 21300000, guid: b0e905546af89064f9dec85fd1f15d43, type: 3}
+  nodes:
+  - text: Browse wares
+    portraitOverride: {fileID: 0}
+    choices:
+    - text: Browse wares
+      nextNodeIndex: -1
+      eventId: open_shop
+    - text: Not now
+      nextNodeIndex: -1
+      eventId: 
+    nextNodeIndex: -1
+    eventId: 
+    createsQuest: 0
+    questId: 
