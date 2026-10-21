@@ -2,6 +2,7 @@ using Havengard.Core;
 using Havengard.Items;
 using Havengard.Vendors;
 using Havengard.Vendors.UI;
+using Havengard.Dialogue;
 using UnityEngine;
 
 namespace Havengard.Interactions
@@ -30,12 +31,13 @@ namespace Havengard.Interactions
             return base.CanInteract() && !PlayerInputLock.IsLocked;
         }
 
-        public override void OnDialogueEvent(string eventId)
+        public override void RegisterDialogueFunctions(IDialogueFunctionBinder binder)
         {
-            if (eventId == openShopEventId) openShopAfterDialogue = true;
+            base.RegisterDialogueFunctions(binder);
+            binder.Bind(openShopEventId, () => openShopAfterDialogue = true);
         }
 
-        public override void OnDialogueEnded()
+        public override void OnDialogueEnded(IDialogueVariables variables)
         {
             if (!openShopAfterDialogue) return;
             openShopAfterDialogue = false;

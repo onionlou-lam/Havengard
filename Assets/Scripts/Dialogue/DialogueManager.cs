@@ -1,109 +1,87 @@
+using System;
+using System.Collections;
+using cherrydev;
+using Havengard.Core;
 using UnityEngine;
 
 namespace Havengard.Dialogue
 {
+    /// <summary>Adapter between Havengard NPCs and the cherrydev DialogBehaviour.</summary>
     public class DialogueManager : MonoBehaviour
     {
-        [Tooltip("Must implement IDialogueView (e.g. DialogueView).")]
-        [SerializeField] private MonoBehaviour viewBehaviour;
+        [SerializeField] private DialogBehaviour dialogBehaviour;
 
         public static DialogueManager Instance { get; private set; }
-        public static bool IsActive { get { return Instance != null && Instance.current != null; } }
+        public static bool IsActive { get { return Instance != null && Instance.isRunning; } }
 
-        private IDialogueView view;
-        private DialogueData current;
-        private IDialogueListener listener;
-        private int nodeIndex;
+        private bool isRunning;
+        private bool playerLocked;
 
         private void Awake()
         {
             Instance = this;
-            view = viewBehaviour as IDialogueView;
-            if (view == null)
-            {
-                Debug.LogError("DialogueManager: viewBehaviour does not implement IDialogueView.", this);
-                return;
-            }
-            view.AdvanceRequested += HandleAdvance;
-            view.ChoiceSelected += HandleChoice;
+            if (dialogBehaviour == null)
+                Debug.LogError("DialogueManager: DialogBehaviour is not assigned.", this);
         }
 
         private void OnDestroy()
         {
-            if (view != null)
-            {
-                view.AdvanceRequested -= HandleAdvance;
-                view.ChoiceSelected -= HandleChoice;
-            }
+            if (playerLocked) { playerLocked = false; PlayerInputLock.Release(); }
             if (Instance == this) Instance = null;
         }
 
-        public void Begin(DialogueData data, IDialogueListener dialogueListener)
+        /// <param name="blocksPlayer">False for ambient chatter that must not freeze the player.</param>
+        public bool Begin(DialogNodeGraph graph, IDialogueListener listener, bool blocksPlayer = true)
         {
-            if (IsActive || data == null || data.nodes.Count == 0 || view == null) return;
+            if (isRunning || dialogBehaviour == null) return false;
+            if (graph == null || graph.NodesList == null || graph.NodesList.Count == 0) return false;
 
-            current = data;
-            listener = dialogueListener;
-            if (listener != null) listener.OnDialogueStarted();
-
-            view.Open();
-            ShowNode(0);
+            isRunning = true;
+            StartCoroutine(BeginNextFrame(graph, listener, blocksPlayer));
+            return true;
         }
 
-        private void ShowNode(int index)
+        private IEnumerator BeginNextFrame(DialogNodeGraph graph, IDialogueListener listener, bool blocksPlayer)
         {
-            if (index < 0 || index >= current.nodes.Count)
+            // The interact key is usually also a "next sentence" key. Waiting a frame stops
+            // the press that opened the dialogue from instantly skipping the first line.
+            yield return null;
+
+            if (blocksPlayer)
             {
-                End();
-                return;
+                PlayerInputLock.Acquire();
+                playerLocked = true;
             }
-
-            nodeIndex = index;
-            DialogueNode node = current.nodes[index];
-            Sprite portrait = node.portraitOverride != null ? node.portraitOverride : current.portrait;
-
-            view.ShowLine(current.speakerName, portrait, node.text);
 
             if (listener != null)
             {
-                if (!string.IsNullOrEmpty(node.eventId)) listener.OnDialogueEvent(node.eventId);
-                if (node.createsQuest) listener.OnQuestRequested(node.questId);
+                listener.OnDialogueStarted();
+                listener.RegisterDialogueFunctions(new FunctionBinder(dialogBehaviour));
             }
+
+            dialogBehaviour.StartDialog(graph, null, variables => Finish(listener, variables));
         }
 
-        private void HandleAdvance()
+        private void Finish(IDialogueListener listener, DialogVariablesHandler variables)
         {
-            if (current == null) return;
-            DialogueNode node = current.nodes[nodeIndex];
+            isRunning = false;
 
-            if (node.HasChoices)
+            // Listener first: if it opens a shop, that shop takes its own lock before ours is released.
+            if (listener != null)
+                listener.OnDialogueEnded(new CherryDialogueVariables(variables));
+
+            if (playerLocked)
             {
-                view.ShowChoices(node.choices);
-                return;
+                playerLocked = false;
+                PlayerInputLock.Release();
             }
-
-            // -2 = default: go to the next node in the list
-            ShowNode(node.nextNodeIndex == -2 ? nodeIndex + 1 : node.nextNodeIndex);
         }
 
-        private void HandleChoice(int choiceIndex)
+        private sealed class FunctionBinder : IDialogueFunctionBinder
         {
-            if (current == null) return;
-            DialogueChoice choice = current.nodes[nodeIndex].choices[choiceIndex];
-
-            if (listener != null && !string.IsNullOrEmpty(choice.eventId))
-                listener.OnDialogueEvent(choice.eventId);
-
-            ShowNode(choice.nextNodeIndex);
-        }
-
-        private void End()
-        {
-            view.Close();
-            IDialogueListener finished = listener;
-            current = null;
-            listener = null;
-            if (finished != null) finished.OnDialogueEnded();
+            private readonly DialogBehaviour behaviour;
+            public FunctionBinder(DialogBehaviour behaviour) { this.behaviour = behaviour; }
+            public void Bind(string functionName, Action action) { behaviour.BindExternalFunction(functionName, action); }
         }
     }
 }
