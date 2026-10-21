@@ -5,13 +5,14 @@ using UnityEngine;
 namespace Havengard.Interactions
 {
     /// <summary>
-    /// Base NPC. Talking = run a dialogue graph. Subclasses add behaviour by overriding
-    /// RegisterDialogueFunctions (graph -> NPC) and OnDialogueEnded (NPC reacts to final state).
+    /// Base NPC. Talking = run a Yarn dialogue node. Subclasses add behaviour by overriding
+    /// RegisterDialogueFunctions (script -> NPC) and OnDialogueEnded (NPC reacts to final state).
     /// </summary>
-    public class NpcInteractable : MonoBehaviour, IInteractable, IDialogueListener
+    public class NPCInteractable : MonoBehaviour, IInteractable, IDialogueListener
     {
         [Header("Dialogue")]
-        [SerializeField] protected DialogNodeGraph dialogue;
+        [Tooltip("Title of the Yarn node to run, e.g. 'Vendor'.")]
+        [SerializeField] protected string dialogueNode;
         [Tooltip("Off for ambient/background chatter that must not freeze the player.")]
         [SerializeField] private bool blocksPlayer = true;
 
@@ -21,18 +22,18 @@ namespace Havengard.Interactions
         [SerializeField] private Transform tooltipAnchor;
 
         [Header("Quest")]
-        [Tooltip("Quest/expedition entry created when the graph calls the 'start_quest' function.")]
+        [Tooltip("Quest/expedition entry created when the script calls the 'start_quest' command.")]
         [SerializeField] protected string questId;
 
         public virtual string GetInteractionPrompt() { return prompt; }
         public virtual string GetInteractionKey() { return key; }
-        public virtual bool CanInteract() { return dialogue != null && !DialogueManager.IsActive; }
+        public virtual bool CanInteract() { return !string.IsNullOrEmpty(dialogueNode) && !DialogueManager.IsActive; }
         public Transform GetTooltipTransform() { return tooltipAnchor != null ? tooltipAnchor : transform; }
 
         public virtual void Interact()
         {
             if (DialogueManager.Instance != null)
-                DialogueManager.Instance.Begin(dialogue, this, blocksPlayer);
+                DialogueManager.Instance.Begin(dialogueNode, this, blocksPlayer);
         }
 
         public virtual void OnDialogueStarted() { }

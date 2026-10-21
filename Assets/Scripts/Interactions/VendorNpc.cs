@@ -11,7 +11,7 @@ namespace Havengard.Interactions
     /// NPC that talks first, then opens a shop if the player picked the "open_shop" choice.
     /// The catalog decides what kind of vendor this is (sales, item upgrades, tower upgrades...).
     /// </summary>
-    public class VendorNpc : NpcInteractable
+    public class VendorNPC : NPCInteractable
     {
         [Header("Vendor")]
         [SerializeField] private string shopTitle = "Shop";

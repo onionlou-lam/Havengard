@@ -1,13 +1,11 @@
 using System.Collections;
-using cherrydev;
 using UnityEngine;
 
 namespace Havengard.Dialogue
 {
-    /// <summary>Small damped up/down bounce of the speaker portrait each time a sentence starts.</summary>
+    /// <summary>Small damped up/down bounce of the speaker portrait each time a line starts.</summary>
     public class DialoguePortraitBob : MonoBehaviour
     {
-        [SerializeField] private DialogBehaviour dialogBehaviour;
         [SerializeField] private RectTransform portrait;
 
         [Header("Bob")]
@@ -24,19 +22,16 @@ namespace Havengard.Dialogue
             basePosition = portrait.anchoredPosition;
         }
 
-        private void OnEnable()
-        {
-            dialogBehaviour.SentenceStarted += HandleSentenceStarted;
-        }
-
         private void OnDisable()
         {
-            dialogBehaviour.SentenceStarted -= HandleSentenceStarted;
             StopBob();
         }
 
-        private void HandleSentenceStarted()
+        /// <summary>Called by the dialogue presenter whenever a new line starts.</summary>
+        public void NotifyLineStarted()
         {
+            if (!isActiveAndEnabled) return;
+
             StopBob();
             routine = StartCoroutine(Bob());
         }

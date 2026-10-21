@@ -1,4 +1,3 @@
-using cherrydev;
 using UnityEngine;
 
 namespace Havengard.Dialogue
@@ -8,8 +7,6 @@ namespace Havengard.Dialogue
     public class DialogueAudio : MonoBehaviour
     {
         public static DialogueAudio Instance { get; private set; }
-
-        [SerializeField] private DialogBehaviour dialogBehaviour;
 
         [Header("Clips")]
         [SerializeField] private AudioClip openClip;
@@ -38,43 +35,31 @@ namespace Havengard.Dialogue
             source.playOnAwake = false;
         }
 
-        private void OnEnable()
-        {
-            if (dialogBehaviour == null) return;
-            dialogBehaviour.OnDialogStarted.AddListener(HandleStarted);
-            dialogBehaviour.OnDialogFinished.AddListener(HandleFinished);
-            dialogBehaviour.SentenceNodeActivated += HandleSentenceActivated;
-            dialogBehaviour.SentenceStarted += HandleSentenceStarted;
-            dialogBehaviour.DialogTextCharWrote += HandleCharWrote;
-            dialogBehaviour.DialogTextSkipped += HandleTextSkipped;
-            dialogBehaviour.AnswerNodeActivated += HandleAnswersShown;
-        }
-
-        private void OnDisable()
+        private void OnDestroy()
         {
             if (Instance == this) Instance = null;
-            if (dialogBehaviour == null) return;
-            dialogBehaviour.OnDialogStarted.RemoveListener(HandleStarted);
-            dialogBehaviour.OnDialogFinished.RemoveListener(HandleFinished);
-            dialogBehaviour.SentenceNodeActivated -= HandleSentenceActivated;
-            dialogBehaviour.SentenceStarted -= HandleSentenceStarted;
-            dialogBehaviour.DialogTextCharWrote -= HandleCharWrote;
-            dialogBehaviour.DialogTextSkipped -= HandleTextSkipped;
-            dialogBehaviour.AnswerNodeActivated -= HandleAnswersShown;
         }
 
-        private void HandleStarted() { openedFrame = Time.frameCount; Play(openClip); }
-        private void HandleFinished() { Play(closeClip); }
-
-        private void HandleSentenceActivated()
+        public void NotifyDialogueStarted()
         {
-            // The first sentence shares a frame with the open sound, so don't also play "advance".
+            openedFrame = Time.frameCount;
+            Play(openClip);
+        }
+
+        public void NotifyDialogueFinished()
+        {
+            Play(closeClip);
+        }
+
+        public void NotifyLineStarted()
+        {
+            charCount = 0;
+
+            // The first line shares a frame with the open sound, so don't also play "advance".
             if (Time.frameCount != openedFrame) Play(advanceClip);
         }
 
-        private void HandleSentenceStarted() { charCount = 0; }
-
-        private void HandleCharWrote()
+        public void NotifyCharRevealed()
         {
             if (typeBlipClip == null) return;
             if (charCount++ % Mathf.Max(1, blipEveryNChars) != 0) return;
@@ -84,8 +69,8 @@ namespace Havengard.Dialogue
             source.pitch = 1f;
         }
 
-        private void HandleTextSkipped(string _) { Play(skipClip); }
-        private void HandleAnswersShown() { Play(choiceShowClip); }
+        public void NotifyTextSkipped() { Play(skipClip); }
+        public void NotifyChoicesShown() { Play(choiceShowClip); }
 
         public void PlayChoiceHover() { Play(choiceHoverClip); }
         public void PlayChoiceSelect() { Play(choiceSelectClip); }

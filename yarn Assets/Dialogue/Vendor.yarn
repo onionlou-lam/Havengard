@@ -1,0 +1,8 @@
+title: Vendor
+---
+Merchant: Welcome, traveler. Care to see my wares?
+-> Browse wares
+    <<open_shop>>
+-> Not now
+    You: Not now
+===
