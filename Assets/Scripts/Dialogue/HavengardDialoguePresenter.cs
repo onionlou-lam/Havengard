@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using cherrydev;
 using UnityEngine;
 using Yarn.Unity;
 
@@ -62,7 +61,10 @@ namespace Havengard.Dialogue
             _sentencePanel.gameObject.SetActive(true);
 
             string text = line.TextWithoutCharacterName.Text;
-            _sentencePanel.Setup(line.CharacterName ?? string.Empty, text, FindPortrait(line.CharacterName));
+            Sprite? portrait = FindPortrait(line.CharacterName);
+            Debug.Log("[Presenter] Speaker '" + line.CharacterName + "' portrait = " + (portrait != null ? portrait.name : "NONE"), this);
+
+            _sentencePanel.Setup(line.CharacterName ?? string.Empty, text, portrait);
             _sentencePanel.ResetDialogText();
 
             if (Audio != null) Audio.NotifyLineStarted();
@@ -73,6 +75,8 @@ namespace Havengard.Dialogue
             // Typewriter effect, skipped if the player requests "hurry up" or "next"
             float delay = 1f / _charactersPerSecond;
             bool skipped = false;
+
+            IsTyping = true;
 
             for (int i = 0; i < text.Length; i++)
             {
@@ -87,6 +91,8 @@ namespace Havengard.Dialogue
 
                 await YarnTask.Delay(TimeSpan.FromSeconds(delay), token.HurryUpToken);
             }
+
+            IsTyping = false;
 
             _sentencePanel.ShowFullDialogText(text);
 
@@ -124,8 +130,11 @@ namespace Havengard.Dialogue
                 });
             }
 
+            IsShowingOptions = true;
+
             await YarnTask.WaitUntil(() => selected != null || cancellationToken.IsCancellationRequested);
 
+            IsShowingOptions = false;
             _answerPanel.DisableAllButtons();
             return selected;
         }
@@ -155,5 +164,8 @@ namespace Havengard.Dialogue
                 _root.SetActive(visible);
             }
         }
+
+        public bool IsTyping { get; private set; }
+        public bool IsShowingOptions { get; private set; }
     }
 }

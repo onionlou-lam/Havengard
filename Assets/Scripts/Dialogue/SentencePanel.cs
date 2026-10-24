@@ -2,8 +2,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace cherrydev
+namespace Havengard.Dialogue
 {
+    /// <summary>Speech bubble text, speaker name and portrait. Driven by HavengardDialoguePresenter.</summary>
     public class SentencePanel : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI _dialogNameText;
@@ -11,9 +12,9 @@ namespace cherrydev
         [SerializeField] private Image _dialogCharacterImage;
 
         private string _currentFullText;
-        
+
         /// <summary>
-        /// Setting dialogText max visible characters to zero
+        /// Sets the dialog text's max visible characters to zero.
         /// </summary>
         public void ResetDialogText()
         {
@@ -22,9 +23,8 @@ namespace cherrydev
         }
 
         /// <summary>
-        /// Set dialog text max visible characters to dialog text length
+        /// Shows the whole dialog text at once.
         /// </summary>
-        /// <param name="text"></param>
         public void ShowFullDialogText(string text)
         {
             _currentFullText = text;
@@ -33,12 +33,12 @@ namespace cherrydev
         }
 
         /// <summary>
-        /// Increasing max visible characters
+        /// Reveals one more character.
         /// </summary>
         public void IncreaseMaxVisibleCharacters() => _dialogText.maxVisibleCharacters++;
-        
+
         /// <summary>
-        /// Assigning dialog name text, character image sprite and dialog text
+        /// Assigns the speaker name, portrait sprite and dialog text.
         /// </summary>
         public void Setup(string characterName, string text, Sprite sprite)
         {
@@ -46,16 +46,26 @@ namespace cherrydev
             _dialogText.text = text;
             _currentFullText = text;
 
-            if (sprite == null)
+            if (_dialogCharacterImage == null)
             {
-                _dialogCharacterImage.color = new Color(_dialogCharacterImage.color.r,
-                    _dialogCharacterImage.color.g, _dialogCharacterImage.color.b, 0);
+                Debug.LogError("[SentencePanel] Dialog Character Image is not assigned.", this);
                 return;
             }
 
-            _dialogCharacterImage.color = new Color(_dialogCharacterImage.color.r,
-                _dialogCharacterImage.color.g, _dialogCharacterImage.color.b, 255);
+            if (sprite == null)
+            {
+                _dialogCharacterImage.color = new Color(_dialogCharacterImage.color.r,
+                    _dialogCharacterImage.color.g, _dialogCharacterImage.color.b, 0f);
+                return;
+            }
+
             _dialogCharacterImage.sprite = sprite;
+            _dialogCharacterImage.enabled = true;
+            _dialogCharacterImage.color = new Color(_dialogCharacterImage.color.r,
+                _dialogCharacterImage.color.g, _dialogCharacterImage.color.b, 1f);
+
+            Debug.Log("[SentencePanel] Portrait set on '" + _dialogCharacterImage.name +
+                "', activeInHierarchy = " + _dialogCharacterImage.gameObject.activeInHierarchy, _dialogCharacterImage);
         }
     }
 }

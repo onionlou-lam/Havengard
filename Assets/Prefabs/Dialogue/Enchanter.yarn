@@ -1,0 +1,14 @@
+﻿title: Enchanter
+---
+Enchanter: The northern road is overrun. Will you send a party?
+-> Add it to the expedition list
+    <<start_quest>>
+    Captain: Good. Pick your heroes at the map.
+-> Not yet
+    Captain: Come back when you're ready.
+===
+
+title: EnchanterActive
+---
+Enchanter: It's on your expedition list. Choose a party at the map.
+===

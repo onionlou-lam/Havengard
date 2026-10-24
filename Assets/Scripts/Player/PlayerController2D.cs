@@ -2,6 +2,7 @@
 using UnityEngine.AI;
 using Havengard.Abilities;
 using Havengard.UI;
+using Havengard.Core;
 
 public class PlayerController2D : MonoBehaviour
 {
@@ -104,15 +105,39 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
+    private static bool InputBlocked
+    {
+        get { return GameplayUIBlocker.IsBlocked || PlayerInputLock.IsLocked; }
+    }
+
     void Update()
     {
-        // Don't process movement/ability input while a blocking UI panel is open
-        if (GameplayUIBlocker.IsBlocked)
+        // Dialogue, shop or full-screen panel open: stand still instead of freezing mid-stride
+        if (InputBlocked)
+        {
+            StopMovement();
+            UpdateAnimations();
             return;
+        }
 
         HandleMovementInput();
         HandleAbilityInput();
         UpdateAnimations();
+    }
+
+    private void StopMovement()
+    {
+        moveInput = Vector2.zero;
+        hasClickMoveTarget = false;
+
+        if (abilityUser != null && abilityUser.IsChanneling)
+            abilityUser.CancelChanneling();
+
+        if (useNavMeshMovement && agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.ResetPath();
+            agent.isStopped = true; // HandleMovementInput sets this back to false once unblocked
+        }
     }
 
     void FixedUpdate()

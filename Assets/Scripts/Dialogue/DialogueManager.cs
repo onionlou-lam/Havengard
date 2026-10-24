@@ -14,6 +14,7 @@ namespace Havengard.Dialogue
 
         public static DialogueManager Instance { get; private set; }
         public static bool IsActive { get { return Instance != null && Instance.isRunning; } }
+        public static event Action<bool> ActiveChanged;
 
         private readonly List<string> boundCommands = new List<string>();
         private IDialogueListener currentListener;
@@ -70,6 +71,8 @@ namespace Havengard.Dialogue
                 playerLocked = true;
             }
 
+            if (ActiveChanged != null) ActiveChanged(true);
+
             currentListener = listener;
 
             if (listener != null)
@@ -94,9 +97,10 @@ namespace Havengard.Dialogue
 
             UnbindCommands();
 
-            // Listener first: if it opens a shop, that shop takes its own lock before ours is released.
             if (listener != null)
                 listener.OnDialogueEnded(new YarnDialogueVariables(dialogueRunner.VariableStorage));
+
+            if (ActiveChanged != null) ActiveChanged(false);
 
             if (playerLocked)
             {

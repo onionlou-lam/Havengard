@@ -1,4 +1,6 @@
 using UnityEngine;
+using Havengard.Core;
+using Havengard.UI;
 
 namespace Havengard.Interactions
 {
@@ -61,6 +63,13 @@ namespace Havengard.Interactions
         {
             if (playerTransform == null) return;
 
+            // Dialogue, shop or full-screen panel open: no prompts and no new interactions
+            if (GameplayUIBlocker.IsBlocked || PlayerInputLock.IsLocked)
+            {
+                ClearCurrentInteractable();
+                return;
+            }
+
             // Detect nearby interactables
             DetectInteractables();
 
@@ -72,6 +81,15 @@ namespace Havengard.Interactions
                     currentInteractable.Interact();
                 }
             }
+        }
+
+        private void ClearCurrentInteractable()
+        {
+            if (currentInteractable == null) return;
+
+            if (tooltipUI != null) tooltipUI.Hide();
+            isShowingTooltip = false;
+            currentInteractable = null;
         }
 
         private void DetectInteractables()

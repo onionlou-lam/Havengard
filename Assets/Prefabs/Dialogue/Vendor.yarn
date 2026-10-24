@@ -1,6 +1,12 @@
 ﻿title: Vendor
 ---
-Merchant: Welcome, traveler. Care to see my wares?
+<<declare $metVendor = false>>
+<<if $metVendor>>
+    Merchant: Back again? Care to see my wares?
+<<else>>
+    Merchant: Welcome, traveler. Care to see my wares?
+    <<set $metVendor = true>>
+<<endif>>
 -> Browse wares
     <<open_shop>>
 -> Not now
