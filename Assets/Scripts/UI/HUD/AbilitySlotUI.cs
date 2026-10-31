@@ -236,11 +236,6 @@ namespace Havengard.UI
             return slotIndex;
         }
 
-        private void OnEnable()
-        {
-            Debug.Log($"[AbilitySlotUI] Slot {slotIndex} enabled - has IDropHandler: {this is IDropHandler}");
-        }
-
         //-----------------------------------------------------
         // DRAG AND DROP IMPLEMENTATION
         //-----------------------------------------------------

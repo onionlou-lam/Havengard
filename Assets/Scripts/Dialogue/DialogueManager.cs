@@ -39,7 +39,7 @@ namespace Havengard.Dialogue
                 dialogueRunner.onDialogueComplete.RemoveListener(HandleDialogueComplete);
 
             UnbindCommands();
-
+            DialogueContext.CurrentQuestId = null;
             if (playerLocked) { playerLocked = false; PlayerInputLock.Release(); }
             if (Instance == this) Instance = null;
         }
@@ -75,6 +75,9 @@ namespace Havengard.Dialogue
 
             currentListener = listener;
 
+            IQuestDialogueSource questSource = listener as IQuestDialogueSource;
+            DialogueContext.CurrentQuestId = questSource != null ? questSource.QuestId : null;
+
             if (listener != null)
             {
                 listener.OnDialogueStarted();
@@ -96,6 +99,7 @@ namespace Havengard.Dialogue
             currentListener = null;
 
             UnbindCommands();
+            DialogueContext.CurrentQuestId = null;
 
             if (listener != null)
                 listener.OnDialogueEnded(new YarnDialogueVariables(dialogueRunner.VariableStorage));

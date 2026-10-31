@@ -3,17 +3,15 @@ using UnityEngine.EventSystems;
 
 namespace Havengard.Dialogue
 {
-    /// <summary>Put on the answer button prefab used by the package's AnswerPanel.</summary>
-    public class DialogueButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
+    /// <summary>
+    /// Put on the answer button prefab. Plays the hover sound only.
+    /// Click sounds (accept, decline, generic) are chosen by HavengardDialoguePresenter.
+    /// </summary>
+    public class DialogueButtonSfx : MonoBehaviour, IPointerEnterHandler
     {
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (DialogueAudio.Instance != null) DialogueAudio.Instance.PlayChoiceHover();
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (DialogueAudio.Instance != null) DialogueAudio.Instance.PlayChoiceSelect();
         }
     }
 }

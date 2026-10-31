@@ -9,6 +9,6 @@
 <<endif>>
 -> Browse wares
     <<open_shop>>
--> Not now
-    You: Not now
+-> {hero_line("enchanter.decline", "Not now")} #decline
+    Player: Not now
 ===

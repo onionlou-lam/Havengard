@@ -39,7 +39,7 @@ namespace Havengard.Interactions
 
         public override void OnDialogueEnded(IDialogueVariables variables)
         {
-            Debug.Log("[VendorNpc] metVendor = " + variables.GetBool("metVendor"), this);
+            base.OnDialogueEnded(variables);
 
             if (!openShopAfterDialogue) return;
             openShopAfterDialogue = false;

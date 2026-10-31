@@ -1,3 +1,4 @@
+using Havengard.Dialogue;
 using UnityEngine;
 
 namespace Havengard.Audio
@@ -50,6 +51,8 @@ namespace Havengard.Audio
         /// </summary>
         public void PlayButtonClick()
         {
+            // DialogueAudio owns every sound while a conversation is running.
+            if (DialogueManager.IsActive) return;
             PlaySound(buttonClickSound);
         }
 
@@ -58,6 +61,7 @@ namespace Havengard.Audio
         /// </summary>
         public void PlayButtonHover()
         {
+            if (DialogueManager.IsActive) return;
             PlaySound(buttonHoverSound);
         }
 
@@ -124,6 +128,7 @@ namespace Havengard.Audio
         {
             if (clip != null && audioSource != null)
             {
+                Debug.Log("[UIAudioManager] Playing '" + clip.name + "'\n" + System.Environment.StackTrace);
                 audioSource.PlayOneShot(clip, uiVolume);
             }
         }

@@ -55,8 +55,7 @@ namespace Havengard.Waves
                     wavePreviewPanel = FindFirstObjectByType<WavePreviewPanel>(FindObjectsInactive.Include);
                 }
             }
-
-            Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}, Preview Panel found: {wavePreviewPanel != null}, UseTimeLimit: {useTimeLimit}, TimeLimitSeconds: {timeLimitSeconds}");
+            //Debug.Log($"[PreWavePhase] Initialized. UI found: {phaseUI != null}, Preview Panel found: {wavePreviewPanel != null}, UseTimeLimit: {useTimeLimit}, TimeLimitSeconds: {timeLimitSeconds}");
         }
 
         private void Update()
@@ -109,15 +108,12 @@ namespace Havengard.Waves
                 var previewData = WavePreviewData.FromWaveDefinition(waveDefinition, upcomingWaveNumber);
                 wavePreviewPanel.ShowPreview(previewData, useTimeLimit, timeLimitSeconds);
             }
-
-            // Debug logging
+            /* Debug logging
             Debug.Log($"[PreWavePhase] StartPhase called - About to invoke OnPhaseStarted event");
             Debug.Log($"[PreWavePhase] OnPhaseStarted listener count: {OnPhaseStarted?.GetPersistentEventCount() ?? 0}");
-            
-            // Invoke event
+            */
             OnPhaseStarted?.Invoke();
-            
-            Debug.Log($"[PreWavePhase] ✓ OnPhaseStarted event invoked for wave {upcomingWaveNumber}");
+            //Debug.Log($"[PreWavePhase] ✓ OnPhaseStarted event invoked for wave {upcomingWaveNumber}");
         }
 
         /// <summary>

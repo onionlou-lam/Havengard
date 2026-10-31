@@ -3,6 +3,7 @@ using Havengard.Core.Progression;
 using Havengard.Units;
 using System.Collections.Generic;
 using UnityEngine;
+using Havengard.Dialogue;
 
 namespace Havengard.Core.Heroes
 {
@@ -13,6 +14,10 @@ namespace Havengard.Core.Heroes
         public string heroName;
         public Sprite portrait;
         public Faction faction = Faction.Ally;
+
+        [Header("Dialogue")]
+        [Tooltip("This hero's spoken lines. Optional. Yarn fallbacks are used when empty.")]
+        public HeroDialogueProfile dialogueProfile;
 
         [Header("Class Reference")]
         public PlayerClass heroClass;   // Link to WarriorClass, MageClass, etc.

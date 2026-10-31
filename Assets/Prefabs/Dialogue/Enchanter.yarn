@@ -1,14 +1,65 @@
 ﻿title: Enchanter
 ---
-Enchanter: The northern road is overrun. Will you send a party?
--> Add it to the expedition list
-    <<start_quest>>
-    Captain: Good. Pick your heroes at the map.
--> Not yet
-    Captain: Come back when you're ready.
+<<declare $metEnchanter = false>>
+<<if not $metEnchanter>>
+    Enchanter: Ah, a new face. I give new life to what others discard.
+    <<set $metEnchanter = true>>
+<<endif>>
+
+<<if npc_quest_state() == "none">>
+    <<jump EnchanterOffer>>
+<<elseif npc_quest_state() == "readytoclaim">>
+    <<jump EnchanterQuestReady>>
+<<elseif npc_quest_state() == "complete">>
+    <<jump EnchanterQuestComplete>>
+<<else>>
+    <<jump EnchanterQuestActive>>
+<<endif>>
 ===
 
-title: EnchanterActive
+title: EnchanterQuestReady
 ---
-Enchanter: It's on your expedition list. Choose a party at the map.
+Enchanter: You're back! And with what I asked for. Splendid work.
+<<if hero_has_line("enchanter.ready_reply")>>
+    Player: {hero_line("enchanter.ready_reply", "")}
+<<endif>>
+Enchanter: You've earned this.
+<<claim_reward>>
+===
+
+title: EnchanterOffer
+---
+Enchanter: I have work for you, if you're brave enough.
+-> {hero_line("enchanter.accept", "I'll do it")} #accept
+    <<start_quest>>
+    Player: {hero_line("enchanter.accepted", "Consider it done.")}
+    Enchanter: Good. Mind the dark places.
+-> {hero_line("enchanter.trade", "Let's trade")}
+    <<open_shop>>
+-> {hero_line("enchanter.decline", "Not now")} #decline
+    Player: {hero_line("enchanter.declined", "Not yet.")}
+===
+
+title: EnchanterQuestActive
+---
+Enchanter: The task is still yours. Do not keep me waiting.
+-> {hero_line("enchanter.trade", "Let's trade")}
+    <<open_shop>>
+-> {hero_line("enchanter.decline", "Not now")} #decline
+    <<if hero_has_line("enchanter.active_reply")>>
+        Player: {hero_line("enchanter.active_reply", "")}
+    <<endif>>
+    Enchanter: Search the ruins north of town. What you need is buried deep.
+===
+
+title: EnchanterQuestComplete
+---
+Enchanter: You've done well. I have nothing more for you, for now.
+-> {hero_line("enchanter.trade", "Let's trade")}
+    <<open_shop>>
+-> {hero_line("enchanter.decline", "Not now")} #decline
+    <<if hero_has_line("enchanter.complete_reply")>>
+        Player: {hero_line("enchanter.complete_reply", "")}
+    <<endif>>
+    Enchanter: Come back when you need my skills.
 ===

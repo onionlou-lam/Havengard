@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Yarn.Unity;
+using Havengard.Core.Heroes;
 
 namespace Havengard.Dialogue
 {
@@ -61,10 +62,24 @@ namespace Havengard.Dialogue
             _sentencePanel.gameObject.SetActive(true);
 
             string text = line.TextWithoutCharacterName.Text;
-            Sprite? portrait = FindPortrait(line.CharacterName);
-            Debug.Log("[Presenter] Speaker '" + line.CharacterName + "' portrait = " + (portrait != null ? portrait.name : "NONE"), this);
+            string speaker = line.CharacterName ?? string.Empty;
+            string displayName = speaker;
+            Sprite? portrait;
 
-            _sentencePanel.Setup(line.CharacterName ?? string.Empty, text, portrait);
+            if (string.Equals(speaker.Trim(), PlayerSpeaker, StringComparison.OrdinalIgnoreCase))
+            {
+                HeroData hero = HeroDialogue.Current;
+                if (hero != null && !string.IsNullOrEmpty(hero.heroName)) displayName = hero.heroName;
+
+                // Hero's own portrait first, then a "Player" entry in the Portraits list as a default.
+                portrait = hero != null && hero.portrait != null ? hero.portrait : FindPortrait(speaker);
+            }
+            else
+            {
+                portrait = FindPortrait(speaker);
+            }
+
+            _sentencePanel.Setup(displayName, text, portrait);
             _sentencePanel.ResetDialogText();
 
             if (Audio != null) Audio.NotifyLineStarted();
@@ -89,7 +104,16 @@ namespace Havengard.Dialogue
                 _sentencePanel.IncreaseMaxVisibleCharacters();
                 if (Audio != null) Audio.NotifyCharRevealed();
 
-                await YarnTask.Delay(TimeSpan.FromSeconds(delay), token.HurryUpToken);
+                try
+                {
+                    await YarnTask.Delay(TimeSpan.FromSeconds(delay), token.HurryUpToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Skip was requested mid-delay. Show the full line below.
+                    skipped = true;
+                    break;
+                }
             }
 
             IsTyping = false;
@@ -108,24 +132,41 @@ namespace Havengard.Dialogue
         public override async YarnTask<DialogueOption?> RunOptionsAsync(
             DialogueOption[] dialogueOptions, CancellationToken cancellationToken)
         {
+            var available = new List<DialogueOption>();
+            foreach (DialogueOption candidate in dialogueOptions)
+            {
+                if (candidate.IsAvailable) available.Add(candidate);
+            }
+
             _answerPanel.gameObject.SetActive(true);
-            _answerPanel.SetUpButtons(dialogueOptions.Length);
+            _answerPanel.SetUpButtons(available.Count);
 
             if (Audio != null) Audio.NotifyChoicesShown();
 
             DialogueOption? selected = null;
 
-            for (int i = 0; i < dialogueOptions.Length; i++)
+            for (int i = 0; i < available.Count; i++)
             {
-                DialogueOption option = dialogueOptions[i];
+                DialogueOption option = available[i];
+                ChoiceKind kind = GetChoiceKind(option);
+
                 var button = _answerPanel.GetButtonByIndex(i);
 
                 _answerPanel.GetButtonTextByIndex(i).text = option.Line.TextWithoutCharacterName.Text;
-                button.interactable = option.IsAvailable;
+                button.interactable = true;
                 button.gameObject.SetActive(true);
                 button.onClick.AddListener(() =>
                 {
-                    if (Audio != null) Audio.PlayChoiceSelect();
+                    if (Audio != null)
+                    {
+                        switch (kind)
+                        {
+                            case ChoiceKind.Accept: Audio.PlayChoiceAccept(); break;
+                            case ChoiceKind.Decline: Audio.PlayChoiceDecline(); break;
+                            default: Audio.PlayChoiceSelect(); break;
+                        }
+                    }
+
                     selected = option;
                 });
             }
@@ -141,14 +182,16 @@ namespace Havengard.Dialogue
 
         private Sprite? FindPortrait(string? characterName)
         {
-            if (string.IsNullOrEmpty(characterName))
+            if (string.IsNullOrWhiteSpace(characterName))
             {
                 return null;
             }
 
+            string wanted = characterName.Trim();
+
             foreach (Portrait portrait in _portraits)
             {
-                if (string.Equals(portrait.characterName, characterName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(portrait.characterName?.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
                 {
                     return portrait.sprite;
                 }
@@ -167,5 +210,33 @@ namespace Havengard.Dialogue
 
         public bool IsTyping { get; private set; }
         public bool IsShowingOptions { get; private set; }
+
+        private const string AcceptTag = "accept";
+        private const string DeclineTag = "decline";
+        private const string PlayerSpeaker = "Player";
+
+        private enum ChoiceKind { Generic, Accept, Decline }
+
+        private static ChoiceKind GetChoiceKind(DialogueOption option)
+        {
+            string[]? metadata = option.Line.Metadata;
+            if (metadata == null) return ChoiceKind.Generic;
+
+            foreach (string raw in metadata)
+            {
+                string tag = raw.TrimStart('#').Trim();
+
+                if (string.Equals(tag, DeclineTag, StringComparison.OrdinalIgnoreCase)) return ChoiceKind.Decline;
+                if (string.Equals(tag, AcceptTag, StringComparison.OrdinalIgnoreCase)) return ChoiceKind.Accept;
+            }
+
+            return ChoiceKind.Generic;
+        }
+
+        private static bool IsDecline(DialogueOption option)
+        {
+            string[]? metadata = option.Line.Metadata;
+            return metadata != null && Array.IndexOf(metadata, DeclineTag) >= 0;
+        }
     }
 }

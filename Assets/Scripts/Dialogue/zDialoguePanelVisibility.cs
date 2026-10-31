@@ -1,4 +1,6 @@
-using cherrydev;
+/*
+ * ARCHIVE: This file is part of the Havengard project and is provided as-is for reference purposes. It may not be used in the current project.
+ * using cherrydev;
 using UnityEngine;
 
 namespace Havengard.Dialogue
@@ -30,4 +32,4 @@ namespace Havengard.Dialogue
         private void Show() { panelRoot.SetActive(true); }
         private void Hide() { panelRoot.SetActive(false); }
     }
-}
+}*/

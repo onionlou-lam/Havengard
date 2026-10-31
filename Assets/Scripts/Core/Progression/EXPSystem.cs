@@ -39,11 +39,6 @@ namespace Havengard.Core.Progression
             }
         }
 
-        private void Awake()
-        {
-            Debug.Log($"[ExpSystem] Awake on {name}");
-        }
-
         public void InitEXPTable(int[] expTable)
         {
             expToLevel = expTable;

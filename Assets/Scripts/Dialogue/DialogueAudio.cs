@@ -17,6 +17,8 @@ namespace Havengard.Dialogue
         [SerializeField] private AudioClip choiceShowClip;
         [SerializeField] private AudioClip choiceHoverClip;
         [SerializeField] private AudioClip choiceSelectClip;
+        [SerializeField] private AudioClip choiceDeclineClip;
+        [SerializeField] private AudioClip choiceAcceptClip;
 
         [Header("Settings")]
         [Range(0f, 1f)] [SerializeField] private float volume = 0.8f;
@@ -27,6 +29,7 @@ namespace Havengard.Dialogue
         private AudioSource source;
         private int charCount;
         private int openedFrame = -1;
+        private int lastChoiceFrame = -1;
 
         private void Awake()
         {
@@ -55,8 +58,11 @@ namespace Havengard.Dialogue
         {
             charCount = 0;
 
-            // The first line shares a frame with the open sound, so don't also play "advance".
-            if (Time.frameCount != openedFrame) Play(advanceClip);
+            // The first line shares a frame with the open sound, and a line right after a choice
+            // shares one with the choice sound, so don't also play "advance" for either.
+            bool afterOpen = Time.frameCount == openedFrame;
+            bool afterChoice = Time.frameCount - lastChoiceFrame <= 2;
+            if (!afterOpen && !afterChoice) Play(advanceClip);
         }
 
         public void NotifyCharRevealed()
@@ -73,7 +79,12 @@ namespace Havengard.Dialogue
         public void NotifyChoicesShown() { Play(choiceShowClip); }
 
         public void PlayChoiceHover() { Play(choiceHoverClip); }
+        
         public void PlayChoiceSelect() { Play(choiceSelectClip); }
+
+        public void PlayChoiceAccept() { Play(choiceAcceptClip != null ? choiceAcceptClip : choiceSelectClip); }
+
+        public void PlayChoiceDecline() { Play(choiceDeclineClip != null ? choiceDeclineClip : choiceSelectClip); }
 
         private void Play(AudioClip clip)
         {
