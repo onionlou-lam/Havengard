@@ -211,7 +211,7 @@ namespace Havengard.Expeditions.UI
             }
 
             // Active expeditions still open the panel - it displays them in "in progress" mode
-            Debug.Log($"[DungeonIconUI] Selected dungeon: {expeditionData.displayName}");
+            //Debug.Log($"[DungeonIconUI] Selected dungeon: {expeditionData.displayName}");
 
             if (ExpeditionMapController.Instance != null)
             {

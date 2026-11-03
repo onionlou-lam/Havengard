@@ -32,8 +32,12 @@ namespace Havengard.UI
         [SerializeField] private Color activeLabelColor = Color.black;
         [SerializeField] private Color inactiveLabelColor = new Color(0.25f, 0.25f, 0.25f, 1f);
 
-        private void Start()
+        private bool initialized;
+
+        private void Awake()
         {
+            if (tabs == null) return;
+
             for (int i = 0; i < tabs.Length; i++)
             {
                 int index = i; // capture for closure
@@ -44,7 +48,15 @@ namespace Havengard.UI
                 ValidateTab(i);
             }
 
-            SelectTab(defaultTabIndex);
+            initialized = true;
+        }
+
+        private void OnEnable()
+        {
+            if (!initialized) return;
+
+            int index = (tabs != null && defaultTabIndex >= 0 && defaultTabIndex < tabs.Length) ? defaultTabIndex : 0;
+            SelectTab(index);
         }
 
         private void ValidateTab(int i)

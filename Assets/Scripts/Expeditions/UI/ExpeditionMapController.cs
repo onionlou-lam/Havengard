@@ -112,7 +112,7 @@ namespace Havengard.Expeditions.UI
         /// </summary>
         public void CloseMap()
         {
-            Debug.Log("[ExpeditionMap] Map closed");
+            //Debug.Log("[ExpeditionMap] Map closed");
 
             // Only pop the blocker if we were actually open, to avoid double-decrementing
             // if CloseMap() is called multiple times (e.g. from Start()).

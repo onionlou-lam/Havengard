@@ -83,7 +83,7 @@ namespace Havengard.Expeditions.UI
             if (emptyStateRoot != null)
                 emptyStateRoot.SetActive(missionEntries.Count == 0);
 
-            Debug.Log($"[ActiveMissionsPanel] Displayed {missionEntries.Count} mission(s)");
+            //Debug.Log($"[ActiveMissionsPanel] Displayed {missionEntries.Count} mission(s)");
         }
     }
 }

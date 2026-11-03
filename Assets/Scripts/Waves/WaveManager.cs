@@ -87,7 +87,7 @@ namespace Havengard.Waves
             if (preWavePhase != null)
             {
                 preWavePhase.OnPhaseEnded.AddListener(OnPreWavePhaseEnded);
-                Debug.Log("[WaveManager] Subscribed to PreWavePhase events");
+                //Debug.Log("[WaveManager] Subscribed to PreWavePhase events");
             }
 
             // Initialize events if null

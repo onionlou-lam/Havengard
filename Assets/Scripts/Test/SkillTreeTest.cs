@@ -57,7 +57,7 @@ namespace Havengard.Test
                 Debug.Log($"[SkillTreeTest] Initialized unlock tracking for {heroClass.classAbilities.Length} abilities");
             }
 
-            Debug.Log($"[SkillTreeTest] Ready! Press {grantExpKey} to gain EXP, {unlockAbilityKey} to unlock ability, {showStatusKey} for status");
+            Debug.Log($"[SkillTreeTest] Active! Press {grantExpKey} to gain EXP, {unlockAbilityKey} to unlock ability, {showStatusKey} for status");
         }
 
         private void Update()

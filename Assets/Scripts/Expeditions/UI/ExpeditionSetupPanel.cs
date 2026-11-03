@@ -122,8 +122,8 @@ namespace Havengard.Expeditions.UI
             UpdatePartyInfo();
             UpdateStartButton();
 
-            Debug.Log($"[ExpeditionSetupPanel] Opened for: {data.displayName}" +
-                      (activeExpedition != null ? " (in progress)" : ""));
+            /*Debug.Log($"[ExpeditionSetupPanel] Opened for: {data.displayName}" +
+                      (activeExpedition != null ? " (in progress)" : ""));*/
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace Havengard.Expeditions.UI
             }
 
             selectedFollowers.Add(hero);
-            Debug.Log($"[ExpeditionSetupPanel] Selected follower: {hero.Data.heroName}");
+            //Debug.Log($"[ExpeditionSetupPanel] Selected follower: {hero.Data.heroName}");
 
             UpdatePartyInfo();
             UpdateStartButton();

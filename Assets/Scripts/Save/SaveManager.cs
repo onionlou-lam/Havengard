@@ -42,8 +42,7 @@ namespace Havengard.Save
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            Debug.Log("[SaveManager] Initialized");
+            //Debug.Log("[SaveManager] Initialized");
         }
 
         private void Update()

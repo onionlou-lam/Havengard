@@ -99,7 +99,7 @@ namespace Havengard.DebugTools
                 menuPanel.SetActive(false);
             }
             
-            Debug.Log($"[HavengardDebugMenu] Initialized. Press {toggleKey} to toggle menu.");
+            //Debug.Log($"[HavengardDebugMenu] Initialized. Press {toggleKey} to toggle menu.");
         }
 
         private void Start()
@@ -305,7 +305,7 @@ namespace Havengard.DebugTools
                 CacheReferences();
             }
             
-            Debug.Log($"[HavengardDebugMenu] Menu {(isMenuOpen ? "OPENED" : "CLOSED")}");
+            //Debug.Log($"[HavengardDebugMenu] Menu {(isMenuOpen ? "OPENED" : "CLOSED")}");
         }
 
         #region Player Functions
@@ -559,7 +559,7 @@ namespace Havengard.DebugTools
         /// </summary>
         public void CompleteAllExpeditions()
         {
-            Debug.Log("[DebugMenu] CompleteAllExpeditions() called!");
+            //Debug.Log("[DebugMenu] CompleteAllExpeditions() called!");
 
             if (expeditionManager == null) CacheReferences();
 

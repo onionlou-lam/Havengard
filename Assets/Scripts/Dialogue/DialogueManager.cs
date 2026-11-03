@@ -1,9 +1,10 @@
+using Havengard.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Havengard.Core;
 using UnityEngine;
 using Yarn.Unity;
+using static Unity.Collections.Unicode;
 
 namespace Havengard.Dialogue
 {
@@ -85,7 +86,25 @@ namespace Havengard.Dialogue
             }
 
             dialogueRunner.StartDialogue(nodeName);
+            Debug.Log($"[DialogueManager] Project: {(dialogueRunner.YarnProject != null ? dialogueRunner.YarnProject.name : "NULL")}, " +
+          $"nodes: {(dialogueRunner.YarnProject != null ? string.Join(", ", dialogueRunner.YarnProject.NodeNames) : "-")}");
             Debug.Log("[DialogueManager] StartDialogue called. Runner running = " + dialogueRunner.IsDialogueRunning, this);
+
+            var presenters = dialogueRunner.DialoguePresenters;
+            if (presenters == null)
+            {
+                Debug.Log("[DialogueManager] Presenters: NULL");
+            }
+            else
+            {
+                int count = 0;
+                foreach (var p in presenters)
+                {
+                    count++;
+                    Debug.Log($"[DialogueManager]  - {(p == null ? "NULL ENTRY" : p.GetType().Name)}", p);
+                }
+                Debug.Log($"[DialogueManager] Presenters: {count}");
+            }
         }
 
         private void HandleDialogueComplete()

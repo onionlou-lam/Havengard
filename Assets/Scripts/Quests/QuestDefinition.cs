@@ -1,6 +1,6 @@
-using UnityEngine;
 using System.Collections.Generic;
 using Havengard.Expeditions;
+using UnityEngine;
 
 namespace Havengard.Quests
 {
@@ -27,19 +27,6 @@ namespace Havengard.Quests
         public QuestRewardMode rewardMode = QuestRewardMode.Fixed;
         [Tooltip("Fixed: every reward is given. Choice: the player picks one.")]
         public List<QuestReward> rewards = new List<QuestReward>();
-
-        /// <summary>Converts to the runtime Quest class that QuestSystem already uses.</summary>
-        public Quest ToQuest()
-        {
-            return new Quest
-            {
-                questName = displayName,
-                durationDays = durationDays,
-                baseGoldReward = baseGoldReward,
-                baseExpReward = baseExpReward,
-                baseCelestiumReward = baseCelestiumReward
-            };
-        }
 
         private void OnValidate()
         {

@@ -293,6 +293,7 @@ namespace Havengard.Abilities
             Debug.Log($"[AbilityUser] Assigned {abilities.Count} abilities");
         }
 
+        /*ARRAY NOT NEEDED IF LIST IS USED ABOVE
         public void AssignAbilities(AbilityBase[] array)
         {
             abilities = array != null ? new List<AbilityBase>(array) : new List<AbilityBase>();
@@ -300,7 +301,7 @@ namespace Havengard.Abilities
             OnAbilitiesChanged?.Invoke();
             Debug.Log($"[AbilityUser] Assigned {abilities.Count} abilities");
         }
-
+        */
         public AbilityBase GetAbility(int index)
         {
             if (abilities == null) return null;
@@ -491,7 +492,7 @@ namespace Havengard.Abilities
             activeChanneledAbility = null;
             activeChanneledAbilityIndex = -1;
 
-            Debug.Log("[AbilityUser] Channeling canceled");
+            //Debug.Log("[AbilityUser] Channeling canceled");
         }
 
         /// <summary>
@@ -574,13 +575,13 @@ namespace Havengard.Abilities
             if (useChannelingAudio && ability.castSFX != null)
             {
                 AudioSource.PlayClipAtPoint(ability.castSFX, transform.position, castSoundVolume);
-                Debug.Log($"[AbilityUser] Played cast SFX at volume {castSoundVolume}");
+                //Debug.Log($"[AbilityUser] Played cast SFX at volume {castSoundVolume}");
             }
 
             // Spawn VFX
             SpawnChannelingVFX(ability, targetPos);
 
-            Debug.Log($"[AbilityUser] Started channeling {ability.abilityName}");
+            //Debug.Log($"[AbilityUser] Started channeling {ability.abilityName}");
             return true;
         }
 
@@ -883,7 +884,7 @@ namespace Havengard.Abilities
             if (unlockedAbilities == null || unlockedAbilities.Length != abilityCount)
             {
                 unlockedAbilities = new bool[abilityCount];
-                Debug.Log($"[AbilityUser] Initialized unlock tracking for {abilityCount} abilities");
+                //Debug.Log($"[AbilityUser] Initialized unlock tracking for {abilityCount} abilities");
             }
         }
 
@@ -921,7 +922,7 @@ namespace Havengard.Abilities
             {
                 abilities.Add(ability);
                 RebuildCooldownArray();
-                Debug.Log($"[AbilityUser] Unlocked ability: {ability.abilityName}");
+                //Debug.Log($"[AbilityUser] Unlocked ability: {ability.abilityName}");
                 
                 // FIRE EVENT
                 OnAbilitiesChanged?.Invoke();

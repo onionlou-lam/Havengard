@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 using System.Collections.Generic;
 using Havengard.Resources;
 using Havengard.Core.Heroes;
@@ -49,3 +49,4 @@ namespace Havengard.Quests
         }
     }
 }
+*/

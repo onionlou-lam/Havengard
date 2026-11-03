@@ -27,7 +27,7 @@ namespace Havengard.UI
 
         private void Awake()
         {
-            Debug.Log("=== SkillTreeParticleManager Awake ===");
+            //Debug.Log("=== SkillTreeParticleManager Awake ===");
 
             // Create container in world space
             GameObject container = new GameObject("SkillTreeParticles");
@@ -40,27 +40,27 @@ namespace Havengard.UI
             // Check and initialize each prefab
             if (clickParticlePrefab != null)
             {
-                Debug.Log($"✅ Click particle prefab found: {clickParticlePrefab.name}");
+                //Debug.Log($"✅ Click particle prefab found: {clickParticlePrefab.name}");
                 InitializePool(clickParticlePrefab);
             }
             else
             {
-                Debug.LogError("❌ Click particle prefab is NOT assigned!");
+                Debug.LogWarning("❌ Click particle prefab is NOT assigned!");
             }
 
             if (hoverParticlePrefab != null)
             {
-                Debug.Log($"✅ Hover particle prefab found: {hoverParticlePrefab.name}");
+                //Debug.Log($"✅ Hover particle prefab found: {hoverParticlePrefab.name}");
                 InitializePool(hoverParticlePrefab);
             }
             else
             {
-                Debug.LogError("❌ Hover particle prefab is NOT assigned!");
+                Debug.LogWarning("❌ Hover particle prefab is NOT assigned!");
             }
 
             if (unlockParticlePrefab != null)
             {
-                Debug.Log($"✅ Unlock particle prefab found: {unlockParticlePrefab.name}");
+                //Debug.Log($"✅ Unlock particle prefab found: {unlockParticlePrefab.name}");
                 InitializePool(unlockParticlePrefab);
             }
             else
@@ -70,12 +70,12 @@ namespace Havengard.UI
 
             if (pulseParticlePrefab != null)
             {
-                Debug.Log($"✅ Pulse particle prefab found: {pulseParticlePrefab.name}");
+                //Debug.Log($"✅ Pulse particle prefab found: {pulseParticlePrefab.name}");
                 InitializePool(pulseParticlePrefab);
             }
             else
             {
-                Debug.LogError("❌ Pulse particle prefab is NOT assigned!");
+                Debug.LogWarning("❌ Pulse particle prefab is NOT assigned!");
             }
 
             // Auto-find camera
@@ -84,7 +84,7 @@ namespace Havengard.UI
                 uiCamera = Camera.main;
                 if (uiCamera != null)
                 {
-                    Debug.Log($"✅ UI Camera auto-assigned: {uiCamera.name}");
+                    //Debug.Log($"✅ UI Camera auto-assigned: {uiCamera.name}");
                 }
                 else
                 {
@@ -93,10 +93,10 @@ namespace Havengard.UI
             }
             else
             {
-                Debug.Log($"✅ UI Camera assigned: {uiCamera.name}");
+                //Debug.Log($"✅ UI Camera assigned: {uiCamera.name}");
             }
 
-            Debug.Log($"=== Pool initialized with {particlePools.Count} particle types ===");
+            //Debug.Log($"=== Pool initialized with {particlePools.Count} particle types ===");
         }
 
         //-----------------------------------------------------
@@ -113,17 +113,17 @@ namespace Havengard.UI
             }
 
             particlePools[prefab] = pool;
-            Debug.Log($"[ParticleManager] Initialized pool for {prefab.name} with {poolSize} instances");
+            //Debug.Log($"[ParticleManager] Initialized pool for {prefab.name} with {poolSize} instances");
         }
 
         //-----------------------------------------------------
 
-        private void Update()
+        /*private void Update()
         {
             // Test particle spawn with P key
             if (Input.GetKeyDown(KeyCode.P))
             {
-                Debug.Log("=== MANUAL PARTICLE TEST ===");
+                //Debug.Log("=== MANUAL PARTICLE TEST ===");
 
                 if (clickParticlePrefab != null && particlePools.ContainsKey(clickParticlePrefab))
                 {
@@ -153,7 +153,7 @@ namespace Havengard.UI
                 }
             }
         }
-
+        */
         //-----------------------------------------------------
 
         public void PlayParticleAtUI(ParticleSystem prefab, RectTransform uiElement)

@@ -64,7 +64,7 @@ namespace Havengard.Expeditions
             if (waveManager != null && waveManager.waveEvents != null)
             {
                 waveManager.waveEvents.OnWaveCleared.AddListener(OnWaveCompleted);
-                Debug.Log("[ExpeditionManager] Subscribed to WaveManager.OnWaveCleared");
+                //Debug.Log("[ExpeditionManager] Subscribed to WaveManager.OnWaveCleared");
             }
             else
             {
@@ -239,11 +239,11 @@ namespace Havengard.Expeditions
 
             activeExpeditions.Add(instance);
 
-            Debug.Log($"[ExpeditionManager] Started expedition: {data.displayName}");
+            /*Debug.Log($"[ExpeditionManager] Started expedition: {data.displayName}");
             Debug.Log($"[ExpeditionManager] Party size: {followers.Count}/{data.maximumPartySize}");
             Debug.Log($"[ExpeditionManager] Duration: {effectiveDuration} day(s) (base {data.durationInDays})");
             Debug.Log($"[ExpeditionManager] Active followers: {GetActiveExpeditionFollowerCount()}/{maxActiveExpeditionFollowers}");
-
+            */
             OnExpeditionStarted?.Invoke(instance);
             OnExpeditionsUpdated?.Invoke();
 
