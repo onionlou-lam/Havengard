@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using Havengard.Core;
+using Havengard.Interactions;
 
 namespace Havengard.Town
 {
     /// <summary>
-    /// Manages shop interior scenes. Auto-walks player to counter and starts dialogue.
+    /// Manages shop interior scenes. Auto-walks player to counter and starts the vendor dialogue.
+    /// Dialogue and shop UI are handled by VendorNPC / DialogueManager / VendorShopUI.
     /// </summary>
     public class ShopInteriorController : MonoBehaviour
     {
@@ -24,8 +27,8 @@ namespace Havengard.Town
 
         [Header("NPC Setup")]
         [SerializeField]
-        [Tooltip("The shopkeeper NPC")]
-        private ShopkeeperNPC shopkeeper;
+        [Tooltip("The vendor NPC at the counter")]
+        private VendorNPC vendor;
 
         [Header("Timing")]
         [SerializeField]
@@ -39,7 +42,17 @@ namespace Havengard.Town
         private GameObject playerInstance;
         private NavMeshAgent playerAgent;
         private PlayerController2D playerController;
-        private bool sequenceComplete = false;
+        private bool sequenceComplete;
+
+        private void OnEnable()
+        {
+            PlayerInputLock.LockChanged += HandleLockChanged;
+        }
+
+        private void OnDisable()
+        {
+            PlayerInputLock.LockChanged -= HandleLockChanged;
+        }
 
         private void Start()
         {
@@ -51,7 +64,6 @@ namespace Havengard.Town
             // Wait for scene to fully load
             yield return new WaitForSeconds(startDelay);
 
-            // Find or spawn player
             SetupPlayer();
 
             if (playerInstance == null)
@@ -60,41 +72,28 @@ namespace Havengard.Town
                 yield break;
             }
 
-            // Disable player input during sequence
+            // Disable player input during the walk
             if (playerController != null)
-            {
                 playerController.enabled = false;
-            }
 
-            // Position player at spawn point
             playerInstance.transform.position = playerSpawnPoint.position;
 
-            // Walk to counter
             yield return StartCoroutine(WalkToCounter());
 
-            // Start dialogue
-            if (shopkeeper != null)
-            {
-                shopkeeper.StartGreeting();
-            }
+            if (vendor != null)
+                vendor.Interact();
             else
-            {
-                Debug.LogWarning("[ShopInteriorController] No shopkeeper assigned!");
-            }
+                Debug.LogWarning("[ShopInteriorController] No vendor assigned!");
 
             sequenceComplete = true;
         }
 
         private void SetupPlayer()
         {
-            // Try to find existing player in scene
             playerInstance = GameObject.FindGameObjectWithTag("Player");
 
-            // If no player exists, instantiate from prefab
             if (playerInstance == null && playerPrefab != null)
-            {
                 playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
-            }
 
             if (playerInstance != null)
             {
@@ -106,53 +105,30 @@ namespace Havengard.Town
         private IEnumerator WalkToCounter()
         {
             if (playerAgent == null || counterPosition == null)
-            {
                 yield break;
-            }
 
-            // Set destination
             playerAgent.SetDestination(counterPosition.position);
             playerAgent.isStopped = false;
 
-            // Wait until player reaches counter
             while (Vector3.Distance(playerInstance.transform.position, counterPosition.position) > arrivalThreshold)
-            {
                 yield return null;
-            }
 
-            // Stop at counter
             playerAgent.isStopped = true;
             playerAgent.velocity = Vector3.zero;
         }
 
-        /// <summary>
-        /// Call this when dialogue completes and shop UI opens
-        /// </summary>
-        public void OnShopUIOpened()
+        /// <summary>Gives control back once dialogue and shop UI have both released the input lock.</summary>
+        private void HandleLockChanged(bool locked)
         {
-            // Keep player control disabled while in shop UI
-            if (playerController != null)
-            {
-                playerController.enabled = false;
-            }
-        }
+            if (locked || !sequenceComplete) return;
 
-        /// <summary>
-        /// Call this when player exits the shop
-        /// </summary>
-        public void OnShopExit()
-        {
-            // Re-enable player control
             if (playerController != null)
-            {
                 playerController.enabled = true;
-            }
         }
 
 #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
-            // Visualize spawn and counter positions
             if (playerSpawnPoint != null)
             {
                 Gizmos.color = Color.green;
@@ -167,7 +143,6 @@ namespace Havengard.Town
                 UnityEditor.Handles.Label(counterPosition.position + Vector3.up * 0.5f, "Counter");
             }
 
-            // Draw path line
             if (playerSpawnPoint != null && counterPosition != null)
             {
                 Gizmos.color = Color.yellow;

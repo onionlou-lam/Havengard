@@ -15,16 +15,16 @@ MonoBehaviour:
   entries:
   - item: {fileID: 11400000, guid: 32bb8c72d1786184fa92ed25beca8cb7, type: 2}
     currency: 0
-    price: 0
+    price: 1
   - item: {fileID: 11400000, guid: b773b8ace12bf84488979476bffa004b, type: 2}
     currency: 0
-    price: 0
+    price: 2
   - item: {fileID: 11400000, guid: 29c4de1220342a34aaee5c688c15df3b, type: 2}
     currency: 0
-    price: 0
+    price: 3
   - item: {fileID: 11400000, guid: 43ee2fce4dc4aad488fb0669f2e7ec78, type: 2}
     currency: 0
-    price: 0
+    price: 4
   - item: {fileID: 11400000, guid: 87967c4231834b347914cc5ccfc620f5, type: 2}
     currency: 0
-    price: 0
+    price: 5
