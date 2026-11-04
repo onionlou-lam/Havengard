@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 using Havengard.Abilities;
 using Havengard.UI;
 using Havengard.Core;

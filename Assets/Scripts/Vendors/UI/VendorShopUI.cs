@@ -22,6 +22,7 @@ namespace Havengard.Vendors.UI
         [SerializeField] private TextMeshProUGUI celestiumText;
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField] private GameObject emptyLabel;
+        [SerializeField] private Image portraitImage;
 
         [Header("Input")]
         [SerializeField] private KeyCode closeKey = KeyCode.Escape;
@@ -36,6 +37,7 @@ namespace Havengard.Vendors.UI
         [Range(0f, 1f)] [SerializeField] private float volume = 0.8f;
 
         private readonly List<GameObject> rows = new List<GameObject>();
+        private readonly List<GameObject> hiddenPanels = new List<GameObject>();
         private readonly VendorTransactionService transactions = new VendorTransactionService(new CurrencyService());
         private ICurrencyService currency = new CurrencyService();
 
@@ -43,6 +45,18 @@ namespace Havengard.Vendors.UI
         private VendorCatalog catalog;
         private VendorContext context;
         private Action onClosed;
+
+        [Header("Hide While Open")]
+        [Tooltip("Panels hidden while the shop is open (e.g. WavePreviewPanel). Only those active at open time are restored.")]
+        [SerializeField] private GameObject[] hideWhileOpen;
+
+        [Header("Cursor")]
+        [Tooltip("Shown while hovering a row. Texture Type must be 'Cursor'.")]
+        [SerializeField] private Texture2D rowHoverCursor;
+        [SerializeField] private Vector2 rowHoverCursorHotspot = Vector2.zero;
+        [Tooltip("Restored when leaving a row. Leave empty for the system default cursor.")]
+        [SerializeField] private Texture2D defaultCursor;
+        [SerializeField] private Vector2 defaultCursorHotspot = Vector2.zero;
 
         public bool IsOpen { get; private set; }
 
@@ -64,7 +78,8 @@ namespace Havengard.Vendors.UI
             if (IsOpen) Close();
         }
 
-        public void Open(string vendorName, VendorCatalog vendorCatalog, VendorContext vendorContext, Action closedCallback)
+        public void Open(string vendorName, VendorCatalog vendorCatalog, VendorContext vendorContext,
+            Action closedCallback, Sprite portrait = null)
         {
             if (IsOpen || vendorCatalog == null) return;
 
@@ -74,7 +89,14 @@ namespace Havengard.Vendors.UI
             IsOpen = true;
 
             if (titleText != null) titleText.text = vendorName;
+            if (portraitImage != null)
+            {
+                portraitImage.sprite = portrait;
+                portraitImage.enabled = portrait != null;
+            }
+
             SetMessage(string.Empty);
+            HideOtherPanels();
             panel.SetActive(true);
             PlayerInputLock.Acquire();
 
@@ -142,7 +164,7 @@ namespace Havengard.Vendors.UI
                 bool affordable = currency.CanAfford(offer.Price);
 
                 VendorOfferRow row = Instantiate(rowPrefab, rowContainer);
-                row.Setup(offer, available, affordable, reason, OnBuyClicked, () => Play(rowHoverClip));
+                row.Setup(offer, available, affordable, reason, OnBuyClicked, OnRowHoverEnter, OnRowHoverExit);
                 rows.Add(row.gameObject);
             }
         }
@@ -177,6 +199,47 @@ namespace Havengard.Vendors.UI
         private void Play(AudioClip clip)
         {
             if (clip != null) audioSource.PlayOneShot(clip, volume);
+        }
+
+        private void OnRowHoverEnter()
+        {
+            Play(rowHoverClip);
+            SetRowCursor(true);
+        }
+
+        private void OnRowHoverExit()
+        {
+            SetRowCursor(false);
+        }
+
+        private void SetRowCursor(bool hovering)
+        {
+            if (hovering && rowHoverCursor != null)
+                Cursor.SetCursor(rowHoverCursor, rowHoverCursorHotspot, CursorMode.Auto);
+            else
+                Cursor.SetCursor(defaultCursor, defaultCursorHotspot, CursorMode.Auto);
+        }
+
+        private void HideOtherPanels()
+        {
+            hiddenPanels.Clear();
+            if (hideWhileOpen == null) return;
+
+            foreach (GameObject go in hideWhileOpen)
+            {
+                if (go == null || !go.activeSelf) continue;
+                hiddenPanels.Add(go);
+                go.SetActive(false);
+            }
+        }
+
+        private void RestoreOtherPanels()
+        {
+            foreach (GameObject go in hiddenPanels)
+            {
+                if (go != null) go.SetActive(true);
+            }
+            hiddenPanels.Clear();
         }
     }
 }

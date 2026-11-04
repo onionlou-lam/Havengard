@@ -15,6 +15,8 @@ namespace Havengard.Interactions
     {
         [Header("Vendor")]
         [SerializeField] private string shopTitle = "Shop";
+        [Tooltip("Yarn speaker name, used to fetch the same portrait the dialogue shows.")]
+        [SerializeField] private string speakerName;
         [SerializeField] private VendorCatalog catalog;
         [SerializeField] private VendorShopUI shopUI;
         [SerializeField] private string openShopEventId = "open_shop";
@@ -53,7 +55,13 @@ namespace Havengard.Interactions
                 Debug.LogWarning("[VendorNpc] Missing shop UI or catalog on " + name, this);
                 return;
             }
-            shopUI.Open(shopTitle, catalog, BuildContext(), null);
+
+            Sprite portrait = null;
+            HavengardDialoguePresenter presenter = FindFirstObjectByType<HavengardDialoguePresenter>();
+            if (presenter != null && !string.IsNullOrEmpty(speakerName))
+                portrait = presenter.GetPortrait(speakerName);
+
+            shopUI.Open(shopTitle, catalog, BuildContext(), null, portrait);
         }
 
         protected virtual VendorContext BuildContext()

@@ -141,7 +141,7 @@ namespace Havengard.Dialogue
             _answerPanel.gameObject.SetActive(true);
             _answerPanel.SetUpButtons(available.Count);
 
-            if (Audio != null) Audio.NotifyChoicesShown();
+            if ( Audio != null) Audio.NotifyChoicesShown();
 
             DialogueOption? selected = null;
 
@@ -178,6 +178,12 @@ namespace Havengard.Dialogue
             IsShowingOptions = false;
             _answerPanel.DisableAllButtons();
             return selected;
+        }
+
+        /// <summary>Same lookup the dialogue uses, so other UIs (e.g. the vendor shop) show the identical portrait.</summary>
+        public Sprite? GetPortrait(string characterName)
+        {
+            return FindPortrait(characterName);
         }
 
         private Sprite? FindPortrait(string? characterName)

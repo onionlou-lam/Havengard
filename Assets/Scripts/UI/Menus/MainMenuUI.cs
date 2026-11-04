@@ -15,6 +15,7 @@ namespace Havengard.UI
         [SerializeField] private GameObject mainMenuPanel;
         [SerializeField] private GameObject loadGamePanel;
         [SerializeField] private GameObject optionsPanel;
+        [SerializeField] private CharacterCreationUI characterCreationUI;
 
         [Header("Main Menu Buttons")]
         [SerializeField] private Button newGameButton;
@@ -29,6 +30,12 @@ namespace Havengard.UI
 
         private void Start()
         {
+            if (characterCreationUI != null)
+            {
+                characterCreationUI.OnCharacterCreated += OnCharacterCreated;
+                characterCreationUI.OnCreationCancelled += OnCharacterCreationCancelled;
+            }
+
             // Hook up main menu buttons
             if (newGameButton != null)
             {
@@ -161,18 +168,22 @@ namespace Havengard.UI
         #region Button Handlers
 
         /// <summary>
-        /// Handle New Game button - directly load game scene for now
+        /// Handle New Game button - opens character creation
         /// </summary>
         private void OnNewGameClicked()
         {
             if (UIAudioManager.Instance != null)
                 UIAudioManager.Instance.PlayButtonClick();
 
-            Debug.Log("[MainMenuUI] New Game clicked - loading game scene");
+            if (characterCreationUI == null)
+            {
+                Debug.LogWarning("[MainMenuUI] CharacterCreationUI not assigned - loading game scene directly");
+                SceneManager.LoadScene(gameSceneName);
+                return;
+            }
 
-            // For now, just load the game scene directly
-            // TODO: Later this will show character creation
-            SceneManager.LoadScene(gameSceneName);
+            SetActivePanel(null);
+            characterCreationUI.Show();
         }
 
         /// <summary>
@@ -263,6 +274,36 @@ namespace Havengard.UI
 #endif
         }
 
+        /// <summary>
+        /// Character confirmed - store data and start the game
+        /// </summary>
+        private void OnCharacterCreated(CharacterCreationData data)
+        {
+            CharacterCreationData.currentCharacter = data;
+            Debug.Log($"[MainMenuUI] Character created: {data.characterName} ({data.selectedClass.className})");
+
+            characterCreationUI.Hide();
+            SceneManager.LoadScene(gameSceneName);
+        }
+
+        /// <summary>
+        /// Character creation cancelled - return to the main menu
+        /// </summary>
+        private void OnCharacterCreationCancelled()
+        {
+            characterCreationUI.Hide();
+            ShowMainMenu();
+        }
+
         #endregion
+
+        private void OnDestroy()
+        {
+            if (characterCreationUI != null)
+            {
+                characterCreationUI.OnCharacterCreated -= OnCharacterCreated;
+                characterCreationUI.OnCreationCancelled -= OnCharacterCreationCancelled;
+            }
+        }
     }
 }
